@@ -3,7 +3,7 @@
     {
       "archivo": "audio/v01.mp3",
       "inicio": 0.3,
-      "duracion": 4.26,
+      "duracion": 4.0,
       "max": 4.6,
       "velocidad": 1.0,
       "texto": "Así se hace la varilla de la lámpara roseta, paso a paso."
@@ -11,7 +11,7 @@
     {
       "archivo": "audio/v02.mp3",
       "inicio": 5.3,
-      "duracion": 2.27,
+      "duracion": 2.51,
       "max": 3.6,
       "velocidad": 1.0,
       "texto": "La lámpara tiene cuarenta y ocho curvas..."
@@ -19,7 +19,7 @@
     {
       "archivo": "audio/v03.mp3",
       "inicio": 9.0,
-      "duracion": 2.4,
+      "duracion": 2.12,
       "max": 3.8,
       "velocidad": 1.0,
       "texto": "y todas son la misma pieza."
@@ -27,7 +27,7 @@
     {
       "archivo": "audio/v04.mp3",
       "inicio": 13.2,
-      "duracion": 6.87,
+      "duracion": 5.85,
       "max": 7.4,
       "velocidad": 1.0,
       "texto": "Es un arco plano de varilla de seis milímetros, con un radio de doscientos ochenta y seis milímetros."
@@ -35,7 +35,7 @@
     {
       "archivo": "audio/v05.mp3",
       "inicio": 21.3,
-      "duracion": 5.43,
+      "duracion": 4.36,
       "max": 5.6,
       "velocidad": 1.0,
       "texto": "Paso uno: corta cuarenta y ocho tramos de seiscientos milímetros."
@@ -43,7 +43,7 @@
     {
       "archivo": "audio/v06.mp3",
       "inicio": 27.3,
-      "duracion": 5.98,
+      "duracion": 5.8,
       "max": 6.8,
       "velocidad": 1.0,
       "texto": "Paso dos: con un clavo y un cordel de doscientos ochenta y seis, traza el arco."
@@ -51,7 +51,7 @@
     {
       "archivo": "audio/v07.mp3",
       "inicio": 34.3,
-      "duracion": 5.51,
+      "duracion": 5.69,
       "max": 6.6,
       "velocidad": 1.0,
       "texto": "Paso tres: corta una horma un poco más cerrada, porque el acero se abre al soltarlo."
@@ -59,7 +59,7 @@
     {
       "archivo": "audio/v08.mp3",
       "inicio": 41.2,
-      "duracion": 4.44,
+      "duracion": 4.26,
       "max": 4.5,
       "velocidad": 1.0,
       "texto": "Paso cuatro: prensa la punta y dobla de a poco contra la horma."
@@ -67,7 +67,7 @@
     {
       "archivo": "audio/v09.mp3",
       "inicio": 45.8,
-      "duracion": 2.46,
+      "duracion": 2.53,
       "max": 3.0,
       "velocidad": 1.0,
       "texto": "Al soltarla, queda justo en el trazo."
@@ -75,7 +75,7 @@
     {
       "archivo": "audio/v10.mp3",
       "inicio": 48.9,
-      "duracion": 4.6,
+      "duracion": 4.55,
       "max": 5.2,
       "velocidad": 1.0,
       "texto": "Paso cinco: recorta las puntas y revisa que quede plana."
@@ -83,7 +83,7 @@
     {
       "archivo": "audio/v11.mp3",
       "inicio": 54.3,
-      "duracion": 4.68,
+      "duracion": 4.0,
       "max": 5.4,
       "velocidad": 1.0,
       "texto": "Repite la misma curva cuarenta y ocho veces, y arma tu lámpara."
@@ -181,6 +181,6 @@
       "descripcion": "Quiet metal workshop room tone ambience, distant soft tool sounds, steady, no music, no voices"
     }
   ],
-  "voz_id": "57D8YIbQSuE3REDPO6Vm",
+  "voz_id": "sDh3eviBhiuHKi0MjTNq",
   "modelo": "eleven_multilingual_v2"
 }

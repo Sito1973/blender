@@ -13,7 +13,7 @@ import urllib.request
 
 KEY = os.environ.get("eleven_labs_api_key") or os.environ.get("ELEVENLABS_API_KEY")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public", "audio")
-VOICE_ID = "57D8YIbQSuE3REDPO6Vm"  # "Horacio", voz colombiana de la biblioteca de ElevenLabs
+VOICE_ID = "sDh3eviBhiuHKi0MjTNq"  # "Alejandro - Corporate and Elegant", biblioteca de ElevenLabs
 MODEL = "eleven_multilingual_v2"
 
 # (archivo, inicio en segundos, duración máxima, texto)
@@ -96,7 +96,7 @@ def voz(resumen, solo=None):
                 "text": text, "model_id": MODEL,
                 "previous_text": textos[i - 1] if i else None,
                 "next_text": textos[i + 1] if i + 1 < len(textos) else None,
-                "voice_settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.15, "use_speaker_boost": True, "speed": speed},
+                "voice_settings": {"stability": 0.55, "similarity_boost": 0.8, "style": 0.1, "use_speaker_boost": True, "speed": speed},
             }, dest)
             d = dur(dest)
             if d <= maxd or speed >= 1.15:
