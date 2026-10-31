@@ -1,0 +1,136 @@
+{
+  "voz": [
+    {
+      "archivo": "audio/v01.mp3",
+      "inicio": 0.3,
+      "duracion": 3.89,
+      "max": 4.6,
+      "velocidad": 1.0,
+      "texto": "Así se hace la varilla de la lámpara roseta, paso a paso."
+    },
+    {
+      "archivo": "audio/v02.mp3",
+      "inicio": 5.3,
+      "duracion": 3.24,
+      "max": 3.6,
+      "velocidad": 1.0,
+      "texto": "La lámpara tiene cuarenta y ocho curvas..."
+    },
+    {
+      "archivo": "audio/v03.mp3",
+      "inicio": 9.0,
+      "duracion": 2.17,
+      "max": 3.8,
+      "velocidad": 1.0,
+      "texto": "y todas son la misma pieza."
+    },
+    {
+      "archivo": "audio/v04.mp3",
+      "inicio": 13.2,
+      "duracion": 7.0,
+      "max": 7.4,
+      "velocidad": 1.04,
+      "texto": "Es un arco plano de varilla de seis milímetros, con un radio de doscientos ochenta y seis milímetros."
+    },
+    {
+      "archivo": "audio/v05.mp3",
+      "inicio": 21.3,
+      "duracion": 5.15,
+      "max": 5.6,
+      "velocidad": 1.15,
+      "texto": "Paso uno: corta cuarenta y ocho tramos de seiscientos milímetros."
+    },
+    {
+      "archivo": "audio/v06.mp3",
+      "inicio": 27.3,
+      "duracion": 6.77,
+      "max": 6.8,
+      "velocidad": 1.0,
+      "texto": "Paso dos: con un clavo y un cordel de doscientos ochenta y seis, traza el arco."
+    },
+    {
+      "archivo": "audio/v07.mp3",
+      "inicio": 34.3,
+      "duracion": 6.5,
+      "max": 6.6,
+      "velocidad": 1.0,
+      "texto": "Paso tres: corta una horma un poco más cerrada, porque el acero se abre al soltarlo."
+    },
+    {
+      "archivo": "audio/v08.mp3",
+      "inicio": 41.2,
+      "duracion": 4.08,
+      "max": 4.5,
+      "velocidad": 1.15,
+      "texto": "Paso cuatro: prensa la punta y dobla de a poco contra la horma."
+    },
+    {
+      "archivo": "audio/v09.mp3",
+      "inicio": 45.8,
+      "duracion": 2.74,
+      "max": 3.0,
+      "velocidad": 1.12,
+      "texto": "Al soltarla, queda justo en el trazo."
+    },
+    {
+      "archivo": "audio/v10.mp3",
+      "inicio": 48.9,
+      "duracion": 4.83,
+      "max": 5.2,
+      "velocidad": 1.0,
+      "texto": "Paso cinco: recorta las puntas y revisa que quede plana."
+    },
+    {
+      "archivo": "audio/v11.mp3",
+      "inicio": 54.3,
+      "duracion": 4.21,
+      "max": 5.4,
+      "velocidad": 1.0,
+      "texto": "Repite la misma curva cuarenta y ocho veces, y arma tu lámpara."
+    }
+  ],
+  "efectos": [
+    {
+      "archivo": "audio/sfx_whoosh.mp3",
+      "duracion": 1.65,
+      "descripcion": "Soft cinematic whoosh rising, a metal rod lifting into the air, clean, no music"
+    },
+    {
+      "archivo": "audio/sfx_cortes.mp3",
+      "duracion": 3.03,
+      "descripcion": "Angle grinder cutting a thin steel rod several times in quick short bursts, workshop, close up"
+    },
+    {
+      "archivo": "audio/sfx_lapiz.mp3",
+      "duracion": 3.79,
+      "descripcion": "Pencil drawing one long smooth curved line on a wooden board, close up, quiet room"
+    },
+    {
+      "archivo": "audio/sfx_sierra.mp3",
+      "duracion": 2.59,
+      "descripcion": "Electric jigsaw cutting a curve through an MDF wood board, close up"
+    },
+    {
+      "archivo": "audio/sfx_doblar.mp3",
+      "duracion": 3.45,
+      "descripcion": "Steel rod being slowly bent by hand around a wooden form, metallic creaking strain, close up"
+    },
+    {
+      "archivo": "audio/sfx_soltar.mp3",
+      "duracion": 1.04,
+      "descripcion": "Short metallic spring twang as a bent steel rod is released from a clamp"
+    },
+    {
+      "archivo": "audio/sfx_check.mp3",
+      "duracion": 0.63,
+      "descripcion": "Soft short positive confirmation ding, clean user interface sound"
+    },
+    {
+      "archivo": "audio/sfx_armar.mp3",
+      "duracion": 3.79,
+      "descripcion": "Light metal rods clinking and tapping into place while assembling a metal lamp frame, gentle, workshop"
+    }
+  ],
+  "voz_id": "pNInz6obpgDQGcFmaJgB",
+  "modelo": "eleven_multilingual_v2"
+}

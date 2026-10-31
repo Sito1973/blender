@@ -3,6 +3,7 @@ import { AbsoluteFill, Sequence, useCurrentFrame } from 'remotion';
 import { SHOP, fmt, DESIGN } from './geometry';
 import { CheckList, S1Title, S2OnePiece, S3Measures, S4Cut, S9Assemble, T_DOBLAR, T_END, T_HORMA, T_REV, Workshop } from './scenes';
 import { Background, C, Scene, StepHeader, StepsBar } from './ui';
+import { Soundtrack } from './Soundtrack';
 
 export const FPS = 30;
 export const DURATION = 1800;
@@ -38,6 +39,7 @@ export const Video: React.FC = () => (
     <Sequence from={WS + T_REV} durationInFrames={T_END - T_REV}><Scene dur={T_END - T_REV} fadeIn={0} fadeOut={14}><CheckList /></Scene></Sequence>
     <Sequence from={630} durationInFrames={990}><Scene dur={990} fadeIn={12} fadeOut={14}><StepsBarAnim /></Scene></Sequence>
     <Sequence from={1620} durationInFrames={180}><Scene dur={180} fadeIn={14} fadeOut={10}><S9Assemble /></Scene></Sequence>
+    <Soundtrack />
   </AbsoluteFill>
 );
 

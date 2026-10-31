@@ -6,3 +6,5 @@
 *.obj   -filter -diff -merge -text
 *.pdf   -filter -diff -merge -text
 *.mp4   -filter -diff -merge -text
+*.mp3   -filter -diff -merge -text
+*.wav   -filter -diff -merge -text
