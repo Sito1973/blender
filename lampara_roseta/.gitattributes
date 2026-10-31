@@ -5,3 +5,4 @@
 *.stl   -filter -diff -merge -text
 *.obj   -filter -diff -merge -text
 *.pdf   -filter -diff -merge -text
+*.mp4   -filter -diff -merge -text
