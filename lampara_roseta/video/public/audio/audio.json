@@ -129,6 +129,56 @@
       "archivo": "audio/sfx_armar.mp3",
       "duracion": 3.79,
       "descripcion": "Light metal rods clinking and tapping into place while assembling a metal lamp frame, gentle, workshop"
+    },
+    {
+      "archivo": "audio/sfx_intro.mp3",
+      "duracion": 2.59,
+      "descripcion": "Deep cinematic impact hit with a soft metallic shimmer tail, short intro sting, no music"
+    },
+    {
+      "archivo": "audio/sfx_trans.mp3",
+      "duracion": 0.91,
+      "descripcion": "Quick airy swoosh transition, clean and short"
+    },
+    {
+      "archivo": "audio/sfx_golpe.mp3",
+      "duracion": 0.63,
+      "descripcion": "Single short punchy knock on a wooden workbench"
+    },
+    {
+      "archivo": "audio/sfx_pop.mp3",
+      "duracion": 0.52,
+      "descripcion": "Soft subtle pop, small user interface tick"
+    },
+    {
+      "archivo": "audio/sfx_brillo.mp3",
+      "duracion": 1.23,
+      "descripcion": "Soft magical shimmer sparkle as a metal rod lights up"
+    },
+    {
+      "archivo": "audio/sfx_clavo.mp3",
+      "duracion": 1.31,
+      "descripcion": "Hammer tapping a small nail into a wooden board, two taps"
+    },
+    {
+      "archivo": "audio/sfx_tornillo.mp3",
+      "duracion": 1.65,
+      "descripcion": "Electric screwdriver quickly driving a screw into wood"
+    },
+    {
+      "archivo": "audio/sfx_contador.mp3",
+      "duracion": 3.6,
+      "descripcion": "Fast mechanical counter ticking, many quick soft clicks accelerating"
+    },
+    {
+      "archivo": "audio/sfx_final.mp3",
+      "duracion": 2.04,
+      "descripcion": "Warm satisfying success chime with a soft metallic ring, ending sting"
+    },
+    {
+      "archivo": "audio/sfx_ambiente.mp3",
+      "duracion": 20.04,
+      "descripcion": "Quiet metal workshop room tone ambience, distant soft tool sounds, steady, no music, no voices"
     }
   ],
   "voz_id": "57D8YIbQSuE3REDPO6Vm",

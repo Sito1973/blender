@@ -41,6 +41,16 @@ EFECTOS = [
     ("sfx_soltar", 1.0, "Short metallic spring twang as a bent steel rod is released from a clamp"),
     ("sfx_check", 0.6, "Soft short positive confirmation ding, clean user interface sound"),
     ("sfx_armar", 3.8, "Light metal rods clinking and tapping into place while assembling a metal lamp frame, gentle, workshop"),
+    ("sfx_intro", 2.6, "Deep cinematic impact hit with a soft metallic shimmer tail, short intro sting, no music"),
+    ("sfx_trans", 0.9, "Quick airy swoosh transition, clean and short"),
+    ("sfx_golpe", 0.6, "Single short punchy knock on a wooden workbench"),
+    ("sfx_pop", 0.5, "Soft subtle pop, small user interface tick"),
+    ("sfx_brillo", 1.2, "Soft magical shimmer sparkle as a metal rod lights up"),
+    ("sfx_clavo", 1.3, "Hammer tapping a small nail into a wooden board, two taps"),
+    ("sfx_tornillo", 1.6, "Electric screwdriver quickly driving a screw into wood"),
+    ("sfx_contador", 3.6, "Fast mechanical counter ticking, many quick soft clicks accelerating"),
+    ("sfx_final", 2.0, "Warm satisfying success chime with a soft metallic ring, ending sting"),
+    ("sfx_ambiente", 20.0, "Quiet metal workshop room tone ambience, distant soft tool sounds, steady, no music, no voices", {"loop": True}),
 ]
 
 
@@ -96,15 +106,50 @@ def voz(resumen, solo=None):
         print(f"{name}: {d:.2f}s (máx {maxd}) velocidad {speed} caracteres {cost}")
 
 
-def efectos(resumen):
-    for name, d, text in EFECTOS:
+def efectos(resumen, solo=None):
+    previas = {x["archivo"]: x for x in resumen.get("efectos", [])}
+    resumen["efectos"] = []
+    for name, d, text, *extra in EFECTOS:
         dest = os.path.join(OUT, name + ".mp3")
-        post("https://api.elevenlabs.io/v1/sound-generation", {"text": text, "duration_seconds": d, "prompt_influence": 0.55}, dest)
+        prev = previas.get(f"audio/{name}.mp3")
+        if solo and name not in solo and os.path.exists(dest):
+            resumen["efectos"].append(prev or {"archivo": f"audio/{name}.mp3", "duracion": round(dur(dest), 2), "descripcion": text})
+            continue
+        payload = {"text": text, "duration_seconds": d, "prompt_influence": 0.55}
+        payload.update(extra[0] if extra else {})
+        post("https://api.elevenlabs.io/v1/sound-generation", payload, dest)
         resumen["efectos"].append({"archivo": f"audio/{name}.mp3", "duracion": round(dur(dest), 2), "descripcion": text})
         print(f"{name}: {dur(dest):.2f}s")
 
 
+def nivel(path):
+    out = subprocess.run(["ffmpeg", "-hide_banner", "-i", path, "-af", "volumedetect", "-f", "null", "-"], capture_output=True, text=True).stderr
+    mean = float(out.split("mean_volume:")[1].split("dB")[0])
+    peak = float(out.split("max_volume:")[1].split("dB")[0])
+    return mean, peak
+
+
+def normalizar_efectos(objetivo=-18.0, techo=-1.0):
+    """Deja todos los efectos con el mismo nivel medio (sin pasar el techo de pico).
+    El balance final de cada uno se hace con el volumen en src/Soundtrack.tsx."""
+    for name, *_ in EFECTOS:
+        path = os.path.join(OUT, name + ".mp3")
+        if not os.path.exists(path):
+            continue
+        mean, peak = nivel(path)
+        gain = round(min(objetivo - mean, techo - peak), 1)
+        if abs(gain) < 0.3:
+            continue
+        tmp = path + ".tmp.mp3"
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", path, "-af", f"volume={gain}dB", "-c:a", "libmp3lame", "-b:a", "128k", tmp], check=True)
+        os.replace(tmp, path)
+        print(f"{name}: {gain:+.1f} dB (antes medio {mean} / pico {peak})")
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "normalizar":
+        normalizar_efectos()
+        raise SystemExit(0)
     if not KEY:
         raise SystemExit("Falta la variable de entorno eleven_labs_api_key")
     os.makedirs(OUT, exist_ok=True)
@@ -114,8 +159,8 @@ if __name__ == "__main__":
     if que in ("voz", "todo"):
         voz(resumen, set(sys.argv[2:]) or None)
     if que in ("efectos", "todo"):
-        resumen["efectos"] = []
-        efectos(resumen)
+        efectos(resumen, set(sys.argv[2:]) or None)
+        normalizar_efectos()
     resumen["voz_id"] = VOICE_ID
     resumen["modelo"] = MODEL
     json.dump(resumen, open(path, "w"), ensure_ascii=False, indent=2)
