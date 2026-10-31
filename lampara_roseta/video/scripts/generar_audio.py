@@ -13,7 +13,7 @@ import urllib.request
 
 KEY = os.environ.get("eleven_labs_api_key") or os.environ.get("ELEVENLABS_API_KEY")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public", "audio")
-VOICE_ID = "pNInz6obpgDQGcFmaJgB"  # "Adam", voz predeterminada de ElevenLabs
+VOICE_ID = "57D8YIbQSuE3REDPO6Vm"  # "Horacio", voz colombiana de la biblioteca de ElevenLabs
 MODEL = "eleven_multilingual_v2"
 
 # (archivo, inicio en segundos, duración máxima, texto)
