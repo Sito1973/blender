@@ -5,6 +5,4 @@ Config.setBrowserExecutable('/opt/pw-browsers/chromium_headless_shell-1243/chrom
 Config.setChromiumOpenGlRenderer('swangle');
 Config.setVideoImageFormat('jpeg');
 Config.setJpegQuality(92);
-Config.setCodec('h264');
-Config.setCrf(18);
 Config.setConcurrency(4);
