@@ -1,0 +1,7 @@
+# Los archivos de esta carpeta se guardan como objetos normales de git (sin
+# Git LFS), para que se puedan descargar directamente desde GitHub.
+*.blend -filter -diff -merge -text
+*.png   -filter -diff -merge -text
+*.stl   -filter -diff -merge -text
+*.obj   -filter -diff -merge -text
+*.pdf   -filter -diff -merge -text
