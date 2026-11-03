@@ -31,6 +31,10 @@ Las 24 que giran hacia el otro lado son esa misma pieza montada al revés.
 | `render_*.png` | Vistas renderizadas. |
 | `generar_lampara.py` | Script de Blender que genera todo. Las medidas se cambian al inicio del script. |
 | `generar_planos.py` | Genera los PDF y DXF a partir de lo que produce el script anterior. |
+| `corte_laser_9_lamparas.pdf` | Para el taller de corte láser (Metal Cortes): 9 aros y 9 discos en lámina de acero de 5 mm. |
+| `corte_laser/*.dxf` | Los DXF 1:1 para el láser: aro y disco, cada uno con y sin muescas de ubicación, más un acomodo sugerido en lámina de 1220 × 2440. |
+| `curvas_9_lamparas.pdf` | Las 432 curvas y los 216 meridianos en varilla Ø6: compra de barras, plan de corte, dibujos, tablas de trazado y plantillas 1:1. |
+| `pdfs_taller.py` | Genera esos dos PDF y los DXF para cualquier cantidad de lámparas: `python3 pdfs_taller.py 9`. |
 
 ## Cambiar el tamaño
 
