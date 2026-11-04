@@ -1,4 +1,8 @@
-"""Arma index.html a partir de template.html: íconos Lucide en línea, QR de WhatsApp y mapa."""
+"""Arma index.html a partir de template.html: tipografía, íconos Lucide en línea, QR de WhatsApp y mapa.
+
+Uso: python3 build.py <carpeta-paquetes-npm> <carpeta-segno> [fuente] [salida.html]
+     fuente = una de THEMES (por defecto: manrope)
+"""
 import io, json, re, sys
 from pathlib import Path
 from urllib.parse import quote
@@ -11,12 +15,31 @@ import segno
 CFG = {
     "PRICE_FULL": "$1.260.000.000",
     "PRICE_SHORT": "$1.260",
-    "AVALUO_FECHA": "mayo 2026",
+    "AVALUO_FECHA": "mayo\u00a02026",   # espacio duro: no partir la fecha
     "PHONE": "310 830 0277",
     "PHONE_DIGITS": "3108300277",
 }
 WA_TEXT = "Hola, me interesa el apartamento 101 de Pinares Alto que está en venta."
 CFG["WA_URL"] = f"https://wa.me/57{CFG['PHONE_DIGITS']}?text={quote(WA_TEXT)}"
+
+# Tipografía de titulares (todas SIL OFL 1.1, de Google Fonts vía Fontsource; archivos en assets/fonts).
+# k escala los tamaños para que cada fuente ocupe más o menos lo mismo que Manrope.
+THEMES = {
+    "manrope":             {"family": "Manrope",             "k": 1.00},
+    "plus-jakarta-sans":   {"family": "Plus Jakarta Sans",   "k": 0.98},
+    "urbanist":            {"family": "Urbanist",            "k": 1.06},
+    "bricolage-grotesque": {"family": "Bricolage Grotesque", "k": 0.98},
+}
+WEIGHTS = (300, 500, 700, 800)   # pesos que usa template.html con --display
+FONT = sys.argv[3] if len(sys.argv) > 3 else "manrope"
+OUT = sys.argv[4] if len(sys.argv) > 4 else "index.html"
+
+def font_theme(slug):
+    t = THEMES[slug]
+    faces = "".join(
+        f'@font-face{{font-family:"{t["family"]}";src:url(assets/fonts/{slug}-latin-{w}-normal.woff2) format("woff2");font-weight:{w}}}\n'
+        for w in WEIGHTS)
+    return faces, f'--display:"{t["family"]}", var(--sans); --k:{t["k"]};'
 
 MAP_CARD_PX = 420  # ancho de .mapcard en template.html
 LUCIDE = VENDOR / "lucide-static-1.67.0/package/icons"
@@ -70,6 +93,8 @@ def map_overlay(meta, W, H):
     return "".join(o)
 
 html = (HERE / "template.html").read_text()
+faces, font_vars = font_theme(FONT)
+html = html.replace("/*{{FONT_FACES}}*/", faces).replace("/*{{FONT_VARS}}*/", font_vars)
 for k, v in CFG.items():
     html = html.replace("{{" + k + "}}", v)
 html = re.sub(r"\{\{i:([a-z0-9-]+)\}\}", lambda m: icon(m.group(1)), html)
@@ -79,5 +104,5 @@ W, H = map(float, re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', svg).groups())
 html = html.replace("{{map}}", svg).replace("{{map_overlay}}", map_overlay(json.loads((HERE / "assets/map.json").read_text()), W, H))
 left = re.findall(r"\{\{[^}]+\}\}", html)
 assert not left, left
-(HERE / "index.html").write_text(html)
-print("index.html", len(html), "bytes ·", CFG["WA_URL"])
+(HERE / OUT).write_text(html)
+print(OUT, f"({THEMES[FONT]['family']})", len(html), "bytes")

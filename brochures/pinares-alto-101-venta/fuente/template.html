@@ -5,13 +5,12 @@
 <title>Apartamento en Venta · Pinares Alto 101 · Pereira</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-@font-face{font-family:"Instrument Serif";src:url(assets/fonts/instrument-serif-latin-400-normal.woff2) format("woff2");font-weight:400;font-style:normal}
-@font-face{font-family:"Instrument Serif";src:url(assets/fonts/instrument-serif-latin-400-italic.woff2) format("woff2");font-weight:400;font-style:italic}
 @font-face{font-family:"Geist";src:url(assets/fonts/geist-latin-300-normal.woff2) format("woff2");font-weight:300}
 @font-face{font-family:"Geist";src:url(assets/fonts/geist-latin-400-normal.woff2) format("woff2");font-weight:400}
 @font-face{font-family:"Geist";src:url(assets/fonts/geist-latin-500-normal.woff2) format("woff2");font-weight:500}
 @font-face{font-family:"Geist";src:url(assets/fonts/geist-latin-600-normal.woff2) format("woff2");font-weight:600}
 @font-face{font-family:"Geist";src:url(assets/fonts/geist-latin-700-normal.woff2) format("woff2");font-weight:700}
+/*{{FONT_FACES}}*/
 
 :root{
   --paper:#F3EEE5; --paper-2:#EAE3D6; --card:#FBF9F5;
@@ -21,8 +20,10 @@
   --map-bg:#ECE5D8; --map-green:#D5DDC8; --map-campus:#E4DCCB; --map-pitch:#CCD6BF;
   --map-water:#B9CBC6; --map-bldg:#DFD5C3; --map-path:#FFFFFF; --map-road:#FFFFFF;
   --map-road-major:#FFFFFF; --map-cable:#1C3A2F;
-  --serif:"Instrument Serif", Georgia, serif;
   --sans:"Geist", "Inter", system-ui, sans-serif;
+  /* tipografía de titulares: la define build.py (THEMES) */
+  --display:var(--sans); --k:1; --dw:800; --dw-em:300;
+  /*{{FONT_VARS}}*/
 }
 @page{size:A4;margin:0}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -34,13 +35,12 @@ body{background:#9aa09b;font-family:var(--sans);color:var(--ink);font-size:11px;
 .page:last-child{break-after:auto}
 img{display:block}
 .ic{width:1em;height:1em;flex:none;stroke-width:1.7}
-.serif{font-family:var(--serif);font-weight:400}
 
 /* shared bits */
 .eyebrow{font:600 8.6px/1 var(--sans);letter-spacing:.26em;text-transform:uppercase;color:var(--clay)}
 .eyebrow b{font-weight:600;color:var(--ink);margin-right:.9em}
-h2{font:400 37px/1 var(--serif);letter-spacing:-.005em;color:var(--ink);margin-top:10px}
-h2 em{font-style:italic;color:var(--pine-3)}
+h2{font:var(--dw) calc(var(--k) * 32px)/1.06 var(--display);letter-spacing:-.03em;color:var(--ink);margin-top:11px}
+h2 em{font-style:normal;font-weight:var(--dw-em);color:var(--pine-3)}
 .lead{font-size:11.3px;line-height:1.62;color:var(--ink-2)}
 .shead{display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:end}
 figure{position:relative;border-radius:14px;overflow:hidden;background:var(--paper-2)}
@@ -64,14 +64,14 @@ figcaption{position:absolute;left:10px;bottom:10px;background:rgba(251,249,245,.
 .pill.ghost{color:#fff;border:1px solid rgba(255,255,255,.6)}
 .hero .title{position:absolute;left:30px;bottom:28px;color:#fff;max-width:420px}
 .hero .title .eyebrow{color:rgba(255,255,255,.82)}
-.hero h1{font:400 98px/.84 var(--serif);letter-spacing:-.012em;margin:12px 0 14px -3px}
+.hero h1{font:var(--dw) calc(var(--k) * 72px)/.92 var(--display);letter-spacing:-.035em;word-spacing:.1em;margin:12px 0 14px -2px}
 .hero .addr{display:flex;align-items:center;gap:7px;font-size:11.5px;color:rgba(255,255,255,.88)}
 .hero .addr .ic{font-size:13px}
-.price{position:absolute;right:22px;bottom:22px;width:262px;background:var(--paper);border-radius:18px;
+.price{position:absolute;right:22px;bottom:22px;width:280px;background:var(--paper);border-radius:18px;
   padding:17px 20px 15px;box-shadow:0 14px 34px rgba(0,0,0,.22)}
 .price .amount{display:flex;align-items:baseline;gap:8px;margin:10px 0 12px;color:var(--ink)}
-.price .amount b{font:400 60px/.85 var(--serif);letter-spacing:-.01em}
-.price .amount span{font:italic 400 27px/1 var(--serif);color:var(--pine-3)}
+.price .amount b{font:var(--dw) calc(var(--k) * 48px)/.9 var(--display);letter-spacing:-.035em}
+.price .amount span{font:500 calc(var(--k) * 18px)/1 var(--display);letter-spacing:-.01em;color:var(--pine-3)}
 .price .note{display:flex;gap:7px;align-items:flex-start;border-top:1px solid var(--line);padding-top:10px;
   font-size:9.2px;line-height:1.4;color:var(--ink-2)}
 .price .note .ic{font-size:13px;color:var(--clay);margin-top:-1px}
@@ -80,7 +80,7 @@ figcaption{position:absolute;left:10px;bottom:10px;background:rgba(251,249,245,.
 .stat{padding:2px 0 0 16px;border-left:1px solid var(--line)}
 .stat:first-child{border-left:0;padding-left:6px}
 .stat .ic{font-size:17px;color:var(--clay)}
-.stat b{display:block;font:400 33px/1 var(--serif);margin:8px 0 5px;white-space:nowrap}
+.stat b{display:block;font:700 calc(var(--k) * 28px)/1 var(--display);letter-spacing:-.03em;margin:10px 0 7px;white-space:nowrap}
 .stat b sup{font-size:.5em;vertical-align:top;position:relative;top:.12em;margin-left:1px}
 .stat span{display:block;font:500 7.8px/1.35 var(--sans);letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
 
@@ -128,7 +128,7 @@ figcaption{position:absolute;left:10px;bottom:10px;background:rgba(251,249,245,.
   background:rgba(181,100,60,.18);border:1px solid rgba(181,100,60,.35)}
 .lbl.home{background:var(--pine);color:#fff;font-size:8.2px;padding:5px 9px 4.5px}
 .lbl.road{background:none;box-shadow:none;color:var(--ink-2);font-weight:500;font-size:7px;letter-spacing:.12em;text-transform:uppercase;padding:0}
-.lbl.cable{background:none;box-shadow:none;color:var(--pine);font-style:italic;font-family:var(--serif);font-weight:400;font-size:11px;letter-spacing:0;padding:0}
+.lbl.cable{background:none;box-shadow:none;color:var(--pine);font-family:var(--display);font-weight:700;font-size:8.6px;letter-spacing:.02em;padding:0}
 .scale{position:absolute;left:12px;bottom:11px;display:flex;align-items:flex-end;gap:7px;font:600 7px/1 var(--sans);letter-spacing:.12em;color:var(--ink-2)}
 .scale i{display:block;height:5px;border:1.4px solid var(--ink-2);border-top:0}
 .osm{position:absolute;right:10px;bottom:9px;font:500 6.4px/1 var(--sans);color:var(--muted);letter-spacing:.04em}
@@ -138,16 +138,16 @@ figcaption{position:absolute;left:10px;bottom:10px;background:rgba(251,249,245,.
 .near li .bx .ic{font-size:14px}
 .near li p{font-size:10px;line-height:1.35;color:var(--ink-2)}
 .near li p b{display:block;color:var(--ink);font-weight:600;font-size:10.4px}
-.near h2{font-size:31px;margin-top:9px}
+.near h2{font-size:calc(var(--k) * 26px);margin-top:10px}
 
 .s4{position:absolute;left:24px;right:24px;top:676px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
 .ficha{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px 18px 6px}
-.ficha h3,.trust h3{font:400 22px/1 var(--serif);color:var(--ink);margin:8px 0 8px}
+.ficha h3,.trust h3{font:var(--dw) calc(var(--k) * 18px)/1.1 var(--display);letter-spacing:-.025em;color:var(--ink);margin:9px 0 9px}
 .ficha dl{display:grid;grid-template-columns:auto 1fr}
 .ficha dt,.ficha dd{border-top:1px solid #EAE2D4;padding:5.4px 0 4.9px;font-size:9.6px}
 .ficha dt{color:var(--muted)}
 .ficha dd{text-align:right;font-weight:600;color:var(--ink)}
-.ficha dd.big{font:400 17px/1 var(--serif);padding-top:3px}
+.ficha dd.big{font:var(--dw) calc(var(--k) * 14.5px)/1 var(--display);letter-spacing:-.02em;padding-top:4px}
 .trust{padding:16px 4px 0}
 .trust ul{list-style:none;display:grid;gap:10px;margin-top:4px}
 .trust li{display:grid;grid-template-columns:18px 1fr;gap:10px}
@@ -159,7 +159,7 @@ figcaption{position:absolute;left:10px;bottom:10px;background:rgba(251,249,245,.
   border-radius:26px 26px 0 0;padding:24px 30px 0}
 .cta .row{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
 .cta .eyebrow{color:var(--clay-2)}
-.cta h2{color:#fff;font-size:42px;margin-top:9px}
+.cta h2{color:#fff;font-size:calc(var(--k) * 38px);margin-top:10px}
 .cta h2 em{color:var(--clay-2)}
 .cta p.sub{font-size:11px;color:rgba(243,238,229,.75);margin-top:9px}
 .btns{display:flex;gap:10px;margin-top:16px}
@@ -196,7 +196,7 @@ figcaption{position:absolute;left:10px;bottom:10px;background:rgba(251,249,245,.
     <div class="price">
       <p class="eyebrow">Precio de venta</p>
       <p class="amount"><b>{{PRICE_SHORT}}</b><span>millones</span></p>
-      <p class="note">{{i:badge-check}}<span>Precio respaldado por avalúo comercial de {{AVALUO_FECHA}}</span></p>
+      <p class="note">{{i:badge-check}}<span>Respaldado por avalúo comercial · {{AVALUO_FECHA}}</span></p>
     </div>
   </div>
 

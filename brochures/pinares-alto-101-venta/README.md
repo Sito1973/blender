@@ -14,8 +14,9 @@ Datos tomados del avalúo comercial (mayo 2026) y del brochure de arriendo.
 1. Edita `CFG` en `fuente/build.py` (`PRICE_FULL`, `PRICE_SHORT`, `AVALUO_FECHA`, `PHONE`, `PHONE_DIGITS`) o los textos en `fuente/template.html`.
 2. Arma el HTML. Necesita `lucide-static@1.67.0` y `simple-icons@16.36.0` (vía `npm pack`, desempacados en una carpeta) y `segno` (`pip install segno`):
    ```bash
-   python3 fuente/build.py <carpeta-con-los-paquetes-npm> <carpeta-donde-esta-segno>
+   python3 fuente/build.py <carpeta-con-los-paquetes-npm> <carpeta-donde-esta-segno> [fuente]
    ```
+   `fuente` es la letra de los titulares: `manrope` (por defecto), `plus-jakarta-sans`, `urbanist` o `bricolage-grotesque`.
    Para un cambio rápido de texto también sirve editar directamente `fuente/index.html`.
 3. Genera el PDF con Playwright (Chromium):
    ```bash
@@ -26,6 +27,6 @@ Datos tomados del avalúo comercial (mayo 2026) y del brochure de arriendo.
 
 ## Créditos
 
-- Tipografías: Instrument Serif y Geist (SIL Open Font License 1.1).
+- Tipografías: Manrope en titulares y Geist en textos; alternativas incluidas: Plus Jakarta Sans, Urbanist y Bricolage Grotesque (todas SIL Open Font License 1.1).
 - Íconos: Lucide (ISC). Ícono de WhatsApp: Simple Icons (CC0).
 - Mapa: © colaboradores de OpenStreetMap (ODbL).
