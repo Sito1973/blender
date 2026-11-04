@@ -23,10 +23,10 @@ Datos tomados del avalúo comercial (mayo 2026) y del brochure de arriendo.
    node fuente/render.js fuente Brochure_Venta_Pinares_Alto_Apto_101.pdf
    ```
 
-`fuente/herramientas/` guarda los scripts que prepararon las fotos (`photos.py`) y el mapa (`osm_map.py`); ya están generados en `fuente/assets/`.
+El mapa ilustrativo de la página 2 se arma en `fuente/build.py` (`POIS` y `CLUSTER`: lugar, ícono, tiempo y posición). En `fuente/herramientas/` están los lugares encontrados en Google Maps con sus tiempos (`lugares_google_maps.json`), el script que calcula los tiempos (`tiempos.py`) y el que preparó las fotos (`photos.py`).
 
 ## Créditos
 
 - Tipografías: Manrope en titulares y Geist en textos; alternativas incluidas: Plus Jakarta Sans, Urbanist y Bricolage Grotesque (todas SIL Open Font License 1.1).
 - Íconos: Lucide (ISC). Ícono de WhatsApp: Simple Icons (CC0).
-- Mapa: © colaboradores de OpenStreetMap (ODbL).
+- Mapa ilustrativo: lugares de Google Maps. Tiempos con OSRM sobre datos de © colaboradores de OpenStreetMap: a pie, tal cual; en carro, tiempo sin tráfico ×1,3 redondeado hacia arriba a 5 min.
