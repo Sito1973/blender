@@ -105,6 +105,30 @@ COTA, EJE, PLATE = colors.HexColor("#b3332b"), colors.HexColor("#285fa3"), color
 W, Hp = letter
 M = 16 * mm
 
+# ---------------- huecos del aro ----------------
+# Ranuras pasantes para los meridianos (llegan parados) y asientos redondos para las V de las curvas
+# (llegan muy acostadas y de a dos, así que no pueden pasar por un hueco).
+ROD_TXT = '1/4" (6,35 mm)' if abs(ROD - 6.35) < 0.01 else f"Ø{n1(ROD)} mm"
+ROD_CORTO = '1/4"' if abs(ROD - 6.35) < 0.01 else f"Ø{n1(ROD)}"
+E_MER = me.get("llegada_al_aro_deg", math.degrees(math.asin(D / 2 / dat["radio_esfera_domo"])))
+
+
+def up05(x):
+    return math.ceil(x * 2 - 1e-9) / 2
+
+
+SLOT_W = up05(ROD + 0.6)                                                   # holgura 0,6 al ancho
+SLOT_L = up05(ROD / math.sin(math.radians(E_MER)) + T / math.tan(math.radians(E_MER)) + 0.5)
+_Rs, _zc = dat["radio_esfera_domo"], H - dat["radio_esfera_domo"]
+R_MID = math.sqrt(_Rs ** 2 - (-T / 2 - _zc) ** 2)                          # eje del meridiano a media lámina
+WEB_MIN = 3.5
+SLOT_C = min(R_MID, R_EXT - WEB_MIN - SLOT_L / 2)                          # centro de la ranura (radio)
+SEAT_D = up05(ROD + 0.15)                                                  # asiento de las dos puntas de la V
+# lo que el meridiano se alarga para bajar por la ranura hasta la cara de abajo del aro
+EXT_MER = _Rs * (math.radians(me["angulo_arco_deg"]) - (math.radians(E_MER) - math.asin(R_FIN / _Rs))) if me.get("pasa_por_el_aro") else 0.0
+R_SEAT = D / 2
+kg_aro -= (SLOT_W * (SLOT_L - SLOT_W) + math.pi * (SLOT_W / 2) ** 2 + math.pi * (SEAT_D / 2) ** 2) * PET * T * RHO
+
 
 def n0(x):
     return f"{x:,.0f}".replace(",", ".")
@@ -273,13 +297,15 @@ def ring_drawing(d, cx, cy, r_draw, marks=True):
     p.circle(cx, cy, R_INT * k)
     c.drawPath(p, stroke=0, fill=1, fillMode=0)  # par-impar: deja el hueco
     if marks:
-        c.setStrokeColor(colors.white)
-        c.setLineWidth(1.0)
+        c.setFillColor(colors.white)
         for i in range(PET):
-            a = math.radians(i * PASO)
-            c.line(cx + R_INT * k * math.cos(a), cy + R_INT * k * math.sin(a), cx + (R_INT * k + 1.6 * mm) * math.cos(a), cy + (R_INT * k + 1.6 * mm) * math.sin(a))
-            b = math.radians(MER_OFF + i * PASO)
-            c.line(cx + R_EXT * k * math.cos(b), cy + R_EXT * k * math.sin(b), cx + (R_EXT * k - 1.6 * mm) * math.cos(b), cy + (R_EXT * k - 1.6 * mm) * math.sin(b))
+            a, b = math.radians(i * PASO), math.radians(MER_OFF + i * PASO)
+            c.circle(cx + R_SEAT * k * math.cos(a), cy + R_SEAT * k * math.sin(a), max(0.5, SEAT_D / 2 * k), stroke=0, fill=1)
+            c.saveState()
+            c.translate(cx + SLOT_C * k * math.cos(b), cy + SLOT_C * k * math.sin(b))
+            c.rotate(MER_OFF + i * PASO)
+            c.roundRect(-SLOT_L / 2 * k, -max(0.5, SLOT_W / 2 * k), SLOT_L * k, max(1.0, SLOT_W * k), max(0.4, SLOT_W / 2 * k), stroke=0, fill=1)
+            c.restoreState()
     c.setStrokeColor(COTA)
     c.setLineWidth(0.6)
     c.line(cx - R_EXT * k, cy + R_EXT * k + 4 * mm, cx + R_EXT * k, cy + R_EXT * k + 4 * mm)
@@ -287,6 +313,37 @@ def ring_drawing(d, cx, cy, r_draw, marks=True):
     c.line(cx - R_INT * k, cy, cx + R_INT * k, cy)
     d.text(cx, cy + 2 * mm, f"Ø interior {n0(2 * R_INT)}", "monob", 8, COTA, "center")
     d.text(cx, cy - 5 * mm, f"ancho {n0(R_EXT - R_INT)} · espesor {n0(T)}", "monob", 8, MUTED, "center")
+
+
+def ring_detail(d, x0, y0, width):
+    """Detalle del aro desenrollado: un asiento de V (0°) y una ranura de meridiano, con cotas."""
+    c = d.c
+    t0, t1 = -3.0, MER_OFF + 3.0
+    s = width / (math.radians(t1 - t0) * R_SEAT)
+    X = lambda th: x0 + math.radians(th - t0) * R_SEAT * s
+    Y = lambda r: y0 + (r - R_INT) * s
+    c.setFillColor(PLATE)
+    c.rect(X(t0), Y(R_INT), X(t1) - X(t0), (R_EXT - R_INT) * s, stroke=0, fill=1)
+    c.setFillColor(colors.white)
+    c.circle(X(0), Y(R_SEAT), SEAT_D / 2 * s, stroke=0, fill=1)
+    sx, sy = X(MER_OFF), Y(SLOT_C)
+    c.roundRect(sx - SLOT_W / 2 * s, sy - SLOT_L / 2 * s, SLOT_W * s, SLOT_L * s, SLOT_W / 2 * s, stroke=0, fill=1)
+    c.setStrokeColor(COTA)
+    c.setLineWidth(0.5)
+    d.text(X(t0) - 2 * mm, Y(R_EXT) - 2.5 * mm, "borde de afuera", "body", 7, MUTED, "right")
+    d.text(X(t0) - 2 * mm, Y(R_INT) + 0.5 * mm, "borde de adentro", "body", 7, MUTED, "right")
+    d.text(X(0), Y(R_INT) - 5 * mm, f"0° · V de dos curvas", "monob", 7.5, INK, "center")
+    d.text(X(0), Y(R_EXT) + 3 * mm, f"Ø{n1(SEAT_D)}", "monob", 8, COTA, "center")
+    c.line(X(0), Y(R_SEAT) + SEAT_D / 2 * s, X(0), Y(R_EXT) + 2 * mm)
+    d.text(sx, Y(R_INT) - 5 * mm, f"{n1(MER_OFF)}° · meridiano", "monob", 7.5, INK, "center")
+    d.text(sx + SLOT_W / 2 * s + 2 * mm, sy + 1 * mm, f"ranura {n1(SLOT_W)} × {n1(SLOT_L)}", "monob", 8, COTA)
+    d.text(sx + SLOT_W / 2 * s + 2 * mm, sy - 3 * mm, "radial", "monob", 7.5, COTA)
+    c.line(X(0) + 5 * mm, Y(R_INT) - 9 * mm, sx - 5 * mm, Y(R_INT) - 9 * mm)
+    d.text((X(0) + sx) / 2, Y(R_INT) - 12.5 * mm, f"{n1(MER_OFF)}° entre hueco y ranura · cada {n1(PASO)}° se repite", "body", 7.5, MUTED, "center")
+    out_web, in_web = R_EXT - (SLOT_C + SLOT_L / 2), (SLOT_C - SLOT_L / 2) - R_INT
+    d.text(X(t1) + 2 * mm, Y(R_EXT) - 3 * mm, f"quedan {n1(out_web)} mm afuera", "body", 7, MUTED)
+    d.text(X(t1) + 2 * mm, Y(R_INT) + 0.5 * mm, f"y {n1(in_web)} mm adentro", "body", 7, MUTED)
+    d.text(x0, Y(R_EXT) + 9 * mm, "DETALLE · ESCALA {:.1f}:1".format(s).replace(".", ","), "monob", 7.5, BRASS)
 
 
 def disc_drawing(d, cx, cy, r_draw, marks=True):
@@ -356,13 +413,33 @@ def notched_circle(r, angles_deg, outward, cx=0.0, cy=0.0):
     return pts
 
 
+def obround(cx, cy, ang_deg, L, w):
+    """Ranura (dos semicírculos unidos), larga en dirección radial, como polilínea cerrada con arcos."""
+    a = math.radians(ang_deg)
+    ux, uy, vx, vy, sl, h = math.cos(a), math.sin(a), -math.sin(a), math.cos(a), L / 2 - w / 2, w / 2
+    P = lambda su, sv: (cx + su * ux + sv * vx, cy + su * uy + sv * vy)
+    A, B, C2, D2 = P(-sl, h), P(sl, h), P(sl, -h), P(-sl, -h)
+    return [(A[0], A[1], 0.0), (B[0], B[1], -1.0), (C2[0], C2[1], 0.0), (D2[0], D2[1], -1.0)]
+
+
+def ring_holes(dxf, cx=0.0, cy=0.0):
+    for i in range(PET):
+        b = math.radians(MER_OFF + i * PASO)
+        dxf.polyline(obround(cx + SLOT_C * math.cos(b), cy + SLOT_C * math.sin(b), MER_OFF + i * PASO, SLOT_L, SLOT_W))
+        a = math.radians(i * PASO)
+        dxf.circle(cx + R_SEAT * math.cos(a), cy + R_SEAT * math.sin(a), SEAT_D / 2)
+
+
 def write_dxfs(folder):
     os.makedirs(folder, exist_ok=True)
     v_angles = [i * PASO for i in range(PET)]                 # puntos de V de las curvas
     m_angles = [MER_OFF + i * PASO for i in range(PET)]       # meridianos
     d = DXF(); d.circle(0, 0, R_EXT); d.circle(0, 0, R_INT); d.save(os.path.join(folder, "aro_laser.dxf"))
-    d = DXF(); d.polyline(notched_circle(R_EXT, m_angles, outward=False)); d.polyline(notched_circle(R_INT, v_angles, outward=True))
-    d.save(os.path.join(folder, "aro_laser_con_marcas.dxf"))
+    d = DXF(); d.circle(0, 0, R_EXT); d.circle(0, 0, R_INT); ring_holes(d)
+    d.save(os.path.join(folder, "aro_laser_con_huecos.dxf"))
+    viejo = os.path.join(folder, "aro_laser_con_marcas.dxf")
+    if os.path.exists(viejo):
+        os.remove(viejo)
     rd = disco["diametro"] / 2
     d = DXF(); d.circle(0, 0, rd); d.circle(0, 0, HOLE / 2); d.save(os.path.join(folder, "disco_laser.dxf"))
     d = DXF(); d.polyline(notched_circle(rd, m_angles, outward=False)); d.circle(0, 0, HOLE / 2)
@@ -374,14 +451,14 @@ def write_dxfs(folder):
         d.line(x1, y1, x2, y2, "LAMINA_REFERENCIA")
     centers = [(GAP + R_EXT, GAP + R_EXT), (2 * GAP + 3 * R_EXT, GAP + R_EXT)]
     for (x, y) in centers:
-        d.circle(x, y, R_EXT); d.circle(x, y, R_INT)
+        d.circle(x, y, R_EXT); d.circle(x, y, R_INT); ring_holes(d, x, y)
     cell = disco["diametro"] + GAP
     for i in range(3):
         for j in range(3):
             x, y = centers[0][0] + (i - 1) * cell, centers[0][1] + (j - 1) * cell
             d.circle(x, y, rd); d.circle(x, y, HOLE / 2)
     d.save(os.path.join(folder, "lamina_1220x2440_acomodo_sugerido.dxf"))
-    return ["aro_laser.dxf", "aro_laser_con_marcas.dxf", "disco_laser.dxf", "disco_laser_con_marcas.dxf", "lamina_1220x2440_acomodo_sugerido.dxf"]
+    return ["aro_laser_con_huecos.dxf", "aro_laser.dxf", "disco_laser.dxf", "disco_laser_con_marcas.dxf", "lamina_1220x2440_acomodo_sugerido.dxf"]
 
 
 # =====================================================================
@@ -399,12 +476,13 @@ y = d.tiles(y - 6 * mm, [(n0(N), "aros", f"Ø{n0(2 * R_EXT)} × Ø{n0(2 * R_INT)
 y -= 10 * mm
 d.text(M, y, "PIEZAS", "semi", 13, INK)
 y = d.table(M, y - 3 * mm, ["PIEZA", ("CANT.", "right"), "MEDIDAS", "ARCHIVO DXF"], [
-    ["Aro de abajo", (n0(N), "right"), f"Ø ext {n0(2 * R_EXT)} · Ø int {n0(2 * R_INT)} · ancho {n0(R_EXT - R_INT)}", "aro_laser.dxf"],
+    ["Aro de abajo", (n0(N), "right"), f"Ø {n0(2 * R_EXT)} × Ø {n0(2 * R_INT)} · {PET} ranuras y {PET} huecos", "aro_laser_con_huecos.dxf"],
     ["Disco del centro", (n0(N), "right"), f"Ø {n0(disco['diametro'])} · perforación central Ø{n1(HOLE)}", "disco_laser.dxf"],
 ], [34 * mm, 16 * mm, 74 * mm, W - 2 * M - 124 * mm])
 y -= 4 * mm
-y = d.wrap(M, y, f"Opcional: las versiones \"con marcas\" (aro_laser_con_marcas.dxf y disco_laser_con_marcas.dxf) traen muescas de "
-           f"{n1(NOTCH_W)} × {n1(NOTCH_D)} mm en el borde que marcan dónde va cada varilla. Ayudan mucho al soldar.", W - 2 * M, "body", 9.2, MUTED)
+y = d.wrap(M, y, f"Cada aro lleva {PET} ranuras pasantes de {n1(SLOT_W)} × {n1(SLOT_L)} mm, radiales, donde entran los meridianos de varilla {ROD_CORTO}, "
+           f"y {PET} huecos de Ø{n1(SEAT_D)} donde se asientan las puntas de las curvas. aro_laser.dxf es el mismo aro sin huecos. "
+           f"El disco va liso (disco_laser.dxf) o con muescas de ubicación (disco_laser_con_marcas.dxf).", W - 2 * M, "body", 9.2, MUTED)
 
 y -= 8 * mm
 d.text(M, y, "LÁMINA", "semi", 13, INK)
@@ -417,6 +495,7 @@ y -= 6 * mm
 y = d.notes(y, "PARA METAL CORTES", [
     f"Cantidad: {N} aros y {N} discos. Acero al carbono laminado en caliente (HR, A36 o similar) de {n0(T)} mm.",
     "Los DXF están en milímetros, escala 1:1. Las cotas son de la pieza terminada; tolerancia normal del láser (±0,3 mm).",
+    f"Las ranuras ya traen la holgura para la varilla de {ROD_CORTO}: no hay que agrandarlas. Van radiales, apuntando al centro del aro.",
     f"Los {N} discos caben dentro del hueco de un aro, así que no necesitan lámina aparte (ver lamina_1220x2440_acomodo_sugerido.dxf).",
     "Entregar sin escoria ni rebaba, y planos (los aros no deben quedar alabeados).",
 ])
@@ -431,14 +510,15 @@ d.next_page()
 
 # página 2: dibujos
 y = d.header("CORTE LÁSER · DIBUJOS", "LAS DOS PIEZAS")
-ring_drawing(d, W / 2, Hp - M - 82 * mm, 52 * mm)
+ring_drawing(d, W / 2, Hp - M - 70 * mm, 40 * mm)
 d.text(M, Hp - M - 26 * mm, f"AROS · HACER {N}", "semi", 13, INK)
-y = Hp - M - 148 * mm
+ring_detail(d, M + 30 * mm, Hp - M - 138 * mm, W - 2 * M - 62 * mm)
+y = Hp - M - 166 * mm
 d.text(M, y, f"DISCOS · HACER {N}", "semi", 13, INK)
 disc_drawing(d, M + 40 * mm, y - 38 * mm, 26 * mm)
-d.wrap(M + 84 * mm, y - 12 * mm, f"Las muescas blancas son las marcas opcionales. En el aro, las de adentro marcan los {PET} puntos donde se "
-       f"juntan dos curvas formando una V (cada {n1(PASO)}°, empezando en 0°) y las de afuera los {PET} meridianos (corridos {n1(MER_OFF)}°). "
-       f"En el disco marcan las {PET} posiciones donde llegan las varillas, alineadas con los meridianos del aro.",
+d.wrap(M + 84 * mm, y - 12 * mm, f"Ranuras: los {PET} meridianos (tiras LED) llegan a {n0(E_MER)}° de la horizontal, entran por la ranura y bajan hasta la cara "
+       f"de abajo del aro; se sueldan por arriba y por abajo. Huecos: en cada uno se asientan las puntas de las dos curvas que forman la V "
+       f"(llegan a solo 25°, por eso no atraviesan); la soldadura rellena el hueco. Las muescas del disco marcan dónde llegan las varillas.",
        W - 2 * M - 84 * mm, "body", 9.2, INK)
 d.wrap(M + 84 * mm, y - 56 * mm, f"Peso por pieza: aro {n1(kg_aro)} kg, disco {n1(kg_disco)} kg. Para {N} lámparas: {n1(N * (kg_aro + kg_disco))} kg de piezas terminadas.",
        W - 2 * M - 84 * mm, "body", 9.2, MUTED)
@@ -448,16 +528,16 @@ laser_pdf = d.path
 # =====================================================================
 # 2 · CURVAS EN VARILLA
 # =====================================================================
-foot = f"Lámpara roseta · curvas en varilla Ø{n0(ROD)} · {N} lámparas · aro Ø{n0(D)} al eje · medidas en mm"
+foot = f"Lámpara roseta · curvas en varilla {ROD_CORTO} · {N} lámparas · aro Ø{n0(D)} al eje · medidas en mm"
 d = Doc(os.path.join(DATA, f"curvas_{N}_lamparas_{TAG}.pdf"), f"Curvas en varilla · {N} lámparas roseta Ø{round(D / 10)} cm", foot)
 y = d.header("CURVAS EN VARILLA · LÁMPARA ROSETA", f"{N} LÁMPARAS · Ø{n0(D / 10)} CM",
-             f"Las dos piezas dobladas de la estructura, en varilla lisa de Ø{n0(ROD)} mm (sirve también la de 1/4\"). "
+             f"Las dos piezas dobladas de la estructura, en varilla lisa de {ROD_TXT}. "
              f"Todas son arcos planos de radio fijo. El aro y el disco van aparte, en corte láser.", W - 2 * M - 60 * mm)
 img = os.path.join(DATA, "render_desde_abajo.png")
 if os.path.exists(img):
     d.c.drawImage(img, W - M - 54 * mm, Hp - M - 40 * mm, 54 * mm, 40 * mm, preserveAspectRatio=True, anchor="c")
 y = d.tiles(Hp - M - 52 * mm, [(n0(q_cur), "curvas", "las diagonales", True), (n0(q_mer), "meridianos", "soporte de las tiras LED", True),
-                               (n0(b_cur + b_mer), "barras", f"varilla Ø{n0(ROD)} de 6 m", False), (f"{n1((q_cur * cu['largo_desarrollado_eje'] + q_mer * me['largo_desarrollado_eje']) / 1000)} m", "de varilla", "sin contar sobrantes", False)])
+                               (n0(b_cur + b_mer), "barras", f"varilla {ROD_CORTO} de 6 m", False), (f"{n1((q_cur * cu['largo_desarrollado_eje'] + q_mer * me['largo_desarrollado_eje']) / 1000)} m", "de varilla", "sin contar sobrantes", False)])
 y -= 10 * mm
 d.text(M, y, "PIEZAS", "semi", 13, INK)
 y = d.table(M, y - 3 * mm, ["PIEZA", ("POR LÁMPARA", "right"), (f"PARA {N}", "right"), "MEDIDAS (AL EJE DE LA VARILLA)"], [
@@ -473,7 +553,7 @@ y = d.table(M, y - 3 * mm, ["PARA", ("BARRAS DE 6 m", "right"), ("TRAMO", "right
     ["Meridianos", (str(b_mer), "right"), (n0(c_mer), "right"), (str(pb_mer), "right"), (f"+{b_mer * pb_mer - q_mer}", "right"), (n0(BARRA - pb_mer * (c_mer + KERF)), "right")],
 ], [34 * mm, 28 * mm, 22 * mm, 24 * mm, 24 * mm, W - 2 * M - 132 * mm])
 y -= 3 * mm
-d.text(M, y, f"Total: {b_cur + b_mer} barras de varilla lisa Ø{n0(ROD)} mm de 6 m ({n1((b_cur + b_mer) * 6 * kg_m_rod)} kg).", "bold", 9.5, INK)
+d.text(M, y, f"Total: {b_cur + b_mer} barras de varilla lisa de {ROD_TXT} de 6 m ({n1((b_cur + b_mer) * 6 * kg_m_rod)} kg).", "bold", 9.5, INK)
 # plan de corte
 y -= 9 * mm
 for label, L, k, col in [(f"Curvas: {pb_cur} tramos de {n0(c_cur)}", c_cur, pb_cur, BRASS), (f"Meridianos: {pb_mer} tramos de {n0(c_mer)}", c_mer, pb_mer, ROD_C)]:
@@ -496,6 +576,8 @@ d.notes(y, "PARA TENER EN CUENTA", [
     f"Horma para doblar a mano: radio {n0(horma(cu['radio_doblez_eje']))} para las curvas y {n0(horma(me['radio_doblez_eje']))} para los meridianos "
     f"(más cerrada que la pieza porque el acero se abre al soltarlo; ajústala con 2 piezas de prueba).",
     "Cada pieza tiene que quedar plana (apoyada en la mesa no cojea) y coincidir con la plantilla 1:1 de las últimas hojas.",
+    f"Los meridianos entran por las ranuras del aro y bajan hasta su cara de abajo; por eso miden {n1(me['largo_desarrollado_eje'])} "
+    f"(unos {n0(EXT_MER)} mm más que si llegaran encima del aro). Las curvas se apoyan en los huecos del aro, sin atravesarlo.",
 ])
 d.next_page()
 

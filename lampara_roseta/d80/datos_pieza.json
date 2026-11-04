@@ -8,11 +8,11 @@
   "n_curvas": 48,
   "salto_v": 4,
   "angulo_llegada_aro_deg": 29.999999999999996,
-  "diam_varilla": 6.0,
+  "diam_varilla": 6.35,
   "curva": {
     "radio_doblez_eje": 253.91984386686875,
-    "radio_interior": 250.91984386686875,
-    "radio_exterior": 256.91984386686875,
+    "radio_interior": 250.74484386686873,
+    "radio_exterior": 257.09484386686876,
     "angulo_arco_deg": 112.14399902449989,
     "largo_desarrollado_eje": 496.9927447519145,
     "cuerda": 421.3747072682811,
@@ -58,10 +58,12 @@
     "incluido": true,
     "cantidad": 24,
     "radio_doblez_eje": 473.6363636363636,
-    "angulo_arco_deg": 49.12255522884607,
-    "largo_desarrollado_eje": 406.07229064410797,
-    "cuerda": 393.74925998672285,
-    "angulo_primer_meridiano_deg": 7.499999999999999
+    "angulo_arco_deg": 49.8359547356733,
+    "largo_desarrollado_eje": 411.9696176567629,
+    "cuerda": 399.10531548893516,
+    "angulo_primer_meridiano_deg": 7.499999999999999,
+    "pasa_por_el_aro": true,
+    "llegada_al_aro_deg": 57.62158748594613
   },
   "aro": {
     "ancho": 20.0,

@@ -49,6 +49,8 @@ ARO_ESPESOR = 5.0          # aro exterior: espesor
 DISCO_DIAM = 170.0         # disco central donde se sueldan las curvas
 DISCO_ESPESOR = 5.0
 MERIDIANOS = True          # 24 varillas rectas (en planta) del centro al aro,
+MER_PASA_ARO = True        # los meridianos entran por una ranura del aro y bajan
+                           # hasta su cara de abajo (se sueldan arriba y abajo)
                            # donde la lámpara original lleva las tiras de luz
 
 SEG_ARCO = 97              # puntos por arco (suavidad; error < 0.02 mm)
@@ -137,7 +139,10 @@ p_mid = petal_point(thq, sm) + Vector((0, 0, zc))
 normal_plano = u.cross(v)
 inclin_plano = math.degrees(math.acos(abs(normal_plano.z)))
 
-mer_ang = th_rim - th_hub
+# fin del meridiano: en la cara de arriba del aro (z = 0) o, si pasa por la
+# ranura, en la cara de abajo (z = -ARO_ESPESOR), siguiendo la misma esfera
+th_mer_fin = math.acos((-ARO_ESPESOR - zc) / Rs) if MER_PASA_ARO else th_rim
+mer_ang = th_mer_fin - th_hub
 mer_largo = Rs * mer_ang
 # los meridianos van entre las "V" del aro
 mer_offset = paso / 2.0 if SALTO_V % 2 == 0 else 0.0
@@ -188,6 +193,8 @@ DATOS = {
         "largo_desarrollado_eje": mer_largo,
         "cuerda": 2 * Rs * math.sin(mer_ang / 2),
         "angulo_primer_meridiano_deg": math.degrees(mer_offset),
+        "pasa_por_el_aro": MER_PASA_ARO,
+        "llegada_al_aro_deg": math.degrees(th_rim),
     },
     "aro": {"ancho": ARO_ANCHO, "espesor": ARO_ESPESOR,
             "diam_interior": DIAMETRO_ARO - ARO_ANCHO,
