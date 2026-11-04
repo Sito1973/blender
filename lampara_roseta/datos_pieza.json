@@ -58,9 +58,9 @@
     "incluido": true,
     "cantidad": 24,
     "radio_doblez_eje": 523.65,
-    "angulo_arco_deg": 50.63886090132933,
-    "largo_desarrollado_eje": 462.8096473480473,
-    "cuerda": 447.8929639362399,
+    "angulo_arco_deg": 50.57455206081831,
+    "largo_desarrollado_eje": 462.2219020617491,
+    "cuerda": 447.3616083873245,
     "por_dentro": true,
     "por_dentro_mm": 6.350000000000023,
     "r_llegada_aro": 442.50347173779323,
@@ -70,13 +70,14 @@
   },
   "aro": {
     "ancho": 20.0,
-    "espesor": 5.0,
+    "espesor": 4.5,
     "diam_interior": 880.0,
     "diam_exterior": 920.0,
     "largo_desarrollado_eje": 2827.4333882308138
   },
   "disco": {
     "diametro": 170.0,
-    "espesor": 5.0
+    "espesor": 4.5,
+    "z_cara_arriba": 234.70826145956863
   }
 }

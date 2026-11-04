@@ -5,17 +5,21 @@ Todas las medidas están en **milímetros**.
 
 ## La pieza que se repite
 
-Las 48 curvas son **la misma pieza**: un arco plano de radio fijo, hecho en varilla lisa de Ø6 mm.
+Las 48 curvas son **la misma pieza**: un arco plano de radio fijo, hecho en varilla lisa de acero 1018 de 1/4" (6,35 mm).
 Las 24 que giran hacia el otro lado son esa misma pieza montada al revés.
+
+Medidas de la lámpara de Ø80 cm que se va a fabricar (carpeta `d80/`):
 
 | Dato | Valor |
 |---|---|
-| Radio de doblez (al eje de la varilla) | 286.2 mm |
-| Ángulo del arco | 114.1° |
-| Largo desarrollado | 569.8 mm |
-| Cuerda (de extremo a extremo) | 480.2 mm |
-| Flecha (altura del arco) | 130.5 mm |
+| Radio de doblez (al eje de la varilla) | 253.9 mm |
+| Ángulo del arco | 112.1° |
+| Largo desarrollado | 497.0 mm |
+| Cuerda (de extremo a extremo) | 421.4 mm |
+| Flecha (altura del arco) | 112.2 mm |
 | Cantidad | 48 |
+
+Los 24 meridianos (donde va la luz LED) van por dentro de las curvas. El aro y el disco se cortan en láser en lámina de 4,5 mm.
 
 ## Archivos
 
@@ -31,7 +35,7 @@ Las 24 que giran hacia el otro lado son esa misma pieza montada al revés.
 | `render_*.png` | Vistas renderizadas. |
 | `generar_lampara.py` | Script de Blender que genera todo. Las medidas se cambian al inicio del script. |
 | `generar_planos.py` | Genera los PDF y DXF a partir de lo que produce el script anterior. |
-| `corte_laser_9_lamparas_D90.pdf` | Para el taller de corte láser (Metal Cortes): 9 aros y 9 discos en lámina de acero de 5 mm. |
+| `corte_laser_9_lamparas_D90.pdf` | Para el taller de corte láser (Metal Cortes): 9 aros y 9 discos en lámina de acero de 4,5 mm. |
 | `corte_laser/*.dxf` | Los DXF 1:1 para el láser: aro y disco, cada uno con y sin muescas de ubicación, más un acomodo sugerido en lámina de 1220 × 2440. |
 | `curvas_9_lamparas_D90.pdf` | Las 432 curvas y los 216 meridianos en varilla Ø6: compra de barras, plan de corte, dibujos, tablas de trazado y plantillas 1:1. |
 | `d80/` | Todo lo mismo para la lámpara de Ø80 cm (aro de 800 al eje, domo de 220): modelo de Blender, planos, plantillas, DXF y los dos PDF de taller. |
@@ -49,9 +53,11 @@ python3 generar_planos.py .
 Para otro tamaño en su propia carpeta (por ejemplo Ø80 cm con domo de 220 mm):
 
 ```
-blender --factory-startup -b -P generar_lampara.py -- d80 --D 800 --H 220
+blender --factory-startup -b -P generar_lampara.py -- d80 --D 800 --H 220 --varilla 6.35
 python3 generar_planos.py d80
 python3 pdfs_taller.py 9 d80
 ```
+
+El aro y el disco salen de la misma lámina, de 4,5 mm por defecto. Para otro espesor se agrega `--espesor`, por ejemplo `--espesor 5`.
 
 Las medidas por defecto (aro de Ø900 mm y domo de 250 mm de alto) se calcularon a partir de las fotos. Confirme el tamaño real antes de mandar a fabricar.

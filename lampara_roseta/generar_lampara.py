@@ -45,9 +45,9 @@ SALTO_V = 4                # en el aro, cada curva se junta (en "V") con la de u
 RADIO_FIN_CENTRO = 70.0    # radio (en planta) donde terminan las curvas en el centro
 DIAM_VARILLA = 6.0         # varilla redonda maciza
 ARO_ANCHO = 20.0           # aro exterior: ancho radial (pletina)
-ARO_ESPESOR = 5.0          # aro exterior: espesor
+ARO_ESPESOR = 4.5          # aro exterior: espesor de la lámina (Metal Cortes, 4,5 mm)
 DISCO_DIAM = 170.0         # disco central donde se sueldan las curvas
-DISCO_ESPESOR = 5.0
+DISCO_ESPESOR = ARO_ESPESOR  # el disco sale de la misma lámina
 MERIDIANOS = True          # 24 varillas rectas (en planta) del centro al aro,
 MER_DENTRO = True          # los meridianos van por dentro de las curvas (las curvas los
                            # cruzan por encima): su eje queda una varilla más adentro
@@ -74,6 +74,8 @@ N_PETALOS = int(_opcion("petalos", N_PETALOS))
 RADIO_FIN_CENTRO = _opcion("rh", RADIO_FIN_CENTRO)
 DIAM_VARILLA = _opcion("varilla", DIAM_VARILLA)
 DISCO_DIAM = _opcion("disco", DISCO_DIAM)
+ARO_ESPESOR = _opcion("espesor", ARO_ESPESOR)
+DISCO_ESPESOR = ARO_ESPESOR
 
 # =====================================================================
 # GEOMETRÍA
@@ -372,6 +374,7 @@ bm.free()
 # el disco queda debajo de lo más bajo que llega al centro: los meridianos si van por dentro
 _r_apoyo = (RADIO_FIN_CENTRO + DISCO_DIAM / 2) / 2
 z_disco_top = zc + math.sqrt(Rm * Rm - _r_apoyo * _r_apoyo) - r_rod
+DATOS["disco"]["z_cara_arriba"] = z_disco_top      # sobre la cara de arriba del aro
 disco = link("Disco_central", me, C_DISCO,
              Matrix.Translation((0, 0, z_disco_top - DISCO_ESPESOR / 2)), M_DISCO)
 

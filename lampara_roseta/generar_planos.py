@@ -200,15 +200,15 @@ filas = [
                                                      f1(cu["largo_desarrollado_eje"]), f1(cu["cuerda"]))),
 ]
 if me["incluido"]:
-    filas.append(("Meridiano (opcional, tiras LED)", str(N), "Varilla lisa Ø%s" % f1(ROD),
+    filas.append(("Meridiano (luz LED, por dentro)", str(N), "Varilla lisa Ø%s" % f1(ROD),
                   "Arco plano R %s · %s° · largo %s · cuerda %s" % (f1(me["radio_doblez_eje"]), f1(me["angulo_arco_deg"]),
                                                                   f1(me["largo_desarrollado_eje"]), f1(me["cuerda"]))))
 filas += [
-    ("Aro exterior", "1", "Pletina %s×%s" % (f1(dat["aro"]["ancho"]), f1(dat["aro"]["espesor"])),
-     "Anillo plano Ø ext %s / Ø int %s · desarrollo %s" % (f1(dat["aro"]["diam_exterior"]), f1(dat["aro"]["diam_interior"]),
-                                                           f1(dat["aro"]["largo_desarrollado_eje"]))),
-    ("Disco central", "1", "Lámina %s" % f1(dat["disco"]["espesor"]),
-     "Disco Ø %s (perforar al centro para el cable/colgante)" % f1(dat["disco"]["diametro"])),
+    ("Aro exterior", "1", "Lámina %s · láser" % f1(dat["aro"]["espesor"]),
+     "Anillo plano Ø ext %s / Ø int %s · con muescas y huecos (ver PDF de corte láser)" % (
+         f1(dat["aro"]["diam_exterior"]), f1(dat["aro"]["diam_interior"]))),
+    ("Disco central", "1", "Lámina %s · láser" % f1(dat["disco"]["espesor"]),
+     "Disco Ø %s con perforación de Ø10,5 al centro (niple del cable)" % f1(dat["disco"]["diametro"])),
 ]
 y = tabla(c, 14 * mm, y - 2 * mm, filas, [52 * mm, 13 * mm, 33 * mm, 153 * mm])
 y -= 4 * mm
@@ -355,18 +355,16 @@ notas(c, 172 * mm, H - 34 * mm, [
     "radio %s mm." % f1(dat["radio_esfera_domo"]),
     "",
     "## Secuencia sugerida",
-    "1. Rolar el aro y soldar el empate.",
-    "2. Marcar en el aro los %d puntos de V" % N,
-    "   (cada %s°) y, si lleva, los %d de" % (f1(PASO), N),
-    "   meridianos (corridos %s°)." % f1(geo["mer_offset_deg"]),
-    "3. Fijar el disco central a %s mm de" % f1(dat["altura_domo_eje"]),
-    "   altura, centrado (soporte provisional).",
-    "4. Si lleva meridianos, soldarlos primero:",
-    "   dan la forma del domo y sirven de guía.",
-    "5. Soldar las %d curvas A (todas giran" % N,
+    "1. Aro y disco cortados en láser, lámina",
+    "   de %s mm: ya traen muescas y huecos." % f1(dat["aro"]["espesor"]),
+    "2. Fijar el disco centrado, con su cara de",
+    "   arriba a %s mm sobre la del aro." % f1(dat["disco"].get("z_cara_arriba", dat["altura_domo_eje"])),
+    "3. Si lleva meridianos, soldarlos primero,",
+    "   por dentro: entran por las muescas.",
+    "4. Soldar las %d curvas A (todas giran" % N,
     "   igual), luego las %d curvas B (volteadas)." % N,
-    "6. Puntear todos los cruces entre varillas.",
-    "7. Pulir soldaduras y pintar (polvo).",
+    "5. Puntear todos los cruces entre varillas.",
+    "6. Pulir soldaduras y pintar (polvo).",
 ], fs=8.6)
 c.showPage()
 

@@ -1,7 +1,7 @@
 """
 Documentos para los dos proveedores de la lámpara roseta, para N lámparas.
 
-  1. corte_laser_{N}_lamparas.pdf   Metal Cortes: aros y discos en lámina de acero de 5 mm,
+  1. corte_laser_{N}_lamparas.pdf   Metal Cortes: aros y discos en lámina de acero (4,5 mm),
                                     con los DXF 1:1 en la carpeta corte_laser/
   2. curvas_{N}_lamparas.pdf        curvas (diagonales) y meridianos (LED) en varilla lisa Ø6,
                                     con las plantillas 1:1 al final
@@ -116,6 +116,11 @@ def n0(x):
 
 def n1(x):
     return f"{x:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def nd(x):
+    """Entero si lo es; si no, con un decimal (4,5)."""
+    return n0(x) if abs(x - round(x)) < 1e-9 else n1(x)
 
 
 W, Hp = letter
@@ -333,7 +338,7 @@ def ring_drawing(d, cx, cy, r_draw, marks=True):
     d.text(cx, cy + R_EXT * k + 6 * mm, f"Ø exterior {n0(2 * R_EXT)}", "monob", 8, COTA, "center")
     c.line(cx - R_INT * k, cy, cx + R_INT * k, cy)
     d.text(cx, cy + 2 * mm, f"Ø interior {n0(2 * R_INT)}", "monob", 8, COTA, "center")
-    d.text(cx, cy - 5 * mm, f"ancho {n0(R_EXT - R_INT)} · espesor {n0(T)}", "monob", 8, MUTED, "center")
+    d.text(cx, cy - 5 * mm, f"ancho {n0(R_EXT - R_INT)} · espesor {nd(T)}", "monob", 8, MUTED, "center")
 
 
 def ring_detail(d, x0, y0, width):
@@ -390,7 +395,7 @@ def disc_drawing(d, cx, cy, r_draw, marks=True):
     c.setStrokeColor(COTA)
     c.setLineWidth(0.6)
     c.line(cx - rd * k, cy - rd * k - 4 * mm, cx + rd * k, cy - rd * k - 4 * mm)
-    d.text(cx, cy - rd * k - 8.5 * mm, f"Ø {n0(disco['diametro'])} · espesor {n0(disco['espesor'])}", "monob", 8, COTA, "center")
+    d.text(cx, cy - rd * k - 8.5 * mm, f"Ø {n0(disco['diametro'])} · espesor {nd(disco['espesor'])}", "monob", 8, COTA, "center")
     d.text(cx, cy - rd * k - 12.5 * mm, f"perforación central Ø{n1(HOLE)}", "monob", 8, COTA, "center")
 
 
@@ -516,13 +521,13 @@ def write_dxfs(folder):
 # =====================================================================
 TAG = f"D{round(D / 10)}"                         # p. ej. D90 o D80 (diámetro del aro en cm)
 dxfs = write_dxfs(os.path.join(DATA, "corte_laser"))
-foot = f"Lámpara roseta · corte láser · {N} lámparas · acero de {n0(T)} mm · medidas en mm"
+foot = f"Lámpara roseta · corte láser · {N} lámparas · acero de {nd(T)} mm · medidas en mm"
 d = Doc(os.path.join(DATA, f"corte_laser_{N}_lamparas_{TAG}.pdf"), f"Corte láser · {N} lámparas roseta Ø{round(D / 10)} cm", foot)
-y = d.header(f"CORTE LÁSER · METAL CORTES · LÁMPARAS DE Ø{round(D / 10)} CM", f"LÁMINA DE ACERO {n0(T)} MM",
+y = d.header(f"CORTE LÁSER · METAL CORTES · LÁMPARAS DE Ø{round(D / 10)} CM", f"LÁMINA DE ACERO {nd(T)} MM",
              f"Piezas planas para {N} lámparas roseta de Ø{round(D / 10)} cm. Medidas en mm. Los archivos DXF van a escala 1:1, "
              f"con las medidas exactas de la pieza (sin compensar el corte).")
 y = d.tiles(y - 6 * mm, [(n0(N), "aros", f"Ø{n0(2 * R_EXT)} × Ø{n0(2 * R_INT)}", True), (n0(N), "discos", f"Ø{n0(disco['diametro'])} con perforación", True),
-                         (f"{n0(T)} mm", "espesor", "acero al carbono HR / A36", False), ("1:1", "DXF", "uno por pieza", False)])
+                         (f"{nd(T)} mm", "espesor", "acero al carbono HR / A36", False), ("1:1", "DXF", "uno por pieza", False)])
 y -= 10 * mm
 d.text(M, y, "PIEZAS", "semi", 13, INK)
 y = d.table(M, y - 3 * mm, ["PIEZA", ("CANT.", "right"), "MEDIDAS", "ARCHIVO DXF"], [
@@ -543,7 +548,7 @@ y = d.table(M, y - 3 * mm, ["LÁMINA", ("AROS POR LÁMINA", "right"), (f"LÁMINA
 ], [40 * mm, 36 * mm, 36 * mm, W - 2 * M - 112 * mm])
 y -= 6 * mm
 y = d.notes(y, "PARA METAL CORTES", [
-    f"Cantidad: {N} aros y {N} discos. Acero al carbono laminado en caliente (HR, A36 o similar) de {n0(T)} mm.",
+    f"Cantidad: {N} aros y {N} discos. Acero al carbono laminado en caliente (HR, A36 o similar) de {nd(T)} mm.",
     "Los DXF están en milímetros, escala 1:1. Las cotas son de la pieza terminada; tolerancia normal del láser (±0,3 mm).",
     f"Las {'muescas' if MUESCA else 'ranuras'} ya traen la holgura para la varilla de {ROD_CORTO}: no hay que agrandarlas. Van radiales, apuntando al centro del aro.",
     f"Los {N} discos caben dentro del hueco de un aro, así que no necesitan lámina aparte (ver lamina_1220x2440_acomodo_sugerido.dxf).",
@@ -553,7 +558,7 @@ y -= 6 * mm
 d.notes(y, "OJO CON EL MATERIAL DE LOS AROS", [
     f"Cada aro pesa {n1(kg_aro)} kg, pero el centro que sobra es un disco de Ø{n0(2 * R_INT)} de unos {n0(math.pi * R_INT ** 2 * T * RHO)} kg. "
     f"Pregunta si cobran la lámina completa o solo lo usado.",
-    f"La alternativa es rolar los aros en pletina de {n0(R_EXT - R_INT)} × {n0(T)} ({b_ple} barras de 6 m para {N} aros, unos {n0(b_ple * 6 * (R_EXT - R_INT) * T * RHO * 1000)} kg). "
+    f"La alternativa es rolar los aros en pletina de {n0(R_EXT - R_INT)} × {nd(T)} ({b_ple} barras de 6 m para {N} aros, unos {n0(b_ple * 6 * (R_EXT - R_INT) * T * RHO * 1000)} kg). "
     f"Pide cotización de las dos opciones y escoge.",
 ])
 d.next_page()
