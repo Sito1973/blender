@@ -59,9 +59,17 @@ def barras(q, pb):
     return b
 
 
-def horma(R):
-    k = 3.395 * 250 / (200000 * ROD)                  # retorno elástico, acero 1020/A36
+def horma(R, fluencia=250):
+    """Radio de la horma para que, al soltar, la varilla quede en R (retorno elástico de varilla redonda)."""
+    k = 3.395 * fluencia / (200000 * ROD)
     return 1 / (1 / R + k) - ROD / 2
+
+
+# precio de la varilla (precios.json, compartido por todos los tamaños)
+_pp = os.path.join(AQUI, "precios.json")
+PRECIO = json.load(open(_pp, encoding="utf-8")).get("varilla") if os.path.exists(_pp) else None
+ACERO = (PRECIO or {}).get("acero")
+FLUENCIA = {"1018": (370, 220)}.get(ACERO)          # MPa: calibrado (estirado en frío), laminado en caliente
 
 
 q_cur, q_mer = N * dat["n_curvas"], (N * PET if me["incluido"] else 0)
@@ -531,13 +539,22 @@ laser_pdf = d.path
 foot = f"Lámpara roseta · curvas en varilla {ROD_CORTO} · {N} lámparas · aro Ø{n0(D)} al eje · medidas en mm"
 d = Doc(os.path.join(DATA, f"curvas_{N}_lamparas_{TAG}.pdf"), f"Curvas en varilla · {N} lámparas roseta Ø{round(D / 10)} cm", foot)
 y = d.header("CURVAS EN VARILLA · LÁMPARA ROSETA", f"{N} LÁMPARAS · Ø{n0(D / 10)} CM",
-             f"Las dos piezas dobladas de la estructura, en varilla lisa de {ROD_TXT}. "
+             f"Las dos piezas dobladas de la estructura, en varilla lisa de {ROD_TXT}" + (f", acero {ACERO}. " if ACERO else ". ") +
              f"Todas son arcos planos de radio fijo. El aro y el disco van aparte, en corte láser.", W - 2 * M - 60 * mm)
 img = os.path.join(DATA, "render_desde_abajo.png")
 if os.path.exists(img):
     d.c.drawImage(img, W - M - 54 * mm, Hp - M - 40 * mm, 54 * mm, 40 * mm, preserveAspectRatio=True, anchor="c")
+b_tot = b_cur + b_mer
+kg_compra = b_tot * 6 * kg_m_rod
+kg_lamp_rod = (dat["n_curvas"] * cu["largo_desarrollado_eje"] + PET * me["largo_desarrollado_eje"]) * kg_m_rod / 1000
+precio = PRECIO["precio"] if PRECIO else None
+iva = " con IVA" if PRECIO and PRECIO.get("iva_incluido") else ""
+if precio:
+    cuarta = (f"${n0(b_tot * precio)}", "varilla", f"{iva.strip() or 'sin IVA'} · ${n0(b_tot * precio / N)} por lámpara", False)
+else:
+    cuarta = (f"{n1((q_cur * cu['largo_desarrollado_eje'] + q_mer * me['largo_desarrollado_eje']) / 1000)} m", "de varilla", "sin contar sobrantes", False)
 y = d.tiles(Hp - M - 52 * mm, [(n0(q_cur), "curvas", "las diagonales", True), (n0(q_mer), "meridianos", "soporte de las tiras LED", True),
-                               (n0(b_cur + b_mer), "barras", f"varilla {ROD_CORTO} de 6 m", False), (f"{n1((q_cur * cu['largo_desarrollado_eje'] + q_mer * me['largo_desarrollado_eje']) / 1000)} m", "de varilla", "sin contar sobrantes", False)])
+                               (n0(b_tot), "barras", (f"acero {ACERO} " if ACERO else "varilla ") + f"{ROD_CORTO} × 6 m", False), cuarta])
 y -= 10 * mm
 d.text(M, y, "PIEZAS", "semi", 13, INK)
 y = d.table(M, y - 3 * mm, ["PIEZA", ("POR LÁMPARA", "right"), (f"PARA {N}", "right"), "MEDIDAS (AL EJE DE LA VARILLA)"], [
@@ -548,12 +565,26 @@ y = d.table(M, y - 3 * mm, ["PIEZA", ("POR LÁMPARA", "right"), (f"PARA {N}", "r
 ], [34 * mm, 24 * mm, 20 * mm, W - 2 * M - 78 * mm])
 y -= 8 * mm
 d.text(M, y, "LISTA DE COMPRA Y CORTE", "semi", 13, INK)
-y = d.table(M, y - 3 * mm, ["PARA", ("BARRAS DE 6 m", "right"), ("TRAMO", "right"), ("POR BARRA", "right"), ("REPUESTO", "right"), ("SOBRA POR BARRA", "right")], [
-    ["Curvas", (str(b_cur), "right"), (n0(c_cur), "right"), (str(pb_cur), "right"), (f"+{b_cur * pb_cur - q_cur}", "right"), (n0(BARRA - pb_cur * (c_cur + KERF)), "right")],
-    ["Meridianos", (str(b_mer), "right"), (n0(c_mer), "right"), (str(pb_mer), "right"), (f"+{b_mer * pb_mer - q_mer}", "right"), (n0(BARRA - pb_mer * (c_mer + KERF)), "right")],
-], [34 * mm, 28 * mm, 22 * mm, 24 * mm, 24 * mm, W - 2 * M - 132 * mm])
+cols = ["PARA", ("BARRAS DE 6 m", "right"), ("TRAMO", "right"), ("POR BARRA", "right"), ("REPUESTO", "right"), ("PESO", "right")]
+filas = [["Curvas", (str(b_cur), "right"), (n0(c_cur), "right"), (str(pb_cur), "right"), (f"+{b_cur * pb_cur - q_cur}", "right"), (f"{n1(b_cur * 6 * kg_m_rod)} kg", "right")],
+         ["Meridianos", (str(b_mer), "right"), (n0(c_mer), "right"), (str(pb_mer), "right"), (f"+{b_mer * pb_mer - q_mer}", "right"), (f"{n1(b_mer * 6 * kg_m_rod)} kg", "right")]]
+anchos = [30 * mm, 26 * mm, 18 * mm, 21 * mm, 21 * mm, 24 * mm]
+if precio:
+    cols.append(("VALOR" + (" CON IVA" if iva else ""), "right"))
+    filas[0].append((f"${n0(b_cur * precio)}", "right"))
+    filas[1].append((f"${n0(b_mer * precio)}", "right"))
+    anchos.append(W - 2 * M - sum(anchos))
+else:
+    anchos[-1] = W - 2 * M - sum(anchos[:-1])
+y = d.table(M, y - 3 * mm, cols, filas, anchos)
 y -= 3 * mm
-d.text(M, y, f"Total: {b_cur + b_mer} barras de varilla lisa de {ROD_TXT} de 6 m ({n1((b_cur + b_mer) * 6 * kg_m_rod)} kg).", "bold", 9.5, INK)
+material = PRECIO["descripcion"] if PRECIO else f"varilla lisa de {ROD_TXT} de 6 m"
+if precio:
+    d.text(M, y, f"Total: {b_tot} barras de {material} · {n1(kg_compra)} kg · ${n0(b_tot * precio)}{iva} (a ${n0(precio)} la barra).", "bold", 9.5, INK)
+    y -= 5 * mm
+    d.text(M, y, f"Por lámpara: {n1(kg_lamp_rod)} kg de varilla en la estructura y ${n0(b_tot * precio / N)} de varilla comprada.", "body", 9.2, MUTED)
+else:
+    d.text(M, y, f"Total: {b_tot} barras de {material} ({n1(kg_compra)} kg).", "bold", 9.5, INK)
 # plan de corte
 y -= 9 * mm
 for label, L, k, col in [(f"Curvas: {pb_cur} tramos de {n0(c_cur)}", c_cur, pb_cur, BRASS), (f"Meridianos: {pb_mer} tramos de {n0(c_mer)}", c_mer, pb_mer, ROD_C)]:
@@ -573,8 +604,12 @@ d.notes(y, "PARA TENER EN CUENTA", [
     "Se corta con sobrante y se recorta después de doblar, sobre la plantilla." + (
         f" Si cortas las curvas a {n0(c_cur - 5)} mm salen {por_barra(c_cur - 5)} por barra ({barras(q_cur, por_barra(c_cur - 5))} barras), "
         f"pero queda menos para recortar." if por_barra(c_cur - 5) > pb_cur else ""),
-    f"Horma para doblar a mano: radio {n0(horma(cu['radio_doblez_eje']))} para las curvas y {n0(horma(me['radio_doblez_eje']))} para los meridianos "
-    f"(más cerrada que la pieza porque el acero se abre al soltarlo; ajústala con 2 piezas de prueba).",
+    (f"Horma para doblar a mano, acero {ACERO}: si la varilla es calibrada (estirada en frío), radio {n0(horma(cu['radio_doblez_eje'], FLUENCIA[0]))} "
+     f"para las curvas y {n0(horma(me['radio_doblez_eje'], FLUENCIA[0]))} para los meridianos; si es laminada en caliente, {n0(horma(cu['radio_doblez_eje'], FLUENCIA[1]))} "
+     f"y {n0(horma(me['radio_doblez_eje'], FLUENCIA[1]))}. Pregunta en el depósito cuál es y ajusta con 2 piezas de prueba (el acero se abre al soltarlo)."
+     if FLUENCIA else
+     f"Horma para doblar a mano: radio {n0(horma(cu['radio_doblez_eje']))} para las curvas y {n0(horma(me['radio_doblez_eje']))} para los meridianos "
+     f"(más cerrada que la pieza porque el acero se abre al soltarlo; ajústala con 2 piezas de prueba)."),
     "Cada pieza tiene que quedar plana (apoyada en la mesa no cojea) y coincidir con la plantilla 1:1 de las últimas hojas.",
     f"Los meridianos entran por las ranuras del aro y bajan hasta su cara de abajo; por eso miden {n1(me['largo_desarrollado_eje'])} "
     f"(unos {n0(EXT_MER)} mm más que si llegaran encima del aro). Las curvas se apoyan en los huecos del aro, sin atravesarlo.",
