@@ -7,7 +7,8 @@ Documentos para los dos proveedores de la lámpara roseta, para N lámparas.
                                     con las plantillas 1:1 al final
 
 Lee las medidas de datos_pieza.json (las genera generar_lampara.py).
-Uso:  python3 pdfs_taller.py [N]          (por defecto 9)
+Uso:  python3 pdfs_taller.py [N] [carpeta]     (por defecto 9 lámparas, datos de esta carpeta)
+      python3 pdfs_taller.py 9 d80               (la versión de Ø80 generada en d80/)
 """
 
 import io
@@ -26,7 +27,8 @@ from reportlab.pdfgen import canvas
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 9
-dat = json.load(open(os.path.join(AQUI, "datos_pieza.json"), encoding="utf-8"))
+DATA = os.path.abspath(os.path.join(AQUI, sys.argv[2])) if len(sys.argv) > 2 else AQUI
+dat = json.load(open(os.path.join(DATA, "datos_pieza.json"), encoding="utf-8"))
 cu, me, aro, disco = dat["curva"], dat["meridiano"], dat["aro"], dat["disco"]
 D, H, ROD, PET = dat["diametro_aro_eje"], dat["altura_domo_eje"], dat["diam_varilla"], dat["n_petalos"]
 PASO = 360 / PET
@@ -72,6 +74,9 @@ kg_aro = math.pi * (R_EXT ** 2 - R_INT ** 2) * T * RHO
 kg_disco = math.pi * ((disco["diametro"] / 2) ** 2 - (HOLE / 2) ** 2) * disco["espesor"] * RHO
 SHEETS = [(1220, 2440), (1500, 3000)]
 GAP = 10.0
+
+
+b_ple = math.ceil(N / int(BARRA // (math.pi * D + 50)))   # barras de pletina si se rolan los aros
 
 
 def aros_por_lamina(w, h):
@@ -382,11 +387,12 @@ def write_dxfs(folder):
 # =====================================================================
 # 1 · CORTE LÁSER (Metal Cortes)
 # =====================================================================
-dxfs = write_dxfs(os.path.join(AQUI, "corte_laser"))
+TAG = f"D{round(D / 10)}"                         # p. ej. D90 o D80 (diámetro del aro en cm)
+dxfs = write_dxfs(os.path.join(DATA, "corte_laser"))
 foot = f"Lámpara roseta · corte láser · {N} lámparas · acero de {n0(T)} mm · medidas en mm"
-d = Doc(os.path.join(AQUI, f"corte_laser_{N}_lamparas.pdf"), f"Corte láser · {N} lámparas roseta", foot)
-y = d.header("CORTE LÁSER · METAL CORTES", f"LÁMINA DE ACERO {n0(T)} MM",
-             f"Piezas planas para {N} lámparas roseta. Medidas en mm. Los archivos DXF van a escala 1:1, "
+d = Doc(os.path.join(DATA, f"corte_laser_{N}_lamparas_{TAG}.pdf"), f"Corte láser · {N} lámparas roseta Ø{round(D / 10)} cm", foot)
+y = d.header(f"CORTE LÁSER · METAL CORTES · LÁMPARAS DE Ø{round(D / 10)} CM", f"LÁMINA DE ACERO {n0(T)} MM",
+             f"Piezas planas para {N} lámparas roseta de Ø{round(D / 10)} cm. Medidas en mm. Los archivos DXF van a escala 1:1, "
              f"con las medidas exactas de la pieza (sin compensar el corte).")
 y = d.tiles(y - 6 * mm, [(n0(N), "aros", f"Ø{n0(2 * R_EXT)} × Ø{n0(2 * R_INT)}", True), (n0(N), "discos", f"Ø{n0(disco['diametro'])} con perforación", True),
                          (f"{n0(T)} mm", "espesor", "acero al carbono HR / A36", False), ("1:1", "DXF", "uno por pieza", False)])
@@ -418,7 +424,7 @@ y -= 6 * mm
 d.notes(y, "OJO CON EL MATERIAL DE LOS AROS", [
     f"Cada aro pesa {n1(kg_aro)} kg, pero el centro que sobra es un disco de Ø{n0(2 * R_INT)} de unos {n0(math.pi * R_INT ** 2 * T * RHO)} kg. "
     f"Pregunta si cobran la lámina completa o solo lo usado.",
-    f"La alternativa es rolar los aros en pletina de {n0(R_EXT - R_INT)} × {n0(T)} (5 barras de 6 m para {N} aros, unos 23 kg). "
+    f"La alternativa es rolar los aros en pletina de {n0(R_EXT - R_INT)} × {n0(T)} ({b_ple} barras de 6 m para {N} aros, unos {n0(b_ple * 6 * (R_EXT - R_INT) * T * RHO * 1000)} kg). "
     f"Pide cotización de las dos opciones y escoge.",
 ])
 d.next_page()
@@ -443,11 +449,11 @@ laser_pdf = d.path
 # 2 · CURVAS EN VARILLA
 # =====================================================================
 foot = f"Lámpara roseta · curvas en varilla Ø{n0(ROD)} · {N} lámparas · aro Ø{n0(D)} al eje · medidas en mm"
-d = Doc(os.path.join(AQUI, f"curvas_{N}_lamparas.pdf"), f"Curvas en varilla · {N} lámparas roseta", foot)
+d = Doc(os.path.join(DATA, f"curvas_{N}_lamparas_{TAG}.pdf"), f"Curvas en varilla · {N} lámparas roseta Ø{round(D / 10)} cm", foot)
 y = d.header("CURVAS EN VARILLA · LÁMPARA ROSETA", f"{N} LÁMPARAS · Ø{n0(D / 10)} CM",
              f"Las dos piezas dobladas de la estructura, en varilla lisa de Ø{n0(ROD)} mm (sirve también la de 1/4\"). "
              f"Todas son arcos planos de radio fijo. El aro y el disco van aparte, en corte láser.", W - 2 * M - 60 * mm)
-img = os.path.join(AQUI, "render_desde_abajo.png")
+img = os.path.join(DATA, "render_desde_abajo.png")
 if os.path.exists(img):
     d.c.drawImage(img, W - M - 54 * mm, Hp - M - 40 * mm, 54 * mm, 40 * mm, preserveAspectRatio=True, anchor="c")
 y = d.tiles(Hp - M - 52 * mm, [(n0(q_cur), "curvas", "las diagonales", True), (n0(q_mer), "meridianos", "soporte de las tiras LED", True),
@@ -484,8 +490,9 @@ for label, L, k, col in [(f"Curvas: {pb_cur} tramos de {n0(c_cur)}", c_cur, pb_c
 y -= 2 * mm
 d.notes(y, "PARA TENER EN CUENTA", [
     f"Las {n0(q_cur)} curvas son la misma pieza; en cada lámpara la mitad ({PET}) se monta volteada. Los {n0(q_mer)} meridianos también son todos iguales.",
-    f"Se corta con sobrante y se recorta después de doblar, sobre la plantilla. Si cortas las curvas a {n0(c_cur - 5)} mm salen "
-    f"{por_barra(c_cur - 5)} por barra ({barras(q_cur, por_barra(c_cur - 5))} barras), pero queda menos para recortar.",
+    "Se corta con sobrante y se recorta después de doblar, sobre la plantilla." + (
+        f" Si cortas las curvas a {n0(c_cur - 5)} mm salen {por_barra(c_cur - 5)} por barra ({barras(q_cur, por_barra(c_cur - 5))} barras), "
+        f"pero queda menos para recortar." if por_barra(c_cur - 5) > pb_cur else ""),
     f"Horma para doblar a mano: radio {n0(horma(cu['radio_doblez_eje']))} para las curvas y {n0(horma(me['radio_doblez_eje']))} para los meridianos "
     f"(más cerrada que la pieza porque el acero se abre al soltarlo; ajústala con 2 piezas de prueba).",
     "Cada pieza tiene que quedar plana (apoyada en la mesa no cojea) y coincidir con la plantilla 1:1 de las últimas hojas.",
@@ -527,7 +534,7 @@ curvas_pdf = d.path
 # plantillas 1:1 al final del PDF de curvas (de planos_lampara_roseta.pdf, páginas 5 a 8)
 try:
     from pypdf import PdfReader, PdfWriter
-    planos = os.path.join(AQUI, "planos_lampara_roseta.pdf")
+    planos = os.path.join(DATA, "planos_lampara_roseta.pdf")
     if os.path.exists(planos):
         w = PdfWriter()
         for p in PdfReader(curvas_pdf).pages:

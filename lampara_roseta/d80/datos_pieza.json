@@ -1,0 +1,77 @@
+{
+  "unidades": "mm",
+  "diametro_aro_eje": 800.0,
+  "diametro_exterior_total": 820.0,
+  "altura_domo_eje": 220.0,
+  "radio_esfera_domo": 473.6363636363636,
+  "n_petalos": 24,
+  "n_curvas": 48,
+  "salto_v": 4,
+  "angulo_llegada_aro_deg": 29.999999999999996,
+  "diam_varilla": 6.0,
+  "curva": {
+    "radio_doblez_eje": 253.91984386686875,
+    "radio_interior": 250.91984386686875,
+    "radio_exterior": 256.91984386686875,
+    "angulo_arco_deg": 112.14399902449989,
+    "largo_desarrollado_eje": 496.9927447519145,
+    "cuerda": 421.3747072682811,
+    "flecha": 112.19431289937651,
+    "extremo_centro_xyz": [
+      8.189926147460938,
+      69.51924896240234,
+      214.79869079589844
+    ],
+    "extremo_aro_xyz": [
+      346.4101867675781,
+      199.99993896484375,
+      0.0
+    ],
+    "punto_medio_xyz": [
+      147.9730224609375,
+      241.439453125,
+      126.02452087402344
+    ],
+    "centro_doblez_xyz": [
+      214.34642028808594,
+      0.0,
+      83.87174987792969
+    ],
+    "inclinacion_plano_vs_horizontal_deg": 32.419026186290914,
+    "extremo_centro_r_ang_z": [
+      70.00000618998075,
+      83.28106599505139,
+      214.79869079589844
+    ],
+    "extremo_aro_r_ang_z": [
+      399.9999913528619,
+      29.999990619979222,
+      0.0
+    ],
+    "punto_medio_r_ang_z": [
+      283.17666729715603,
+      58.49676784964651,
+      126.02452087402344
+    ]
+  },
+  "meridiano": {
+    "incluido": true,
+    "cantidad": 24,
+    "radio_doblez_eje": 473.6363636363636,
+    "angulo_arco_deg": 49.12255522884607,
+    "largo_desarrollado_eje": 406.07229064410797,
+    "cuerda": 393.74925998672285,
+    "angulo_primer_meridiano_deg": 7.499999999999999
+  },
+  "aro": {
+    "ancho": 20.0,
+    "espesor": 5.0,
+    "diam_interior": 780.0,
+    "diam_exterior": 820.0,
+    "largo_desarrollado_eje": 2513.2741228718346
+  },
+  "disco": {
+    "diametro": 170.0,
+    "espesor": 5.0
+  }
+}

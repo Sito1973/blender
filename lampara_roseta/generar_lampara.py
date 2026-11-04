@@ -53,6 +53,24 @@ MERIDIANOS = True          # 24 varillas rectas (en planta) del centro al aro,
 
 SEG_ARCO = 97              # puntos por arco (suavidad; error < 0.02 mm)
 
+# Medidas desde la línea de comandos (opcional), p. ej.:
+#   blender -b -P generar_lampara.py -- d80 --D 800 --H 220
+_ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+
+
+def _opcion(nombre, valor):
+    if "--" + nombre in _ARGS:
+        return float(_ARGS[_ARGS.index("--" + nombre) + 1])
+    return valor
+
+
+DIAMETRO_ARO = _opcion("D", DIAMETRO_ARO)
+ALTURA_DOMO = _opcion("H", ALTURA_DOMO)
+N_PETALOS = int(_opcion("petalos", N_PETALOS))
+RADIO_FIN_CENTRO = _opcion("rh", RADIO_FIN_CENTRO)
+DIAM_VARILLA = _opcion("varilla", DIAM_VARILLA)
+DISCO_DIAM = _opcion("disco", DISCO_DIAM)
+
 # =====================================================================
 # GEOMETRÍA
 # =====================================================================
