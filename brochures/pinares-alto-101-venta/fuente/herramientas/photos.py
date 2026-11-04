@@ -9,7 +9,7 @@ PHOTOS = {
     "cocina":    ("src_rental/r-002.jpg", 0),
     "alcoba":    ("src_rental/r-003.jpg", 0),
     "terraza":   ("src_rental/r-004.jpg", 0),
-    # (la foto "PISCINA" del avalúo no es de Pinares Alto: no se usa)
+    "piscina":   ("src_rental/r-005.jpg", 0),
     "salon":     ("src_rental/r-006.jpg", 0),
     "parque":    ("src_rental/r-007.jpg", 0),
     "comedor":   ("src_avaluo/a-025.jpg", 820),
