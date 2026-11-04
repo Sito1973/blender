@@ -57,13 +57,16 @@
   "meridiano": {
     "incluido": true,
     "cantidad": 24,
-    "radio_doblez_eje": 530.0,
-    "angulo_arco_deg": 51.15411290083979,
-    "largo_desarrollado_eje": 473.18807890997783,
-    "cuerda": 457.628058951812,
+    "radio_doblez_eje": 523.65,
+    "angulo_arco_deg": 50.63886090132933,
+    "largo_desarrollado_eje": 462.8096473480473,
+    "cuerda": 447.8929639362399,
+    "por_dentro": true,
+    "por_dentro_mm": 6.350000000000023,
+    "r_llegada_aro": 442.50347173779323,
     "angulo_primer_meridiano_deg": 7.499999999999999,
     "pasa_por_el_aro": true,
-    "llegada_al_aro_deg": 58.10920819815429
+    "llegada_al_aro_deg": 57.675868966109064
   },
   "aro": {
     "ancho": 20.0,

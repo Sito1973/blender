@@ -49,6 +49,8 @@ ARO_ESPESOR = 5.0          # aro exterior: espesor
 DISCO_DIAM = 170.0         # disco central donde se sueldan las curvas
 DISCO_ESPESOR = 5.0
 MERIDIANOS = True          # 24 varillas rectas (en planta) del centro al aro,
+MER_DENTRO = True          # los meridianos van por dentro de las curvas (las curvas los
+                           # cruzan por encima): su eje queda una varilla más adentro
 MER_PASA_ARO = True        # los meridianos entran por una ranura del aro y bajan
                            # hasta su cara de abajo (se sueldan arriba y abajo)
                            # donde la lámpara original lleva las tiras de luz
@@ -141,9 +143,14 @@ inclin_plano = math.degrees(math.acos(abs(normal_plano.z)))
 
 # fin del meridiano: en la cara de arriba del aro (z = 0) o, si pasa por la
 # ranura, en la cara de abajo (z = -ARO_ESPESOR), siguiendo la misma esfera
-th_mer_fin = math.acos((-ARO_ESPESOR - zc) / Rs) if MER_PASA_ARO else th_rim
-mer_ang = th_mer_fin - th_hub
-mer_largo = Rs * mer_ang
+# esfera de los meridianos: la del domo, o una varilla más adentro si van por dentro
+Rm = Rs - DIAM_VARILLA if MER_DENTRO else Rs
+th_hub_m = math.asin(RADIO_FIN_CENTRO / Rm)
+r_llegada_m = math.sqrt(Rm * Rm - zc * zc)          # donde el eje del meridiano toca la cara de arriba del aro
+th_rim_m = math.asin(r_llegada_m / Rm)
+th_mer_fin = math.acos((-ARO_ESPESOR - zc) / Rm) if MER_PASA_ARO else th_rim_m
+mer_ang = th_mer_fin - th_hub_m
+mer_largo = Rm * mer_ang
 # los meridianos van entre las "V" del aro
 mer_offset = paso / 2.0 if SALTO_V % 2 == 0 else 0.0
 
@@ -188,13 +195,16 @@ DATOS = {
     "meridiano": {
         "incluido": MERIDIANOS,
         "cantidad": N_PETALOS,
-        "radio_doblez_eje": Rs,
+        "radio_doblez_eje": Rm,
         "angulo_arco_deg": math.degrees(mer_ang),
         "largo_desarrollado_eje": mer_largo,
-        "cuerda": 2 * Rs * math.sin(mer_ang / 2),
+        "cuerda": 2 * Rm * math.sin(mer_ang / 2),
+        "por_dentro": MER_DENTRO,
+        "por_dentro_mm": Rs - Rm,
+        "r_llegada_aro": r_llegada_m,
         "angulo_primer_meridiano_deg": math.degrees(mer_offset),
         "pasa_por_el_aro": MER_PASA_ARO,
-        "llegada_al_aro_deg": math.degrees(th_rim),
+        "llegada_al_aro_deg": math.degrees(th_rim_m),
     },
     "aro": {"ancho": ARO_ANCHO, "espesor": ARO_ESPESOR,
             "diam_interior": DIAMETRO_ARO - ARO_ANCHO,
@@ -289,8 +299,8 @@ CURVA.materials.append(M_CURVA)
 
 pts_mer = []
 for i in range(SEG_ARCO):
-    th = th_hub + mer_ang * i / (SEG_ARCO - 1)
-    pts_mer.append((Rs * math.sin(th), Rs * math.cos(th), 0.0))
+    th = th_hub_m + mer_ang * i / (SEG_ARCO - 1)
+    pts_mer.append((Rm * math.sin(th), Rm * math.cos(th), 0.0))
 MERID = curve_data("PIEZA_meridiano", pts_mer, r_rod)
 MERID.materials.append(M_MER)
 
@@ -359,7 +369,9 @@ bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=128,
                       radius1=DISCO_DIAM / 2, radius2=DISCO_DIAM / 2, depth=DISCO_ESPESOR)
 bm.to_mesh(me)
 bm.free()
-z_disco_top = z_esfera((RADIO_FIN_CENTRO + DISCO_DIAM / 2) / 2) - r_rod
+# el disco queda debajo de lo más bajo que llega al centro: los meridianos si van por dentro
+_r_apoyo = (RADIO_FIN_CENTRO + DISCO_DIAM / 2) / 2
+z_disco_top = zc + math.sqrt(Rm * Rm - _r_apoyo * _r_apoyo) - r_rod
 disco = link("Disco_central", me, C_DISCO,
              Matrix.Translation((0, 0, z_disco_top - DISCO_ESPESOR / 2)), M_DISCO)
 
