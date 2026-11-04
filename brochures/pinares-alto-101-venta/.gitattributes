@@ -1,0 +1,4 @@
+# Archivos del brochure como blobs normales (sin Git LFS), para poder regenerarlo en cualquier clon.
+*.jpg   -filter binary
+*.pdf   -filter binary
+*.woff2 binary
