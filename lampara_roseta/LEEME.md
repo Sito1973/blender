@@ -40,6 +40,7 @@ Los 24 meridianos (donde va la luz LED) van por dentro de las curvas. El aro y e
 | `curvas_9_lamparas_D90.pdf` | Las 432 curvas y los 216 meridianos en varilla Ø6: compra de barras, plan de corte, dibujos, tablas de trazado y plantillas 1:1. |
 | `d80/` | Todo lo mismo para la lámpara de Ø80 cm (aro de 800 al eje, domo de 220): modelo de Blender, planos, plantillas, DXF y los dos PDF de taller. |
 | `pdfs_taller.py` | Genera esos dos PDF y los DXF para cualquier cantidad de lámparas: `python3 pdfs_taller.py 9` (Ø90) o `python3 pdfs_taller.py 9 d80` (Ø80). |
+| `web/` | El Diseñador Roseta publicado en https://roseta.cocinandosonrisas.co. Corre en EasyPanel (proyecto `cocson`, servicio `roseta`) con la imagen `nginx:1.27-alpine` y estos dos archivos montados: `index.html` en `/usr/share/nginx/html/index.html` y `nginx.conf` en `/etc/nginx/conf.d/default.conf`. Fuera de Claude, la página descarga los archivos con el navegador y guarda los diseños en ese mismo navegador. |
 
 ## Cambiar el tamaño
 

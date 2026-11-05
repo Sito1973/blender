@@ -1,0 +1,1848 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Diseñador de la lámpara roseta en varilla de 1/4&quot;: modelo 3D, plantillas 1:1, corte láser del aro y compra de varilla.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23bf9455' stroke-width='3'/%3E%3Cpath d='M16 3v26M3 16h26M6.8 6.8l18.4 18.4M25.2 6.8 6.8 25.2' stroke='%23bf9455' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23855818'/%3E%3C/svg%3E">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Diseñador Roseta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: banco de trabajo. Visor 3D fijo (a la izquierda en escritorio, arriba en el teléfono) y las fichas de trabajo se recorren a su lado. */
+:root {
+  --bg: #e8ebee;
+  --panel: #f5f6f7;
+  --ink: #15181c;
+  --muted: #576069;
+  --line: #ccd2d8;
+  --brass: #855818;
+  --brass-ink: #fffaf0;
+  --brass-soft: #ecdfc5;
+  --rod: #bf9455;
+  --cota: #b3332b;
+  --eje: #285fa3;
+  --stage: #1c1f23;
+  --stage-glass: rgba(28, 31, 35, 0.8);
+  --stage-ink: #ece6da;
+  --stage-muted: #aca79e;
+  --stage-line: rgba(236, 230, 218, 0.2);
+  --hl: #ff7b3a;
+  --hl-ink: #1b0e05;
+  --led: #ffe3ad;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Barlow", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 10px;
+  --stage-h: clamp(220px, 38vh, 420px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101215; --panel: #171a1e; --ink: #e7e9ec; --muted: #9ca4ad; --line: #2b3036;
+    --brass: #dcab58; --brass-ink: #1a1307; --brass-soft: #30271a; --rod: #d0ac72;
+    --cota: #ff7366; --eje: #74aaec;
+    --stage: #0b0d0f; --stage-glass: rgba(11, 13, 15, 0.82); --stage-ink: #ece6da; --stage-muted: #a09b93; --stage-line: rgba(236, 230, 218, 0.17);
+    --hl: #ff8a4f; --hl-ink: #1b0e05;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101215; --panel: #171a1e; --ink: #e7e9ec; --muted: #9ca4ad; --line: #2b3036;
+  --brass: #dcab58; --brass-ink: #1a1307; --brass-soft: #30271a; --rod: #d0ac72;
+  --cota: #ff7366; --eje: #74aaec;
+  --stage: #0b0d0f; --stage-glass: rgba(11, 13, 15, 0.82); --stage-ink: #ece6da; --stage-muted: #a09b93; --stage-line: rgba(236, 230, 218, 0.17);
+  --hl: #ff8a4f; --hl-ink: #1b0e05;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 8px 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.08; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.1rem, 2.4vw + 1.3rem, 3.1rem); text-transform: uppercase; letter-spacing: 0.02em; }
+h2 { font-size: 1.65rem; text-transform: uppercase; letter-spacing: 0.03em; }
+h3 { font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+p { margin: 0; }
+b, strong { font-weight: 600; }
+.v { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brass); }
+.hint { font-size: 0.88rem; color: var(--muted); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--eje); outline-offset: 2px; }
+
+/* ---------- estructura ---------- */
+.app { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; max-width: 1480px; margin: 0 auto; }
+.stage-wrap { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: var(--bg); padding-block: 8px 6px; }
+.stage { position: relative; height: var(--stage-h); border-radius: var(--radius); overflow: hidden; background: var(--stage); color: var(--stage-ink); transition: height 0.25s ease; }
+.work { display: flex; flex-direction: column; gap: 34px; min-width: 0; padding-top: 6px; }
+.block { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: calc(var(--stage-h) + 34px); min-width: 0; }
+.block-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+@media (min-width: 980px) {
+  .app { grid-template-columns: minmax(0, 1.3fr) minmax(400px, 1fr); gap: 30px; align-items: start; }
+  .stage-wrap { top: calc(8px + env(safe-area-inset-top, 0px)); padding-block: 8px; }
+  .stage { height: min(calc(100vh - 32px), 880px); min-height: 460px; }
+  .block { scroll-margin-top: 20px; }
+}
+
+/* ---------- visor ---------- */
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.stage canvas:active { cursor: grabbing; }
+.st-row { position: absolute; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; pointer-events: none; }
+.st-row > * { pointer-events: auto; }
+.st-top { top: 10px; }
+.st-bottom { bottom: 10px; align-items: flex-end; }
+.seg { display: inline-flex; border-radius: 8px; padding: 2px; border: 1px solid var(--stage-line); background: var(--stage-glass); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.seg button { font: 500 0.78rem/1 var(--font-mono); letter-spacing: 0.02em; color: var(--stage-muted); background: none; border: 0; padding: 8px 9px; border-radius: 6px; cursor: pointer; }
+.seg button:hover { color: var(--stage-ink); }
+.seg button[aria-pressed="true"] { background: var(--stage-ink); color: var(--stage); }
+.pick { display: inline-flex; align-items: center; border-radius: 8px; border: 1px solid var(--stage-line); background: var(--stage-glass); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); min-width: 0; max-width: 100%; }
+.pick-btn { font: 600 1.2rem/1 var(--font-body); color: var(--stage-ink); background: none; border: 0; padding: 8px 11px; cursor: pointer; }
+.pick-label { display: flex; flex-direction: column; padding: 4px 2px; min-width: 0; }
+.pick-label span, .ex-info span { font: 600 1rem/1.1 var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; color: var(--stage-ink); }
+.pick-label small, .ex-info small { font: 0.72rem/1.3 var(--font-mono); color: var(--stage-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-act { font: 600 0.9rem/1 var(--font-body); color: var(--hl-ink); background: var(--hl); border: 0; border-radius: 8px; padding: 11px 13px; cursor: pointer; }
+.st-ghost { font: 600 0.9rem/1 var(--font-body); color: var(--stage-ink); background: var(--stage-glass); border: 1px solid var(--stage-line); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.ex-info { display: flex; flex-direction: column; gap: 2px; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--stage-line); background: var(--stage-glass); min-width: 0; max-width: 100%; }
+.ex-btns { display: inline-flex; gap: 6px; }
+.st-hint { position: absolute; left: 12px; right: 12px; top: 54px; text-align: center; font: 0.72rem/1.3 var(--font-mono); color: var(--stage-muted); pointer-events: none; transition: opacity 0.5s; }
+.st-hint.gone { opacity: 0; }
+.st-msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; font: 0.9rem/1.4 var(--font-mono); color: var(--stage-muted); }
+.st-legend { position: absolute; right: 10px; bottom: 64px; display: flex; flex-direction: column; gap: 3px; font: 0.68rem/1.2 var(--font-mono); color: var(--stage-muted); pointer-events: none; }
+.st-legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+@media (max-width: 560px) {
+  .st-legend, .st-hint { display: none; }
+  .seg button { font-size: 0.72rem; padding: 7px 7px; }
+  .st-row { left: 8px; right: 8px; }
+  .st-top { top: 8px; } .st-bottom { bottom: 8px; }
+}
+
+/* ---------- ficha ---------- */
+.intro { display: flex; flex-direction: column; gap: 8px; }
+.lede { color: var(--muted); max-width: 60ch; font-size: 1.02rem; }
+.ficha { display: grid; gap: 14px; padding: 16px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); }
+.ficha-head { display: flex; align-items: center; gap: 14px; }
+.qty { font: 700 3.4rem/0.85 var(--font-display); color: var(--brass); font-variant-numeric: tabular-nums; }
+.ficha-title { font-size: 1.35rem; }
+.ficha-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; margin: 0; }
+.ficha-grid > div { display: flex; flex-direction: column; gap: 1px; padding-top: 7px; border-top: 1px solid var(--line); min-width: 0; }
+.ficha-grid dt { font: 0.7rem/1.2 var(--font-mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.ficha-grid dd { margin: 0; font: 500 1.12rem/1.25 var(--font-mono); font-variant-numeric: tabular-nums; }
+.ficha-grid dd small { display: block; font: 0.78rem/1.3 var(--font-body); color: var(--muted); }
+.ficha-foot { font-size: 0.92rem; color: var(--muted); }
+@media (max-width: 440px) { .ficha-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- controles ---------- */
+.btn { font: 600 0.94rem/1.1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; text-align: left; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); }
+.btn.small { padding: 7px 11px; font-size: 0.86rem; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status { font: 0.85rem/1.4 var(--font-mono); color: var(--muted); min-height: 1.2em; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 0.86rem/1 var(--font-body); padding: 8px 11px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.group { display: grid; gap: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.field { display: grid; gap: 3px; }
+.field-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.field-head label { font-weight: 600; }
+.unit-in { display: inline-flex; align-items: baseline; gap: 5px; font: 0.82rem var(--font-mono); color: var(--muted); }
+.unit-in input { width: 5.6em; font: 500 1rem var(--font-mono); text-align: right; padding: 5px 7px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+input[type="range"] { width: 100%; accent-color: var(--brass); margin: 4px 0; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; cursor: pointer; }
+.check input { margin-top: 4px; accent-color: var(--brass); width: 18px; height: 18px; flex: none; }
+.notes { display: grid; gap: 8px; }
+.note { font-size: 0.92rem; padding: 10px 12px; border-radius: 8px; background: var(--brass-soft); }
+.note.info { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+.quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.quick .chip { padding: 6px 10px; font: 500 0.82rem/1 var(--font-mono); }
+.seg.light { background: var(--panel); border-color: var(--line); backdrop-filter: none; }
+.seg.light button { color: var(--muted); font-size: 0.82rem; }
+.seg.light button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg.light button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- dibujo y tablas ---------- */
+.drawing { border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); padding: 6px; }
+.drawing svg { display: block; width: 100%; height: auto; }
+.drawing .rod { stroke: var(--rod); fill: none; }
+.drawing .eje { stroke: var(--eje); fill: none; }
+.drawing .cota { stroke: var(--cota); fill: none; }
+.drawing .ref { stroke: var(--muted); fill: none; }
+.drawing .dot { fill: var(--cota); stroke: none; }
+.drawing text { fill: var(--ink); font-family: var(--font-mono); }
+.drawing text.tc { fill: var(--cota); }
+.drawing text.tm { fill: var(--muted); }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; margin: 0; }
+.facts > div { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.facts dt { color: var(--muted); font-size: 0.9rem; }
+.facts dd { margin: 0; font: 500 0.92rem var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+@media (max-width: 440px) { .facts { grid-template-columns: minmax(0, 1fr); } }
+.table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+tr:last-child td { border-bottom: 0; }
+th { font: 600 0.7rem/1.25 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--panel); }
+td { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+details { border-radius: 8px; border: 1px solid var(--line); background: var(--panel); }
+details > summary { cursor: pointer; padding: 10px 12px; font-weight: 600; }
+details[open] > summary { border-bottom: 1px solid var(--line); }
+details .table-wrap { border: 0; border-radius: 0; }
+
+/* ---------- pasos ---------- */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; counter-reset: paso; }
+.steps > li { counter-increment: paso; display: grid; grid-template-columns: 2.1rem minmax(0, 1fr); gap: 12px; }
+.steps > li::before { content: counter(paso); width: 2.1rem; height: 2.1rem; border-radius: 50%; border: 1.5px solid var(--brass); color: var(--brass); display: grid; place-items: center; font: 700 1.25rem/1 var(--font-display); }
+.steps h4 { margin: 4px 0 3px; font: 600 1.05rem/1.25 var(--font-body); }
+.steps p { color: var(--muted); font-size: 0.95rem; }
+.alts { display: grid; gap: 10px; }
+.alts > div { padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line); }
+.alts h4 { margin: 0 0 3px; font: 600 1rem/1.25 var(--font-body); }
+.alts p { color: var(--muted); font-size: 0.93rem; }
+.build { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; align-items: center; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); }
+.build .status { grid-column: 1 / -1; }
+
+/* ---------- diseños ---------- */
+.save-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.save-row input { flex: 1 1 200px; min-width: 0; font: 1rem var(--font-body); padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.saved { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.saved li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+.saved li.empty { justify-content: flex-start; color: var(--muted); font-size: 0.93rem; border-style: dashed; background: transparent; }
+.saved .s-name { font-weight: 600; overflow-wrap: anywhere; }
+.saved .s-sum { display: block; font: 0.78rem/1.35 var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+.saved .s-btns { display: inline-flex; gap: 6px; }
+.copy-area { width: 100%; min-height: 9em; font: 0.82rem/1.4 var(--font-mono); padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.foot { font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+@media (prefers-reduced-motion: reduce) { .stage, .st-hint { transition: none; } }
+</style>
+
+</head>
+<body>
+<div class="app">
+  <div class="stage-wrap">
+    <section class="stage" id="stage" aria-label="Vista 3D de la lámpara">
+      <canvas id="c3d" aria-label="Lámpara en 3D. Arrastra para girar."></canvas>
+      <div class="st-row st-top">
+        <div class="seg" role="group" aria-label="Punto de vista">
+          <button type="button" id="v-abajo" data-view="abajo" aria-pressed="false">Abajo</button>
+          <button type="button" id="v-tq" data-view="tq" aria-pressed="true">3/4</button>
+          <button type="button" id="v-lado" data-view="lado" aria-pressed="false">Lado</button>
+          <button type="button" id="v-arriba" data-view="arriba" aria-pressed="false">Arriba</button>
+        </div>
+        <div class="seg" role="group" aria-label="Forma de dibujo">
+          <button type="button" id="m-solido" data-mode="solido" aria-pressed="true">Sólido</button>
+          <button type="button" id="m-luz" data-mode="luz" aria-pressed="false">Luz</button>
+          <button type="button" id="m-lineas" data-mode="lineas" aria-pressed="false">Líneas</button>
+        </div>
+      </div>
+      <p class="st-hint" id="stHint">Arrastra para girar · pellizca o usa la rueda para acercar · toca una varilla para elegirla</p>
+      <div class="st-legend" aria-hidden="true">
+        <span><i style="background: var(--hl)"></i>varilla elegida</span>
+        <span><i style="background: var(--rod)"></i>curvas</span>
+        <span id="lgMer"><i style="background: var(--rod); opacity: .6"></i>meridianos, por dentro</span>
+        <span id="lgLed"><i style="background: var(--led)"></i>luz LED</span>
+      </div>
+      <div class="st-row st-bottom" id="stBottom">
+        <div class="pick">
+          <button type="button" class="pick-btn" id="selPrev" aria-label="Varilla anterior">‹</button>
+          <div class="pick-label"><span id="selName">Curva 01A</span><small id="selInfo">centro → aro</small></div>
+          <button type="button" class="pick-btn" id="selNext" aria-label="Varilla siguiente">›</button>
+        </div>
+        <button type="button" class="st-act" id="btnExtract">Sacar varilla</button>
+      </div>
+      <div class="st-row st-bottom" id="stBottomEx" hidden>
+        <div class="ex-info"><span id="exName">Curva 01A</span><small id="exDims">—</small></div>
+        <div class="ex-btns">
+          <button type="button" class="st-ghost" id="btnPlano">Ver plano</button>
+          <button type="button" class="st-act" id="btnReturn">Devolver</button>
+        </div>
+      </div>
+      <div class="st-msg" id="stMsg" hidden></div>
+    </section>
+  </div>
+
+  <main class="work">
+    <header class="intro">
+      <p class="eyebrow">Estructura en varilla · medidas en mm</p>
+      <h1>Diseñador Roseta</h1>
+      <p class="lede">Arranca con la lámpara de Ø80 cm que se va a fabricar. Cambia las medidas, gira la lámpara y saca la varilla que se repite. El plano, la plantilla 1:1, el corte láser y los pasos para hacerla a mano se recalculan solos.</p>
+    </header>
+
+    <section class="ficha" aria-labelledby="fichaTitle">
+      <div class="ficha-head">
+        <span class="qty" id="fQty">48</span>
+        <div>
+          <h2 class="ficha-title" id="fichaTitle">curvas, todas iguales</h2>
+          <p class="hint">Un solo arco plano de radio fijo. La mitad se monta volteada.</p>
+        </div>
+      </div>
+      <dl class="ficha-grid" id="fGrid"></dl>
+      <p class="ficha-foot" id="fFoot"></p>
+      <div class="actions">
+        <button type="button" class="btn small" id="copyTxt">Copiar medidas</button>
+        <span class="status" id="copyStatus" aria-live="polite"></span>
+      </div>
+      <textarea class="copy-area" id="copyArea" readonly hidden aria-label="Medidas para copiar"></textarea>
+    </section>
+
+    <section class="block" id="medidas" aria-labelledby="hMedidas">
+      <div class="block-head">
+        <h2 id="hMedidas">Medidas</h2>
+        <button type="button" class="btn small" id="btnReset">Restablecer</button>
+      </div>
+      <div class="presets" id="presets" role="group" aria-label="Diseños de partida"></div>
+      <div id="fields"></div>
+      <label class="check" for="in-mer"><input type="checkbox" id="in-mer"><span>Meridianos para la luz: van del disco al aro por dentro de las curvas, que los cruzan por encima. Debajo de cada uno va la tira LED.</span></label>
+      <div class="notes" id="warnings" aria-live="polite"></div>
+    </section>
+
+    <section class="block" id="varilla" aria-labelledby="hVarilla">
+      <div class="block-head">
+        <h2 id="hVarilla">La varilla</h2>
+        <div class="seg light" role="group" aria-label="Pieza">
+          <button type="button" id="pz-cur" data-piece="cur" aria-pressed="true">Curva</button>
+          <button type="button" id="pz-mer" data-piece="mer" aria-pressed="false">Meridiano</button>
+        </div>
+      </div>
+      <p class="hint" id="pzLead"></p>
+      <div class="drawing" id="pzDrawing"></div>
+      <dl class="facts" id="pzFacts"></dl>
+      <h3>Tabla de trazado</h3>
+      <p class="hint" id="pzTableLead"></p>
+      <div class="table-wrap"><table id="pzTable"></table></div>
+      <h3>Descargar</h3>
+      <div class="actions">
+        <button type="button" class="btn primary" id="dlPdf" disabled>Plantilla 1:1 en hojas carta (PDF)</button>
+        <button type="button" class="btn" id="dlSvg" disabled>Plantilla 1:1 para plotter (SVG)</button>
+        <button type="button" class="btn" id="dlZip" disabled>Paquete para el taller (ZIP)</button>
+      </div>
+      <p class="hint">El ZIP trae los DXF a escala 1:1 (la curva, el meridiano, la planta de armado y el aro y el disco para el corte láser), los STL, la plantilla SVG y las medidas.</p>
+      <p class="status" id="dlStatus" aria-live="polite">Preparando descargas…</p>
+    </section>
+
+    <section class="block" id="hacer" aria-labelledby="hHacer">
+      <h2 id="hHacer">Cómo hacerla a mano</h2>
+      <p class="hint" id="hacerLead"></p>
+      <ol class="steps" id="hacerSteps"></ol>
+      <h3>Otras formas de hacerla</h3>
+      <div class="alts" id="hacerAlt"></div>
+    </section>
+
+    <section class="block" id="armado" aria-labelledby="hArmado">
+      <h2 id="hArmado">Armado</h2>
+      <div class="build">
+        <button type="button" class="btn small" id="buildPlay">Ver armado</button>
+        <label class="sr" for="buildRange">Varillas puestas</label>
+        <input type="range" id="buildRange" min="0" max="72" step="1" value="72">
+        <p class="status" id="buildLabel" aria-live="polite"></p>
+      </div>
+      <ol class="steps" id="armadoSteps"></ol>
+      <details>
+        <summary>Posición de cada varilla</summary>
+        <div class="table-wrap"><table id="rodTable"></table></div>
+      </details>
+    </section>
+
+    <section class="block" id="disenos" aria-labelledby="hDis">
+      <h2 id="hDis">Mis diseños</h2>
+      <p class="hint" id="disLead">Guarda las medidas que te gusten. Después le puedes pedir a Claude que arme el archivo de Blender y los planos con un diseño guardado.</p>
+      <form class="save-row" id="saveForm">
+        <label class="sr" for="saveName">Nombre del diseño</label>
+        <input type="text" id="saveName" maxlength="60" placeholder="Nombre del diseño">
+        <button type="submit" class="btn primary" id="saveBtn" disabled>Guardar diseño</button>
+      </form>
+      <p class="status" id="saveStatus" aria-live="polite"></p>
+      <ul class="saved" id="savedList">
+        <li class="empty">Cargando diseños guardados…</li>
+      </ul>
+    </section>
+
+    <footer class="foot">Medidas iniciales: la lámpara de Ø80 cm que se va a fabricar, con aro de 800 mm al eje, domo de 220 mm, varilla de acero 1018 de 1/4" y aro y disco en lámina de 4,5 mm. El domo es un casquete esférico y cada curva es el corte de esa esfera con un plano que pasa por el centro de arriba; por eso todas las curvas son el mismo arco plano. Los meridianos siguen una esfera una varilla más chica, para que las curvas pasen por encima.</footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ============ utilidades ============ */
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var PI = Math.PI;
+  var deg = function (r) { return r * 180 / PI; };
+  var nf = function (x, d) { if (d === undefined) d = 1; return Number(x).toLocaleString('es-CO', { minimumFractionDigits: d, maximumFractionDigits: d }); };
+  var nf0 = function (x) { return nf(x, 0); };
+  var nfd = function (x) { return nf(x, Math.round(x) === x ? 0 : 1); };
+  // varilla comercial en pulgadas
+  var INCH = [[4.76, '3/16"'], [6.35, '1/4"'], [7.94, '5/16"'], [9.53, '3/8"'], [12.7, '1/2"']];
+  function inchOf(d) { for (var i = 0; i < INCH.length; i++) if (Math.abs(d - INCH[i][0]) < 0.03) return INCH[i][1]; return null; }
+  function mm2(x) { return nf(x, Math.abs(x - Math.round(x)) < 1e-6 ? 0 : (Math.abs(x * 10 - Math.round(x * 10)) < 1e-6 ? 1 : 2)); }
+  function rodTxt(d) { var i = inchOf(d); return i ? i + ' (' + mm2(d) + ' mm)' : 'Ø' + mm2(d) + ' mm'; }
+  function rodShort(d) { return inchOf(d) || 'Ø' + mm2(d); }
+  var cop = function (x) { return '$' + nf0(x); };
+  function joinY(a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1]; }
+  var wrap180 = function (x) { return ((x + 180) % 360 + 360) % 360 - 180; };
+  var HOLE = 10.5;   // perforación del disco: niple roscado M10 de lámpara
+  var LED_D = 8;     // neón flex redondo de Ø8 por debajo de cada meridiano
+  var pad2 = function (k) { return String(k).padStart(2, '0'); };
+  var norm360 = function (a) { return ((a % 360) + 360) % 360; };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+  function rotZ(v, t) { var c = Math.cos(t), s = Math.sin(t); return [c * v[0] - s * v[1], s * v[0] + c * v[1], v[2]]; }
+  function rotFrame(f, t) { return { e1: rotZ(f.e1, t), e2: rotZ(f.e2, t), n: rotZ(f.n, t), pos: rotZ(f.pos, t) }; }
+  function applyFrame(f, q) {
+    return [
+      f.pos[0] + q[0] * f.e1[0] + q[1] * f.e2[0] + q[2] * f.n[0],
+      f.pos[1] + q[0] * f.e1[1] + q[1] * f.e2[1] + q[2] * f.n[1],
+      f.pos[2] + q[0] * f.e1[2] + q[1] * f.e2[2] + q[2] * f.n[2]
+    ];
+  }
+  var IDF = { e1: [1, 0, 0], e2: [0, 1, 0], n: [0, 0, 1], pos: [0, 0, 0] };
+
+  /* ============ parámetros ============ */
+  var DEF = { D: 800, H: 220, N: 24, m: 4, rh: 70, d: 6.35, aw: 20, at: 4.5, dd: 170, mer: true, n: 9, precio: 11100 };
+  var PRESETS = [
+    { id: 'd80', name: 'Ø80 · la que vamos a fabricar', p: { D: 800, H: 220, N: 24, m: 4, rh: 70, d: 6.35, aw: 20, at: 4.5, dd: 170, mer: true } },
+    { id: 'd90', name: 'Ø90 · como la foto', p: { D: 900, H: 250, N: 24, m: 4, rh: 70, d: 6.35, aw: 20, at: 4.5, dd: 170, mer: true } },
+    { id: 'peq', name: 'Pequeña · Ø60', p: { D: 600, H: 170, N: 18, m: 3, rh: 50, d: 4.76, aw: 16, at: 4, dd: 120, mer: true } },
+    { id: 'gde', name: 'Grande · Ø120', p: { D: 1200, H: 330, N: 30, m: 5, rh: 90, d: 7.94, aw: 25, at: 6, dd: 210, mer: true } }
+  ];
+  var FIELDS = [
+    { g: 'Forma', key: 'D', label: 'Diámetro del aro', unit: 'mm', step: 10, min: function () { return 300; }, max: function () { return 1600; } },
+    { g: 'Forma', key: 'H', label: 'Altura del domo', unit: 'mm', step: 5, min: function () { return 60; }, max: function (p) { return Math.floor(p.D * 0.475 / 5) * 5; } },
+    { g: 'Forma', key: 'N', label: 'Pétalos', unit: '', step: 1, min: function () { return 6; }, max: function () { return 40; } },
+    { g: 'Forma', key: 'm', label: 'Abertura del pétalo', unit: 'pasos', step: 1, min: function () { return 1; }, max: function (p) { return Math.max(1, Math.floor(75 * p.N / 180)); } },
+    { g: 'Varilla y centro', key: 'd', label: 'Diámetro de la varilla', unit: 'mm', step: 0.01, min: function () { return 3; }, max: function () { return 12; }, quick: INCH.slice(0, 4) },
+    { g: 'Varilla y centro', key: 'rh', label: 'Fin de las varillas en el centro', unit: 'mm', step: 5, min: function () { return 25; }, max: function (p) { return Math.floor(p.D * 0.2 / 5) * 5; } },
+    { g: 'Varilla y centro', key: 'dd', label: 'Disco central Ø', unit: 'mm', step: 5, min: function (p) { return Math.ceil((2 * p.rh + 10) / 5) * 5; }, max: function (p) { return Math.max(Math.ceil((2 * p.rh + 10) / 5) * 5, Math.floor(p.D * 0.5 / 5) * 5); } },
+    { g: 'Aro y disco · corte láser', key: 'aw', label: 'Ancho del aro', unit: 'mm', step: 1, min: function () { return 8; }, max: function () { return 50; } },
+    { g: 'Aro y disco · corte láser', key: 'at', label: 'Espesor de la lámina', unit: 'mm', step: 0.5, min: function () { return 3; }, max: function () { return 12; } },
+    { g: 'Compra', key: 'n', label: 'Lámparas a fabricar', unit: '', step: 1, min: function () { return 1; }, max: function () { return 60; } },
+    { g: 'Compra', key: 'precio', label: 'Precio de la barra de 6 m', unit: 'COP', step: 100, min: function () { return 0; }, max: function () { return 500000; }, noRange: true }
+  ];
+
+  function clampParams(src) {
+    var q = Object.assign({}, DEF, src || {});
+    FIELDS.forEach(function (f) {
+      var v = Number(q[f.key]);
+      if (!isFinite(v)) v = DEF[f.key];
+      v = Math.round(v / f.step) * f.step;
+      v = Math.min(f.max(q), Math.max(f.min(q), v));
+      q[f.key] = Number(v.toFixed(2));
+    });
+    q.mer = q.mer !== false && q.mer !== 'false' && q.mer !== 0;
+    return q;
+  }
+
+  /* ============ geometría ============ */
+  // Domo = casquete esférico. Cada pétalo = círculo de la esfera que pasa por el polo:
+  // es plano, así que cada curva (medio pétalo entre el disco y el aro) es un arco de radio fijo.
+  function computeDesign(p) {
+    var a = p.D / 2, H = p.H, N = p.N, rh = p.rh, r = p.d / 2;
+    var Rs = (a * a + H * H) / (2 * H), zc = H - Rs;
+    var paso = 2 * PI / N, alpha = p.m * paso / 2;
+    var thRim = Math.asin(Math.min(1, a / Rs)), thHub = Math.asin(Math.min(1, rh / Rs));
+    function petal(thq) {
+      var Qx = Rs * Math.sin(thq), Qz = Rs * Math.cos(thq);
+      var Cx = Qx / 2, Cz = (Rs + Qz) / 2;
+      var rho = Math.hypot(Qx, Rs - Qz) / 2;
+      return { Cx: Cx, Cz: Cz, rho: rho, ux: -Cx / rho, uz: (Rs - Cz) / rho };
+    }
+    function pt(pe, s) { return [pe.Cx + pe.rho * Math.cos(s) * pe.ux, pe.rho * Math.sin(s), pe.Cz + pe.rho * Math.cos(s) * pe.uz]; }
+    function bis(f, lo, hi) { for (var i = 0; i < 64; i++) { var mid = (lo + hi) / 2; if (f(mid)) lo = mid; else hi = mid; } return (lo + hi) / 2; }
+    function sRim(pe) { return bis(function (s) { return pt(pe, s)[2] + zc > 0; }, 0, PI); }
+    function rimAz(thq) { var pe = petal(thq); var q = pt(pe, sRim(pe)); return Math.atan2(q[1], q[0]); }
+    var thq = bis(function (t) { return rimAz(t) < alpha; }, thRim + 1e-9, PI * 0.97);
+    var pe = petal(thq);
+    var s1 = sRim(pe);
+    var s0 = bis(function (s) { var q = pt(pe, s); return Math.hypot(q[0], q[1]) < rh; }, 0, s1);
+    var Th = s1 - s0, sm = (s0 + s1) / 2, rho = pe.rho;
+    function W(q) { return [q[0], q[1], q[2] + zc]; }
+    function pol(q) { return { r: Math.hypot(q[0], q[1]), az: deg(Math.atan2(q[1], q[0])), z: q[2] }; }
+    var hubP = W(pt(pe, s0)), rimP = W(pt(pe, s1)), midP = W(pt(pe, sm));
+    function frameSide(w) {
+      var c = Math.cos(sm), s = Math.sin(sm);
+      var e1 = [c * pe.ux, s * w, c * pe.uz];
+      var e2 = [-s * pe.ux, c * w, -s * pe.uz];
+      return { e1: e1, e2: e2, n: cross(e1, e2), pos: [pe.Cx, 0, pe.Cz + zc] };
+    }
+    var fA = frameSide(1), fB = frameSide(-1);
+    var cur = {
+      kind: 'cur', R: rho, phi0: -Th / 2, phi1: Th / 2, hubAtPhi1: false, Th: Th,
+      L: rho * Th, chord: 2 * rho * Math.sin(Th / 2), sag: rho * (1 - Math.cos(Th / 2)),
+      hub: pol(hubP), rim: pol(rimP), mid: pol(midP), incl: deg(Math.acos(Math.min(1, Math.abs(pe.ux))))
+    };
+    // Meridianos: van por dentro de las curvas, en una esfera una varilla más chica (Rm), y bajan
+    // por la muesca del aro hasta su cara de abajo (z = -espesor). Igual que generar_lampara.py.
+    var Rm = Rs - p.d;
+    var thHubM = Math.asin(Math.min(1, rh / Rm));
+    var rTopM = Math.sqrt(Math.max(0, Rm * Rm - zc * zc));
+    var thTopM = Math.asin(Math.min(1, rTopM / Rm));
+    var thEndM = Math.acos(Math.max(-1, Math.min(1, (-p.at - zc) / Rm)));
+    var ThM = thEndM - thHubM;
+    var mer = {
+      kind: 'mer', R: Rm, phi0: PI / 2 - thEndM, phi1: PI / 2 - thHubM, hubAtPhi1: true, Th: ThM,
+      L: Rm * ThM, chord: 2 * Rm * Math.sin(ThM / 2), sag: Rm * (1 - Math.cos(ThM / 2)),
+      rTop: rTopM, rBot: Rm * Math.sin(thEndM), incl: deg(thTopM), inside: Rs - Rm
+    };
+    // tira LED: por debajo del meridiano, del borde del disco al borde de adentro del aro
+    var rInt = a - p.aw / 2;
+    var led = {
+      d: LED_D, R: Rm - r - LED_D / 2,
+      th0: Math.asin(Math.min(1, (p.dd / 2 + LED_D / 2 + 2) / Rm)), th1: Math.asin(Math.min(1, (rInt - 1) / Rm)),
+      tramo: Rm * (Math.asin(Math.min(1, rInt / Rm)) - Math.asin(Math.min(1, p.dd / 2 / Rm)))
+    };
+    var merOff = (p.m % 2 === 0) ? paso / 2 : 0;
+    var rods = [];
+    if (p.mer) {
+      for (var k = 0; k < N; k++) {
+        var ps = merOff + k * paso;
+        var e1 = [Math.cos(ps), Math.sin(ps), 0], e2 = [0, 0, 1];
+        rods.push({ type: 'mer', k: k, inst: k, name: 'M' + pad2(k + 1), label: 'Meridiano ' + pad2(k + 1),
+          frame: { e1: e1, e2: e2, n: cross(e1, e2), pos: [0, 0, zc] }, hubAz: norm360(deg(ps)), rimAz: norm360(deg(ps)) });
+      }
+    }
+    var nMer = rods.length;
+    [['A', fA, 1], ['B', fB, -1]].forEach(function (sd) {
+      for (var k = 0; k < N; k++) {
+        rods.push({ type: 'cur', side: sd[0], k: k, inst: (sd[0] === 'A' ? 0 : N) + k, name: pad2(k + 1) + sd[0], label: 'Curva ' + pad2(k + 1) + sd[0],
+          frame: rotFrame(sd[1], k * paso), hubAz: norm360(sd[2] * cur.hub.az + deg(k * paso)), rimAz: norm360(sd[2] * cur.rim.az + deg(k * paso)) });
+      }
+    });
+    // el disco queda debajo de lo más bajo que llega al centro: los meridianos (o las curvas si no hay)
+    var Rsup = nMer ? Rm : Rs, rAp = (rh + p.dd / 2) / 2;
+    var zDiscTop = zc + Math.sqrt(Rsup * Rsup - rAp * rAp) - r;
+    var ok = Math.abs(Math.atan2(rimP[1], rimP[0]) - alpha) < 2e-3;
+    // radios (en planta) donde la curva 01A cruza por encima de los meridianos
+    var crossR = [];
+    if (nMer) {
+      var fr = rods[nMer].frame, S = 1500, pAz = null, pR = null;
+      for (var i = 0; i <= S; i++) {
+        var ph = cur.phi0 + (cur.phi1 - cur.phi0) * i / S, w = applyFrame(fr, [rho * Math.cos(ph), rho * Math.sin(ph), 0]);
+        var az = deg(Math.atan2(w[1], w[0])), rr = Math.hypot(w[0], w[1]);
+        if (pAz !== null) for (var j = 0; j < N; j++) {
+          var psi = deg(merOff + j * paso), d0 = wrap180(pAz - psi), d1 = wrap180(az - psi);
+          if (Math.abs(d0) < 90 && d0 !== d1 && (d0 === 0 || d0 * d1 < 0)) crossR.push(pR + (rr - pR) * d0 / (d0 - d1));
+        }
+        pAz = az; pR = rr;
+      }
+      crossR.sort(function (x, y) { return x - y; });
+    }
+    var des = { p: p, a: a, H: H, N: N, Rs: Rs, Rm: Rm, zc: zc, paso: paso, alpha: alpha, thRim: thRim, thHub: thHub, cur: cur, mer: mer, led: led, rods: rods, nMer: nMer, nCur: 2 * N, merOff: merOff, zDiscTop: zDiscTop, crossR: crossR, ok: ok };
+    des.ring = ringCut(des);
+    return des;
+  }
+
+  // Aro cortado en láser: muescas (o ranuras) para los meridianos y asientos redondos para las V.
+  // Es el mismo cálculo del PDF para Metal Cortes.
+  function up05(x) { return Math.ceil(x * 2 - 1e-9) / 2; }
+  function ringCut(des) {
+    var p = des.p, Rext = des.a + p.aw / 2, Rint = des.a - p.aw / 2, k;
+    var c = { Rext: Rext, Rint: Rint, slotW: up05(p.d + 0.6), seatD: up05(p.d + 0.15), rSeat: des.a, seatAng: [], merAng: [],
+      muesca: false, slotL: 0, slotC: 0, notchR: null, rOut: 0, rIn: 0, seatsFit: true };
+    c.seatsFit = c.seatD / 2 <= p.aw / 2 - 1;
+    if (c.seatsFit) for (k = 0; k < des.N; k++) c.seatAng.push(norm360(deg(des.alpha + k * des.paso)));
+    if (des.nMer) {
+      for (k = 0; k < des.N; k++) c.merAng.push(norm360(deg(des.merOff + k * des.paso)));
+      var half = (p.d / 2) / Math.sin(des.mer.incl * PI / 180);           // media huella de la varilla inclinada
+      c.rOut = des.mer.rBot + half + 0.25; c.rIn = des.mer.rTop - half - 0.25;
+      c.muesca = c.rIn < Rint + 3.5;
+      if (!c.muesca) {
+        c.slotL = up05(c.rOut - c.rIn); c.slotC = Math.min((c.rOut + c.rIn) / 2, Rext - 3.5 - c.slotL / 2);
+        if (c.slotC - c.slotL / 2 < Rint + 1) c.muesca = true;
+      }
+      if (c.muesca) { c.notchR = Math.min(Rint + up05(c.rOut - Rint), Rext - 1.5); c.slotL = c.notchR - Rint; c.slotC = (Rint + c.notchR) / 2; }
+    }
+    c.seatAng.sort(function (x, y) { return x - y; }); c.merAng.sort(function (x, y) { return x - y; });
+    return c;
+  }
+  function ringHolesTxt(des) {
+    var c = des.ring, t = [];
+    if (des.nMer) t.push(des.N + ' ' + (c.muesca ? 'muescas de ' + nf(c.slotW) + ' × ' + nf(c.slotL) + ' mm desde el borde de adentro' : 'ranuras de ' + nf(c.slotW) + ' × ' + nf(c.slotL) + ' mm') + ' para los meridianos');
+    if (c.seatAng.length) t.push(c.seatAng.length + ' huecos de Ø' + nf(c.seatD) + ' para las V');
+    return joinY(t);
+  }
+
+  // Compra y taller: mismas reglas que el PDF de curvas (corte con 30 mm de sobra, disco de 3 mm,
+  // al menos 1 % de repuesto) y horma con el retorno elástico del acero 1018.
+  function shop(des) {
+    var p = des.p, r = p.d / 2, RHO = 7.85e-6, area = PI * r * r, c = des.ring, n = p.n;
+    function corte(L) { return Math.ceil((L + 30) / 10) * 10; }
+    function porBarra(cut) { return Math.max(1, Math.floor(6000 / (cut + 3))); }
+    function barras(q, pb) { if (!q) return 0; var b = Math.ceil(q / pb); if (b * pb - q < Math.max(1, Math.ceil(q * 0.01))) b += 1; return b; }
+    function plan(L, q1) { var cut = corte(L), per = porBarra(cut); return { cut: cut, per: per, qty1: q1, qty: q1 * n, bars: barras(q1 * n, per), bars1: barras(q1, per) }; }
+    var bC = plan(des.cur.L, des.nCur), bM = des.nMer ? plan(des.mer.L, des.nMer) : null;
+    var nBars = bC.bars + (bM ? bM.bars : 0), kgPerM = area * RHO * 1000;
+    var lenRods = des.nCur * des.cur.L + des.nMer * des.mer.L, kgRods = lenRods * area * RHO;
+    var holes = (des.nMer ? des.N * c.slotW * c.slotL : 0) + c.seatAng.length * PI * Math.pow(c.seatD / 2, 2);
+    var kgRing = (PI * (c.Rext * c.Rext - c.Rint * c.Rint) - holes) * p.at * RHO;
+    var kgDisc = PI * (Math.pow(p.dd / 2, 2) - Math.pow(HOLE / 2, 2)) * p.at * RHO;
+    // fluencia del 1018: 370 MPa calibrado (estirado en frío), 220 MPa laminado en caliente
+    function form(R, Y) { return 1 / (1 / R + 3.395 * Y / (200000 * p.d)) - r; }
+    var nHub = des.nCur + des.nMer;
+    return { bC: bC, bM: bM, nBars: nBars, kgPerM: kgPerM, lenRods: lenRods, kgRods: kgRods, kgRing: kgRing, kgDisc: kgDisc, kg: kgRods + kgRing + kgDisc,
+      kgBuy: nBars * 6 * kgPerM, cost: nBars * p.precio, costLamp: nBars * p.precio / n,
+      formC: [form(des.cur.R, 370), form(des.cur.R, 220)], formM: [form(des.mer.R, 370), form(des.mer.R, 220)],
+      nHub: nHub, gapHub: 2 * PI * p.rh / nHub, ledLamp: des.nMer * des.led.tramo };
+  }
+
+  // Pieza acostada: cuerda horizontal sobre y = 0, panza hacia arriba (y hacia arriba).
+  function flatGeom(pc) {
+    var half = (pc.phi1 - pc.phi0) / 2, phim = (pc.phi0 + pc.phi1) / 2, R = pc.R, yc = -R * Math.cos(half);
+    function at(phi, rr) { if (rr === undefined) rr = R; var t = phi - phim + PI / 2; return [rr * Math.cos(t), yc + rr * Math.sin(t)]; }
+    function arc(rr, n) { n = n || 160; var out = []; for (var i = 0; i <= n; i++) out.push(at(pc.phi0 + (pc.phi1 - pc.phi0) * i / n, rr)); return out; }
+    return { R: R, half: half, yc: yc, chord: 2 * R * Math.sin(half), sag: R * (1 - Math.cos(half)), at: at, arc: arc,
+      hubEnd: at(pc.hubAtPhi1 ? pc.phi1 : pc.phi0), rimEnd: at(pc.hubAtPhi1 ? pc.phi0 : pc.phi1) };
+  }
+  function offsets(pc) {
+    var g = flatGeom(pc), step = g.chord > 260 ? 50 : 25, rows = [];
+    for (var x = 0; x < g.chord / 2 - 1; x += step) rows.push([x, Math.sqrt(g.R * g.R - x * x) + g.yc]);
+    rows.push([g.chord / 2, 0]);
+    return { step: step, rows: rows };
+  }
+
+  /* ============ mallas (sin depender de three.js) ============ */
+  function arcTubeData(R, phi0, phi1, r, segs, rad) {
+    var pos = [], nor = [], idx = [], i, j;
+    for (i = 0; i <= segs; i++) {
+      var ph = phi0 + (phi1 - phi0) * i / segs, c = Math.cos(ph), s = Math.sin(ph);
+      for (j = 0; j < rad; j++) {
+        var b = 2 * PI * j / rad, cb = Math.cos(b), sb = Math.sin(b);
+        var nx = c * cb, ny = s * cb, nz = sb;
+        pos.push(R * c + r * nx, R * s + r * ny, r * nz); nor.push(nx, ny, nz);
+      }
+    }
+    for (i = 0; i < segs; i++) for (j = 0; j < rad; j++) {
+      var A = i * rad + j, B = i * rad + (j + 1) % rad, C = (i + 1) * rad + j, D = (i + 1) * rad + (j + 1) % rad;
+      idx.push(A, C, B, B, C, D);
+    }
+    [[0, -1], [segs, 1]].forEach(function (cap) {
+      var ph = phi0 + (phi1 - phi0) * cap[0] / segs, c = Math.cos(ph), s = Math.sin(ph), sg = cap[1];
+      var T = [-s * sg, c * sg, 0], base = pos.length / 3;
+      pos.push(R * c, R * s, 0); nor.push(T[0], T[1], T[2]);
+      for (var j2 = 0; j2 < rad; j2++) {
+        var b = 2 * PI * j2 / rad, cb = Math.cos(b), sb = Math.sin(b);
+        pos.push(R * c + r * c * cb, R * s + r * s * cb, r * sb); nor.push(T[0], T[1], T[2]);
+      }
+      for (var j3 = 0; j3 < rad; j3++) {
+        var p1 = base + 1 + j3, p2 = base + 1 + (j3 + 1) % rad;
+        if (sg < 0) idx.push(base, p1, p2); else idx.push(base, p2, p1);
+      }
+    });
+    return pack(pos, nor, idx);
+  }
+  function ringData(rin, rout, z0, z1, segs) {
+    var pos = [], nor = [], idx = [];
+    function strip(fn, nfn, flip) {
+      var base = pos.length / 3;
+      for (var i = 0; i <= segs; i++) {
+        var t = 2 * PI * i / segs, c = Math.cos(t), s = Math.sin(t);
+        var A = fn(c, s, 0), B = fn(c, s, 1), n = nfn(c, s);
+        pos.push(A[0], A[1], A[2], B[0], B[1], B[2]); nor.push(n[0], n[1], n[2], n[0], n[1], n[2]);
+      }
+      for (var k = 0; k < segs; k++) {
+        var a0 = base + 2 * k, a1 = a0 + 1, b0 = a0 + 2, b1 = a0 + 3;
+        if (!flip) idx.push(a0, b0, a1, a1, b0, b1); else idx.push(a0, a1, b0, a1, b1, b0);
+      }
+    }
+    strip(function (c, s, u) { var rr = u ? rout : rin; return [rr * c, rr * s, z1]; }, function () { return [0, 0, 1]; }, true);
+    strip(function (c, s, u) { var rr = u ? rout : rin; return [rr * c, rr * s, z0]; }, function () { return [0, 0, -1]; }, false);
+    strip(function (c, s, u) { return [rout * c, rout * s, u ? z1 : z0]; }, function (c, s) { return [c, s, 0]; }, false);
+    strip(function (c, s, u) { return [rin * c, rin * s, u ? z1 : z0]; }, function (c, s) { return [-c, -s, 0]; }, true);
+    return pack(pos, nor, idx);
+  }
+  function discData(rr, z0, z1, segs) {
+    var pos = [], nor = [], idx = [];
+    [[z1, 1], [z0, -1]].forEach(function (f) {
+      var base = pos.length / 3; pos.push(0, 0, f[0]); nor.push(0, 0, f[1]);
+      for (var i = 0; i < segs; i++) { var t = 2 * PI * i / segs; pos.push(rr * Math.cos(t), rr * Math.sin(t), f[0]); nor.push(0, 0, f[1]); }
+      for (var k = 0; k < segs; k++) { var p1 = base + 1 + k, p2 = base + 1 + (k + 1) % segs; if (f[1] > 0) idx.push(base, p1, p2); else idx.push(base, p2, p1); }
+    });
+    var side = ringData(rr - 0.001, rr, z0, z1, segs);
+    // sólo la cara exterior del anillo auxiliar sirve como costado
+    var base = pos.length / 3, sp = side.pos, sn = side.nor;
+    var outerStart = 2 * 2 * (segs + 1), count = 2 * (segs + 1);
+    for (var i = 0; i < count; i++) { var o = (outerStart + i) * 3; pos.push(sp[o], sp[o + 1], sp[o + 2]); nor.push(sn[o], sn[o + 1], sn[o + 2]); }
+    for (var k = 0; k < segs; k++) { var a0 = base + 2 * k, a1 = a0 + 1, b0 = a0 + 2, b1 = a0 + 3; idx.push(a0, b0, a1, a1, b0, b1); }
+    return pack(pos, nor, idx);
+  }
+  function pack(pos, nor, idx) {
+    var nv = pos.length / 3;
+    return { pos: new Float32Array(pos), nor: new Float32Array(nor), idx: nv > 65535 ? new Uint32Array(idx) : new Uint16Array(idx) };
+  }
+  // Pieza de lámina con huecos (aro o disco): tapas trianguladas con el earcut de three.js y costados planos.
+  function ccw(pts) { var s = 0; for (var i = 0; i < pts.length; i++) { var a = pts[i], b = pts[(i + 1) % pts.length]; s += a[0] * b[1] - b[0] * a[1]; } return s > 0 ? pts : pts.slice().reverse(); }
+  function plateData(outer, holes, z0, z1) {
+    var T = window.THREE;
+    if (!T || !T.ShapeUtils) return null;
+    outer = ccw(outer); holes = holes.map(ccw);
+    var all = [outer].concat(holes), flat = [].concat.apply([], all);
+    var V2 = function (q) { return new T.Vector2(q[0], q[1]); };
+    var faces = T.ShapeUtils.triangulateShape(outer.map(V2), holes.map(function (h) { return h.map(V2); }));
+    var pos = [], nor = [], idx = [];
+    [[z1, 1], [z0, -1]].forEach(function (cap) {
+      var base = pos.length / 3;
+      flat.forEach(function (q) { pos.push(q[0], q[1], cap[0]); nor.push(0, 0, cap[1]); });
+      faces.forEach(function (f) {
+        var A = flat[f[0]], B = flat[f[1]], C = flat[f[2]];
+        var s = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]);
+        if ((s > 0) === (cap[1] > 0)) idx.push(base + f[0], base + f[1], base + f[2]); else idx.push(base + f[0], base + f[2], base + f[1]);
+      });
+    });
+    all.forEach(function (ct, ci) {
+      var out = ci === 0;
+      for (var i = 0; i < ct.length; i++) {
+        var a = ct[i], b = ct[(i + 1) % ct.length], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+        var nx = out ? dy / l : -dy / l, ny = out ? -dx / l : dx / l, base = pos.length / 3;
+        pos.push(a[0], a[1], z0, b[0], b[1], z0, b[0], b[1], z1, a[0], a[1], z1);
+        for (var k = 0; k < 4; k++) nor.push(nx, ny, 0);
+        if (out) idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+        else idx.push(base, base + 2, base + 1, base, base + 3, base + 2);
+      }
+    });
+    return pack(pos, nor, idx);
+  }
+  function circlePts(cx, cy, r, n) { var o = []; for (var i = 0; i < n; i++) { var t = 2 * PI * i / n; o.push([cx + r * Math.cos(t), cy + r * Math.sin(t)]); } return o; }
+  function obroundPts(rc, a, L, w) {
+    var h = w / 2, sl = L / 2 - h, ux = Math.cos(a), uy = Math.sin(a), o = [], j, f;
+    var P = function (su, sv) { return [(rc + su) * ux - sv * uy, (rc + su) * uy + sv * ux]; };
+    for (j = 0; j <= 10; j++) { f = -PI / 2 + PI * j / 10; o.push(P(sl + h * Math.cos(f), h * Math.sin(f))); }
+    for (j = 0; j <= 10; j++) { f = PI / 2 + PI * j / 10; o.push(P(-sl + h * Math.cos(f), h * Math.sin(f))); }
+    return o;
+  }
+  // Contornos del aro de láser (en planta): borde de afuera, borde de adentro con las muescas en U, ranuras y asientos.
+  function ringContours(des) {
+    var c = des.ring, holes = [], inner = [];
+    if (des.nMer && c.muesca) {
+      var h = c.slotW / 2, r = c.Rint, beta = Math.asin(h / r), u0 = Math.sqrt(r * r - h * h), rc = c.notchR - h;
+      var angs = c.merAng.map(function (x) { return x * PI / 180; });
+      angs.forEach(function (a, i) {
+        var nx = i + 1 < angs.length ? angs[i + 1] : angs[0] + 2 * PI, ux = Math.cos(a), uy = Math.sin(a), j;
+        var P = function (su, sv) { return [su * ux - sv * uy, su * uy + sv * ux]; };
+        inner.push(P(u0, -h), P(rc, -h));
+        for (j = 1; j < 10; j++) { var f = -PI / 2 + PI * j / 10; inner.push(P(rc + h * Math.cos(f), h * Math.sin(f))); }
+        inner.push(P(rc, h), P(u0, h));
+        var t0 = a + beta, t1 = nx - beta, ns = Math.max(2, Math.ceil((t1 - t0) / (PI / 240)));
+        for (j = 1; j < ns; j++) { var t = t0 + (t1 - t0) * j / ns; inner.push([r * Math.cos(t), r * Math.sin(t)]); }
+      });
+    } else {
+      inner = circlePts(0, 0, c.Rint, 512);
+      if (des.nMer) c.merAng.forEach(function (x) { holes.push(obroundPts(c.slotC, x * PI / 180, c.slotL, c.slotW)); });
+    }
+    holes.unshift(inner);
+    c.seatAng.forEach(function (x) { var t = x * PI / 180; holes.push(circlePts(c.rSeat * Math.cos(t), c.rSeat * Math.sin(t), c.seatD / 2, 20)); });
+    return { outer: circlePts(0, 0, c.Rext, 512), holes: holes };
+  }
+  function ringMesh(des) {
+    var p = des.p, rc = ringContours(des);
+    return plateData(rc.outer, rc.holes, -p.at, 0) || ringData(des.ring.Rint, des.ring.Rext, -p.at, 0, 240);
+  }
+  function discMesh(des) {
+    var p = des.p;
+    return plateData(circlePts(0, 0, p.dd / 2, 128), [circlePts(0, 0, HOLE / 2, 24)], des.zDiscTop - p.at, des.zDiscTop) || discData(p.dd / 2, des.zDiscTop - p.at, des.zDiscTop, 96);
+  }
+
+  /* ============ estado ============ */
+  var state = { p: null, des: null, sh: null, sel: 0, mode: 'solido', piece: 'cur', build: 0, view: 'tq', dl: null, db: null, canWrite: true };
+
+  /* ============ campos ============ */
+  function buildFields() {
+    var html = '', g = null;
+    FIELDS.forEach(function (f) {
+      if (f.g !== g) { if (g) html += '</div>'; g = f.g; html += '<div class="group"><h3>' + esc(f.g) + '</h3>'; }
+      html += '<div class="field"><div class="field-head"><label for="' + (f.noRange ? 'n-' : 'r-') + f.key + '">' + esc(f.label) + '</label>' +
+        '<span class="unit-in"><input id="n-' + f.key + '" type="number" inputmode="decimal" step="' + f.step + '"' + (f.noRange ? '' : ' aria-label="' + esc(f.label) + ' (número)"') + '>' +
+        (f.unit ? '<span>' + f.unit + '</span>' : '') + '</span></div>' +
+        (f.noRange ? '' : '<input id="r-' + f.key + '" type="range" step="' + f.step + '">') +
+        (f.quick ? '<div class="quick" role="group" aria-label="Medidas comerciales">' + f.quick.map(function (qk, i) {
+          return '<button type="button" class="chip" id="q-' + f.key + '-' + i + '" aria-pressed="false">' + esc(qk[1]) + '</button>'; }).join('') + '</div>' : '') +
+        '<p class="hint" id="h-' + f.key + '"></p></div>';
+    });
+    html += '</div>';
+    $('#fields').innerHTML = html;
+    FIELDS.forEach(function (f) {
+      var rEl = $('#r-' + f.key), nEl = $('#n-' + f.key);
+      if (rEl) rEl.addEventListener('input', function () { var o = {}; o[f.key] = Number(rEl.value); schedule(Object.assign({}, state.p, o)); });
+      nEl.addEventListener('change', function () { var o = {}; o[f.key] = Number(String(nEl.value).replace(',', '.')); schedule(Object.assign({}, state.p, o)); });
+      if (f.quick) f.quick.forEach(function (qk, i) {
+        $('#q-' + f.key + '-' + i).addEventListener('click', function () { var o = {}; o[f.key] = qk[0]; setParams(Object.assign({}, state.p, o)); });
+      });
+    });
+    $('#in-mer').addEventListener('change', function () { schedule(Object.assign({}, state.p, { mer: $('#in-mer').checked })); });
+  }
+  function buildPresets() {
+    $('#presets').innerHTML = PRESETS.map(function (pr) { return '<button type="button" class="chip" id="pre-' + pr.id + '" aria-pressed="false">' + esc(pr.name) + '</button>'; }).join('');
+    PRESETS.forEach(function (pr) { $('#pre-' + pr.id).addEventListener('click', function () { setParams(Object.assign({}, state.p, pr.p)); }); });
+  }
+  var pending = null, raf = 0;
+  function schedule(np) {
+    pending = np;
+    if (!raf) raf = requestAnimationFrame(function () { raf = 0; var q = pending; pending = null; setParams(q); });
+  }
+  function setParams(np) {
+    var prev = state.des && state.des.rods[state.sel] ? state.des.rods[state.sel].name : null;
+    state.p = clampParams(np);
+    state.des = computeDesign(state.p);
+    state.sh = shop(state.des);
+    var idx = prev ? state.des.rods.findIndex(function (r) { return r.name === prev; }) : -1;
+    state.sel = idx >= 0 ? idx : state.des.nMer;
+    state.build = state.des.rods.length;
+    if (state.piece === 'mer' && !state.des.nMer) state.piece = 'cur';
+    renderAll();
+    rebuild3D();
+    persist();
+  }
+  var persistT = 0;
+  function persist() {
+    clearTimeout(persistT);
+    persistT = setTimeout(function () { try { localStorage.setItem('roseta.params.v3', JSON.stringify(state.p)); } catch (e) { /* sin almacenamiento */ } }, 400);
+  }
+
+  /* ============ render de la página ============ */
+  function renderAll() {
+    syncFields(); renderFicha(); renderWarnings(); renderPiece(); renderHacer(); renderArmado(); renderSel();
+    var nameEl = $('#saveName'); if (nameEl && !nameEl.dataset.touched) nameEl.value = defaultName();
+  }
+  function syncFields() {
+    var p = state.p, des = state.des, sh = state.sh;
+    FIELDS.forEach(function (f) {
+      var rEl = $('#r-' + f.key), nEl = $('#n-' + f.key), lo = f.min(p), hi = f.max(p);
+      if (rEl) { rEl.min = lo; rEl.max = hi; rEl.value = p[f.key]; }
+      nEl.min = lo; nEl.max = hi;
+      if (document.activeElement !== nEl) nEl.value = p[f.key];
+      if (f.quick) f.quick.forEach(function (qk, i) { $('#q-' + f.key + '-' + i).setAttribute('aria-pressed', Math.abs(p[f.key] - qk[0]) < 0.005 ? 'true' : 'false'); });
+    });
+    $('#in-mer').checked = p.mer;
+    var rg = des.ring, inch = inchOf(p.d);
+    $('#h-D').textContent = 'Al eje de las varillas, donde las curvas llegan al aro. El aro mide Ø' + nf0(2 * rg.Rext) + ' por fuera.';
+    $('#h-H').textContent = 'Del plano del aro al centro de arriba. El domo es parte de una esfera de radio ' + nf(des.Rs) + ' mm.';
+    $('#h-N').textContent = 'Cada pétalo son 2 curvas: ' + des.nCur + ' curvas' + (p.mer ? ' y ' + p.N + ' meridianos.' : '.');
+    $('#h-m').textContent = 'Las dos mitades de cada pétalo llegan al aro a ±' + nf(deg(des.alpha)) + '° de su eje. En cada punto del aro se juntan 2 curvas formando una V. Más pasos: curvas más cortas y más paradas.';
+    $('#h-d').textContent = (inch ? 'Varilla lisa maciza de ' + inch + ' (' + mm2(p.d) + ' mm): ' : 'Varilla lisa maciza: ') + nf(sh.kgPerM, 3) + ' kg por metro, ' + nf(sh.kgPerM * 6, 2) + ' kg la barra de 6 m.' + (p.mer ? ' Los meridianos van una varilla más adentro que las curvas.' : '');
+    $('#h-rh').textContent = 'Radio donde terminan las varillas. Llegan ' + sh.nHub + (p.mer ? ': los meridianos se apoyan en el disco y las curvas encima de ellos.' : ' curvas, apoyadas en el disco.');
+    $('#h-dd').textContent = 'De la misma lámina que el aro, con perforación de Ø' + nf(HOLE) + ' para el niple. Las varillas se apoyan ' + nf0(p.dd / 2 - p.rh) + ' mm sobre el disco.';
+    $('#h-aw').textContent = 'Ø' + nf0(2 * rg.Rext) + ' × Ø' + nf0(2 * rg.Rint) + ', con ' + ringHolesTxt(des) + '.';
+    $('#h-at').textContent = 'El aro y el disco salen de la misma lámina. Pesan ' + nf(sh.kgRing) + ' y ' + nf(sh.kgDisc) + ' kg.';
+    $('#h-n').textContent = 'Para ' + p.n + (p.n === 1 ? ' lámpara: ' : ' lámparas: ') + sh.nBars + ' barras de 6 m (' + sh.bC.bars + ' de curvas' + (sh.bM ? ' y ' + sh.bM.bars + ' de meridianos' : '') + ').';
+    $('#h-precio').textContent = 'Con IVA. Cotización de noviembre de 2026: acero 1018 de 1/4" × 6 m a $11.100. Con 0 no se muestran costos.';
+    PRESETS.forEach(function (pr) {
+      var same = Object.keys(pr.p).every(function (k) { return pr.p[k] === p[k]; });
+      $('#pre-' + pr.id).setAttribute('aria-pressed', same ? 'true' : 'false');
+    });
+  }
+  function renderFicha() {
+    var des = state.des, c = des.cur, sh = state.sh, p = state.p;
+    $('#fQty').textContent = des.nCur;
+    var cells = [
+      ['Radio de doblez', nf(c.R) + ' mm', 'al eje de la varilla'],
+      ['Ángulo del arco', nf(deg(c.Th)) + '°', 'de punta a punta'],
+      ['Largo', nf(c.L) + ' mm', 'cortar ' + nf0(sh.bC.cut) + ' mm'],
+      ['Cuerda', nf(c.chord) + ' mm', 'distancia entre puntas'],
+      ['Flecha', nf(c.sag) + ' mm', 'altura del arco'],
+      ['Varilla', rodShort(p.d), (inchOf(p.d) ? mm2(p.d) + ' mm, ' : '') + 'acero 1018']
+    ];
+    $('#fGrid').innerHTML = cells.map(function (x) { return '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '<small>' + x[2] + '</small></dd></div>'; }).join('');
+    var m = des.mer, t = '';
+    if (des.nMer) t += 'Más ' + des.nMer + ' meridianos para la luz, por dentro de las curvas: R <span class="v">' + nf(m.R) + '</span> · largo <span class="v">' + nf(m.L) + ' mm</span>. ';
+    t += 'Para ' + p.n + (p.n === 1 ? ' lámpara: ' : ' lámparas: ') + '<span class="v">' + sh.nBars + ' barras</span> de ' + esc(rodShort(p.d)) + ' × 6 m (' + nf(sh.kgBuy) + ' kg)';
+    if (p.precio > 0) t += ' · <span class="v">' + cop(sh.cost) + '</span> con IVA, ' + cop(sh.costLamp) + ' por lámpara';
+    $('#fFoot').innerHTML = t + '. Cada lámpara pesa unos ' + nf(sh.kg) + ' kg.';
+  }
+  function renderWarnings() {
+    var des = state.des, sh = state.sh, p = state.p, rg = des.ring, w = [], info = [];
+    if (!des.ok) w.push('Con estas medidas las curvas no alcanzan el ángulo pedido en el aro. Baja la abertura del pétalo.');
+    if (deg(des.alpha) < 12) w.push('Las curvas llegan casi acostadas al aro (±' + nf(deg(des.alpha)) + '°): queda poco espacio para soldarlas. Sube la abertura del pétalo.');
+    if (des.nMer && rg.rOut > rg.Rext - 1.5) w.push('El meridiano se sale por el borde de afuera del aro. Sube la altura del domo o ensancha el aro.');
+    if (!rg.seatsFit) w.push('El aro es muy angosto para los huecos de las V (Ø' + nf(rg.seatD) + '). Ensánchalo.');
+    if (des.cur.chord > 900) w.push('Pieza larga (cuerda de ' + nf0(des.cur.chord) + ' mm): conviene roladora y plantilla impresa en plotter.');
+    if (sh.gapHub < p.d * 1.2) info.push('En el centro llegan ' + sh.nHub + ' varillas sobre un círculo de Ø' + nf0(2 * p.rh) + ' (' + nf(sh.gapHub) + ' mm por varilla), así que quedan pegadas. ' +
+      (des.nMer ? 'Los meridianos se apoyan en el disco y las curvas encima, y se sueldan en bloque. ' : 'Se sueldan juntas sobre el disco. ') + 'Para darles aire, agranda “Fin de las varillas en el centro”.');
+    $('#warnings').innerHTML = w.map(function (x) { return '<p class="note"><b>Ojo:</b> ' + x + '</p>'; }).join('') + info.map(function (x) { return '<p class="note info">' + x + '</p>'; }).join('');
+  }
+
+  /* ---------- dibujo de la pieza ---------- */
+  function pieceSVG(pc, d) {
+    var g = flatGeom(pc), r = d / 2;
+    var span = Math.max(g.chord, g.R * 0.9), fs = span * 0.034, sw = Math.max(0.6, span * 0.0022);
+    var x0 = -g.chord / 2 - fs * 3.2, x1 = g.chord / 2 + fs * 3.2;
+    var yTop = g.sag + r + fs * 2.6, yBot = g.yc - fs * 2.6;
+    var W = x1 - x0, Hh = yTop - yBot;
+    function P(q) { return q[0].toFixed(2) + ' ' + (-q[1]).toFixed(2); }
+    function path(pts) { return 'M' + pts.map(P).join('L'); }
+    var ctr = [0, g.yc], eA = g.at(pc.phi0), eB = g.at(pc.phi1);
+    var right = eA[0] > eB[0] ? eA : eB, left = right === eA ? eB : eA;
+    var hubRight = g.hubEnd[0] > 0;
+    var out = '<svg viewBox="' + x0.toFixed(1) + ' ' + (-yTop).toFixed(1) + ' ' + W.toFixed(1) + ' ' + Hh.toFixed(1) + '" role="img" aria-label="Plano de la varilla con sus medidas">';
+    // radios y centro
+    out += '<path class="ref" d="' + path([left, ctr, right]) + '" stroke-width="' + sw + '" stroke-dasharray="' + (fs * 0.4).toFixed(1) + ' ' + (fs * 0.3).toFixed(1) + '"/>';
+    var ra = Math.min(g.R * 0.22, fs * 3.2), aL = Math.atan2(left[1] - ctr[1], left[0] - ctr[0]), aR = Math.atan2(right[1] - ctr[1], right[0] - ctr[0]);
+    out += '<path class="cota" stroke-width="' + sw + '" d="M' + P([ctr[0] + ra * Math.cos(aR), ctr[1] + ra * Math.sin(aR)]) + 'A' + ra.toFixed(2) + ' ' + ra.toFixed(2) + ' 0 0 0 ' + P([ctr[0] + ra * Math.cos(aL), ctr[1] + ra * Math.sin(aL)]) + '"/>';
+    out += '<path class="cota" stroke-width="' + sw + '" d="M' + P([-fs * 0.5, g.yc]) + 'L' + P([fs * 0.5, g.yc]) + 'M' + P([0, g.yc - fs * 0.5]) + 'L' + P([0, g.yc + fs * 0.5]) + '"/>';
+    // varilla y eje
+    out += '<path class="rod" d="' + path(g.arc(g.R)) + '" stroke-width="' + d + '" stroke-linecap="butt"/>';
+    out += '<path class="eje" d="' + path(g.arc(g.R)) + '" stroke-width="' + sw + '" stroke-dasharray="' + (fs * 0.9).toFixed(1) + ' ' + (fs * 0.3).toFixed(1) + ' ' + (fs * 0.15).toFixed(1) + ' ' + (fs * 0.3).toFixed(1) + '"/>';
+    // cuerda y flecha
+    out += '<path class="cota" stroke-width="' + sw + '" d="' + path([left, right]) + 'M' + P([0, 0]) + 'L' + P([0, g.sag]) + '"/>';
+    out += '<circle class="dot" cx="' + left[0].toFixed(2) + '" cy="' + (-left[1]).toFixed(2) + '" r="' + (fs * 0.22).toFixed(2) + '"/>';
+    out += '<circle class="dot" cx="' + right[0].toFixed(2) + '" cy="' + (-right[1]).toFixed(2) + '" r="' + (fs * 0.22).toFixed(2) + '"/>';
+    function T(x, y, txt, cls, anchor, size, rot) {
+      return '<text x="' + x.toFixed(2) + '" y="' + (-y).toFixed(2) + '" font-size="' + (size || fs).toFixed(2) + '" text-anchor="' + (anchor || 'middle') + '"' + (cls ? ' class="' + cls + '"' : '') +
+        (rot ? ' transform="rotate(' + rot.toFixed(2) + ' ' + x.toFixed(2) + ' ' + (-y).toFixed(2) + ')"' : '') + '>' + esc(txt) + '</text>';
+    }
+    out += T(0, g.sag + r + fs * 0.9, 'largo ' + nf(pc.L) + ' mm (por el eje)', '', 'middle');
+    out += T(0, -fs * 1.35, 'cuerda ' + nf(g.chord), 'tc', 'middle');
+    out += T(fs * 0.5, g.sag * 0.52, 'flecha ' + nf(g.sag), 'tc', 'start', fs * 0.9);
+    // R a lo largo del radio derecho
+    var mx = (ctr[0] + right[0]) * 0.55, my = ctr[1] + (right[1] - ctr[1]) * 0.55, ang = deg(Math.atan2(right[1] - ctr[1], right[0] - ctr[0]));
+    var nxp = -Math.sin(ang * PI / 180), nyp = Math.cos(ang * PI / 180);
+    out += T(mx + nxp * fs * 0.6, my + nyp * fs * 0.6, 'R ' + nf(g.R) + ' (eje)', 'tm', 'middle', fs * 0.9, -ang);
+    out += T(0, g.yc + ra + fs * 0.5, nf(deg(pc.Th)) + '°', 'tc', 'middle', fs * 0.9);
+    out += T(0, g.yc - fs * 1.4, 'centro del doblez', 'tm', 'middle', fs * 0.8);
+    out += T(right[0], right[1] - fs * 1.7, hubRight ? 'al centro' : 'al aro', 'tm', 'middle', fs * 0.8);
+    out += T(left[0], left[1] - fs * 1.7, hubRight ? 'al aro' : 'al centro', 'tm', 'middle', fs * 0.8);
+    return out + '</svg>';
+  }
+
+  function renderPiece() {
+    var des = state.des, p = state.p, sh = state.sh;
+    var kind = state.piece === 'mer' && des.nMer ? 'mer' : 'cur', pc = des[kind];
+    $('#pz-cur').setAttribute('aria-pressed', kind === 'cur' ? 'true' : 'false');
+    $('#pz-mer').setAttribute('aria-pressed', kind === 'mer' ? 'true' : 'false');
+    $('#pz-mer').disabled = !des.nMer;
+    var qty = kind === 'cur' ? des.nCur : des.nMer, bb = kind === 'cur' ? sh.bC : sh.bM, form = kind === 'cur' ? sh.formC : sh.formM;
+    $('#pzLead').innerHTML = kind === 'cur'
+      ? 'Hacer <span class="v">' + qty + '</span> por lámpara, todas iguales. Es un arco plano: apoyado en la mesa no cojea. La mitad se monta volteada (espejo).'
+      : 'Hacer <span class="v">' + qty + '</span> por lámpara, todos iguales. Van del disco al aro por dentro de las curvas, que los cruzan por encima. Debajo de cada uno va la tira LED.';
+    $('#pzDrawing').innerHTML = pieceSVG(pc, p.d);
+    var facts = [
+      ['Radio al eje', nf(pc.R) + ' mm'],
+      ['Radio interior / exterior', nf(pc.R - p.d / 2) + ' / ' + nf(pc.R + p.d / 2)],
+      ['Ángulo del arco', nf(deg(pc.Th)) + '°'],
+      ['Largo por el eje', nf(pc.L) + ' mm'],
+      ['Cuerda', nf(pc.chord) + ' mm'],
+      ['Flecha', nf(pc.sag) + ' mm'],
+      ['Corte de varilla', nf0(bb.cut) + ' mm'],
+      ['Piezas por barra de 6 m', String(bb.per)],
+      ['Barras para ' + p.n + (p.n === 1 ? ' lámpara' : ' lámparas'), bb.bars + ' (' + nf0(bb.qty) + ' piezas)'],
+      ['Horma, acero 1018', 'calibrada ' + nf0(form[0]) + ' · laminada ' + nf0(form[1])]
+    ];
+    if (kind === 'cur') facts.push(['Plano inclinado', nf(des.cur.incl) + '° de la horizontal'], des.nMer ? ['Cruces con cada meridiano', des.crossR.length + ', por encima'] : ['Montaje', 'la mitad volteada']);
+    else facts.push(['Por dentro de las curvas', mm2(des.mer.inside) + ' mm (una varilla)'], ['Llega al aro', 'a ' + nf0(des.mer.incl) + '°, por la ' + (des.ring.muesca ? 'muesca' : 'ranura')]);
+    $('#pzFacts').innerHTML = facts.map(function (f) { return '<div><dt>' + f[0] + '</dt><dd>' + f[1] + '</dd></div>'; }).join('');
+    var off = offsets(pc);
+    $('#pzTableLead').innerHTML = 'Para dibujar el arco sin impresora: traza la cuerda de <span class="v">' + nf(pc.chord) + ' mm</span>, marca su centro y, a cada lado, levanta estas alturas cada ' + off.step + ' mm. Une los puntos con una regla flexible. O usa el método del cordel: clavo en el centro del doblez, que queda <span class="v">' + nf(pc.R - pc.sag) + ' mm</span> debajo del centro de la cuerda, y cordel de <span class="v">' + nf(pc.R) + ' mm</span>.';
+    $('#pzTable').innerHTML = '<thead><tr><th>Desde el centro de la cuerda</th><th>Altura sobre la cuerda</th></tr></thead><tbody>' +
+      off.rows.map(function (rw, i) { return '<tr><td>' + (i ? '± ' : '') + nf0(rw[0]) + ' mm' + (i === off.rows.length - 1 ? ' (punta)' : '') + '</td><td>' + nf(rw[1]) + ' mm</td></tr>'; }).join('') + '</tbody>';
+  }
+
+  function step(title, body) { return '<li><div><h4>' + title + '</h4><p>' + body + '</p></div></li>'; }
+  function V(x) { return '<span class="v">' + x + '</span>'; }
+  function renderHacer() {
+    var des = state.des, p = state.p, sh = state.sh, c = des.cur, q = des.nCur;
+    $('#hacerLead').innerHTML = 'Para las ' + q + ' curvas de una lámpara, en varilla lisa de ' + esc(rodTxt(p.d)) + ', con herramienta de taller sencilla: segueta o pulidora, prensa en C, lima, flexómetro y una tabla de MDF o triplex.';
+    var s = '';
+    s += step('Cortar la varilla', 'Corta ' + q + ' tramos de ' + V(nf0(sh.bC.cut) + ' mm') + ' (' + nf(c.L) + ' mm de pieza y un sobrante para recortar al final). Salen ' + sh.bC.per + ' por barra de 6 m: ' +
+      (p.n > 1 ? 'para una lámpara son ' + V(sh.bC.bars1 + ' barras') + ' y para las ' + p.n + ', ' + V(sh.bC.bars + ' barras') + '.' : 'necesitas ' + V(sh.bC.bars + ' barras') + '.'));
+    s += step('Trazar el arco', 'En una tabla de unos ' + nf0(Math.ceil((c.chord + 120) / 50) * 50) + ' × ' + nf0(Math.ceil((c.sag + 150) / 50) * 50) + ' mm, clava un clavo como centro y, con un cordel de ' + V(nf(c.R) + ' mm') + ' y un lápiz en la punta, dibuja el arco: es el eje de la varilla. Comprueba que la cuerda mida ' + V(nf(c.chord) + ' mm') + '. También sirve la plantilla 1:1 impresa o la tabla de trazado.');
+    s += step('Hacer la horma', 'Desde el mismo clavo, traza y corta un segmento de radio ' + V(nf0(sh.formC[0]) + ' mm') + ' si la varilla es calibrada (estirada en frío) o de ' + V(nf0(sh.formC[1]) + ' mm') + ' si es laminada en caliente; pregunta en el depósito cuál es. La horma es más cerrada que la pieza porque el acero se abre un poco al soltarlo. Atorníllala a la mesa y pon un taco de tope en una punta.');
+    s += step('Doblar', 'Aprieta la punta de la varilla contra el tope con la prensa y dobla de a poco, empujando la varilla contra la horma en todo el largo. Suéltala y ponla encima del arco trazado.');
+    s += step('Ajustar con la primera pieza', 'Si quedó más abierta que el trazo, rebaja la horma unos milímetros; si quedó más cerrada, súplela con cinta o una lámina. Ajusta con 2 piezas de prueba antes de hacer las ' + q + '. Los radios de la horma están calculados para acero 1018.');
+    s += step('Recortar a medida', 'Con la pieza sobre el trazo, marca las dos puntas (cuerda de ' + V(nf(c.chord) + ' mm') + ') y corta. Lima las rebabas.');
+    s += step('Revisar cada pieza', 'Tiene que quedar plana: apoyada en la mesa no cojea. Cuerda ' + V(nf(c.chord) + ' mm') + ' y flecha ' + V(nf(c.sag) + ' mm') + '. Una galga con tres topes (uno en cada punta y uno a la altura de la flecha) revisa cada pieza en segundos.');
+    if (des.nMer) s += step('Meridianos', 'El mismo proceso: ' + des.nMer + ' tramos de ' + V(nf0(sh.bM.cut) + ' mm') + ', arco de radio ' + V(nf(des.mer.R) + ' mm') + ', horma de ' + nf0(sh.formM[0]) + ' mm (calibrada) o ' + nf0(sh.formM[1]) + ' mm (laminada), cuerda ' + nf(des.mer.chord) + ' mm y flecha ' + nf(des.mer.sag) + ' mm. Su radio es una varilla menor que el del domo porque van por dentro de las curvas.');
+    $('#hacerSteps').innerHTML = s;
+    $('#hacerAlt').innerHTML =
+      '<div><h4>Roladora de 3 rodillos</h4><p>En un taller con roladora de varilla: rolar a radio ' + V(nf(c.R) + ' mm') + ' al eje (Ø' + nf0(2 * c.R) + '), probar con un tramo contra la plantilla y pasar las ' + q + ' piezas con el mismo ajuste. Es lo más rápido y parejo.</p></div>' +
+      '<div><h4>Corte láser o plasma</h4><p>Como la pieza es plana, se puede cortar de lámina de ' + esc(rodTxt(p.d)) + '. Queda de sección cuadrada en vez de redonda. El contorno va en <span class="v">curva_1a1.dxf</span> del paquete ZIP (capa CONTORNO).</p></div>' +
+      '<div><h4>Mandarla a hacer</h4><p>Con la plantilla 1:1 o el DXF, un taller de doblado de varilla o alambrón cotiza las ' + q + ' piezas directamente. Pide que queden planas y con la cuerda de ' + nf(c.chord) + ' mm.</p></div>';
+  }
+
+  function renderArmado() {
+    var des = state.des, p = state.p, sh = state.sh, c = des.cur, N = des.N, pasoD = 360 / N, rg = des.ring;
+    var hueco = rg.muesca ? 'muesca' : 'ranura';
+    var s = '';
+    s += step('Aro', 'Mándalo a cortar en láser en lámina de ' + V(nfd(p.at) + ' mm') + ': Ø' + V(nf0(2 * rg.Rext) + ' × Ø' + nf0(2 * rg.Rint)) + ', con ' + ringHolesTxt(des) + '. ' +
+      (rg.seatAng.length ? 'Los huecos de las V van cada ' + nf(pasoD) + '° sobre Ø' + nf0(p.D) + (des.nMer ? ' y las ' + hueco + 's corridas ' + nf(deg(des.merOff)) + '° de ellos' : '') + '. ' : '') +
+      'El DXF va en el ZIP: aro_laser_1a1.dxf.');
+    s += step('Disco central', 'De la misma lámina: Ø' + V(nf0(p.dd) + ' mm') + ' con perforación de Ø' + nf(HOLE) + ' para el niple roscado de la lámpara (disco_laser_1a1.dxf).');
+    s += step('Montaje', 'Apoya el aro en una mesa plana y sostén el disco centrado, con su cara de arriba a ' + V(nf0(des.zDiscTop) + ' mm') + ' sobre la cara de arriba del aro. Un tubo o un taco en el centro sirve de soporte.');
+    if (des.nMer) s += step('Meridianos', 'Van primero y por dentro. Apoya cada uno en el borde del disco y mételo por su ' + hueco + ' del aro hasta la cara de abajo; suéldalo por arriba y por abajo. Llega al aro a ' + V(nf0(des.mer.incl) + '°') + ' de la horizontal, ' + nf(des.a - des.mer.rTop) + ' mm más hacia el centro que las curvas. Dan la forma del domo y sirven de guía.');
+    s += step('Curvas A', 'La curva 01A va con su punta en el disco a ' + V(nf(c.hub.az) + '°') + ' y su punta en el aro a ' + V(nf(c.rim.az) + '°') + (des.nMer ? ', por encima de los meridianos' : '') + '. Cada curva siguiente se corre ' + nf(pasoD) + '°. Para ubicar el plano de la curva, su punto medio queda a ' + V(nf0(c.mid.z) + ' mm') + ' de altura y a ' + nf0(c.mid.r) + ' mm del centro.');
+    s += step('Curvas B', 'Son la misma pieza volteada. La 01B va con su punta en el disco a ' + V(nf(norm360(-c.hub.az)) + '°') + ' y en el aro a ' + V(nf(norm360(-c.rim.az)) + '°') + '. Las dos puntas de cada V' + (rg.seatAng.length ? ' se asientan en el mismo hueco del aro y la soldadura lo rellena.' : ' se sueldan juntas sobre el aro.'));
+    s += step('Cruces y acabado', (des.nMer && des.crossR.length ? 'Cada meridiano lo cruzan 2 curvas en ' + des.crossR.length + ' puntos, a unos ' + V(joinY(des.crossR.map(function (x) { return nf0(x); })) + ' mm') + ' del centro (en planta): ahí se tocan y se puntean. ' : '') +
+      'Puntea también los cruces entre curvas, pule los puntos y pinta (la pintura electrostática queda pareja).');
+    if (des.nMer) s += step('Luz', 'Pega el neón flex redondo (o cinta COB en funda redonda) por debajo de cada meridiano, mirando hacia abajo: ' + N + ' tramos de unos ' + V(nf0(des.led.tramo / 10) + ' cm') + ', del borde del disco al aro. Son ' + V(nf(sh.ledLamp / 1000) + ' m') + ' por lámpara' + (p.n > 1 ? ' y ' + nf0(p.n * sh.ledLamp / 1000) + ' m para las ' + p.n : '') + '.');
+    $('#armadoSteps').innerHTML = s;
+    var rows = '';
+    var byK = {};
+    des.rods.forEach(function (rd) { byK[rd.k] = byK[rd.k] || {}; byK[rd.k][rd.type === 'mer' ? 'M' : rd.side] = rd; });
+    for (var k = 0; k < N; k++) {
+      var A = byK[k].A, B = byK[k].B, M = byK[k].M;
+      rows += '<tr><td>' + pad2(k + 1) + '</td><td>' + nf(A.hubAz) + '° → ' + nf(A.rimAz) + '°</td><td>' + nf(B.hubAz) + '° → ' + nf(B.rimAz) + '°</td>' + (des.nMer ? '<td>' + nf(M.hubAz) + '°</td>' : '') + '</tr>';
+    }
+    $('#rodTable').innerHTML = '<thead><tr><th>N.º</th><th>Curva A · disco → aro</th><th>Curva B · disco → aro</th>' + (des.nMer ? '<th>Meridiano y muesca</th>' : '') + '</tr></thead><tbody>' + rows + '</tbody>';
+    var br = $('#buildRange'); br.max = des.rods.length; br.value = state.build;
+    renderBuildLabel();
+  }
+  function renderBuildLabel() {
+    var des = state.des, b = state.build, total = des.rods.length, phase;
+    if (b >= total) phase = 'lámpara completa';
+    else if (b <= des.nMer && des.nMer) phase = 'poniendo meridianos';
+    else if (b <= des.nMer + des.N) phase = 'poniendo curvas A';
+    else phase = 'poniendo curvas B';
+    $('#buildLabel').textContent = b + ' de ' + total + ' varillas · ' + phase;
+  }
+  function renderSel() {
+    var rd = state.des.rods[state.sel]; if (!rd) return;
+    $('#selName').textContent = rd.label;
+    $('#selInfo').textContent = rd.type === 'mer' ? 'a ' + nf(rd.hubAz) + '° · por dentro, del disco al aro' : 'disco ' + nf(rd.hubAz) + '° → aro ' + nf(rd.rimAz) + '°';
+    $('#lgMer').hidden = !state.des.nMer; $('#lgLed').hidden = !state.des.nMer;
+  }
+  function defaultName() { var p = state.p; return 'Roseta Ø' + nf0(p.D) + ' × ' + nf0(p.H) + ' · ' + p.N + ' pétalos'; }
+
+  function summaryText() {
+    var des = state.des, p = state.p, c = des.cur, m = des.mer, sh = state.sh;
+    var rg = des.ring;
+    var t = 'Lámpara roseta, estructura en varilla (medidas en mm)\n';
+    t += 'Aro Ø' + nf0(p.D) + ' al eje, domo de ' + nf0(p.H) + ' de alto, ' + p.N + ' pétalos, varilla ' + rodTxt(p.d) + ' de acero 1018\n';
+    t += 'CURVA, hacer ' + des.nCur + ' por lámpara: arco plano R ' + nf(c.R) + ' al eje, ' + nf(deg(c.Th)) + '°, largo ' + nf(c.L) + ', cuerda ' + nf(c.chord) + ', flecha ' + nf(c.sag) + ' (cortar ' + nf0(sh.bC.cut) + '; horma ' + nf0(sh.formC[0]) + ' calibrada o ' + nf0(sh.formC[1]) + ' laminada)\n';
+    if (des.nMer) t += 'MERIDIANO (luz), hacer ' + des.nMer + ' por lámpara, por dentro de las curvas: R ' + nf(m.R) + ', ' + nf(deg(m.Th)) + '°, largo ' + nf(m.L) + ', cuerda ' + nf(m.chord) + ', flecha ' + nf(m.sag) + ' (cortar ' + nf0(sh.bM.cut) + '; horma ' + nf0(sh.formM[0]) + ' o ' + nf0(sh.formM[1]) + ')\n';
+    t += 'ARO en láser, lámina de ' + nfd(p.at) + ': Ø' + nf0(2 * rg.Rext) + ' × Ø' + nf0(2 * rg.Rint) + ', con ' + ringHolesTxt(des) + '\n';
+    t += 'DISCO en láser: Ø' + nf0(p.dd) + ' × ' + nfd(p.at) + ', perforación de Ø' + nf(HOLE) + '\n';
+    if (des.nMer) t += 'LUZ: ' + des.N + ' tramos de unos ' + nf0(des.led.tramo) + ' por debajo de los meridianos, ' + nf(sh.ledLamp / 1000) + ' m por lámpara\n';
+    t += 'COMPRA para ' + p.n + ': ' + sh.nBars + ' barras de 6 m (' + sh.bC.bars + ' de curvas' + (sh.bM ? ' y ' + sh.bM.bars + ' de meridianos' : '') + '), ' + nf(sh.kgBuy) + ' kg' + (p.precio > 0 ? ', ' + cop(sh.cost) + ' con IVA' : '') + '\n';
+    t += 'Parámetros: D=' + p.D + ' H=' + p.H + ' N=' + p.N + ' m=' + p.m + ' rh=' + p.rh + ' d=' + p.d + ' aw=' + p.aw + ' at=' + p.at + ' dd=' + p.dd + ' meridianos=' + (p.mer ? 'sí' : 'no') + ' lámparas=' + p.n;
+    return t;
+  }
+
+  /* ============ visor 3D ============ */
+  var view = { ok: false };
+  var LS = 40; // segmentos por varilla en modo líneas
+  function tok(name, fb) { var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fb; }
+  function m2t(v) { return new view.T.Vector3(v[0], v[2], -v[1]); }
+  function frameToMatrix(f, M) {
+    M.set(f.e1[0], f.e2[0], f.n[0], f.pos[0], f.e1[1], f.e2[1], f.n[1], f.pos[1], f.e1[2], f.e2[2], f.n[2], f.pos[2], 0, 0, 0, 1);
+    return M;
+  }
+  function toGeo(d) {
+    var T = view.T, g = new T.BufferGeometry();
+    g.setAttribute('position', new T.BufferAttribute(d.pos, 3));
+    g.setAttribute('normal', new T.BufferAttribute(d.nor, 3));
+    g.setIndex(new T.BufferAttribute(d.idx, 1));
+    g.computeBoundingSphere();
+    return g;
+  }
+  function init3D() {
+    var msg = $('#stMsg'), T = window.THREE;
+    if (!T || !T.OrbitControls) { msg.hidden = false; msg.textContent = 'No se pudo cargar el visor 3D. El resto de la página funciona igual.'; return; }
+    var renderer;
+    try { renderer = new T.WebGLRenderer({ canvas: $('#c3d'), antialias: true }); }
+    catch (e) { msg.hidden = false; msg.textContent = 'Este navegador no puede mostrar 3D (WebGL). El resto de la página funciona igual.'; return; }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    var scene = new T.Scene();
+    var camera = new T.PerspectiveCamera(35, 1, 2, 80000);
+    var controls = new T.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.09; controls.screenSpacePanning = true; controls.rotateSpeed = 0.8;
+    controls.minPolarAngle = 0.002; controls.maxPolarAngle = PI - 0.002;
+    var root = new T.Group(); root.rotation.x = -PI / 2; scene.add(root);
+    var hemi = new T.HemisphereLight(0xfff3e0, 0x1a1d21, 0.75); scene.add(hemi);
+    var l1 = new T.DirectionalLight(0xffffff, 0.85); l1.position.set(0.8, 1.6, 1.2); scene.add(l1);
+    var l2 = new T.DirectionalLight(0xffd9a8, 0.6); l2.position.set(-1.2, -1.4, -0.6); scene.add(l2);
+    var l3 = new T.DirectionalLight(0xffffff, 0.32); l3.position.set(0.3, -1.5, 1.4); scene.add(l3);
+    // modo Luz: un bombillo cálido dentro del domo hace de la luz que echan las tiras
+    var bulb = new T.PointLight(0xffc27a, 0, 0); root.add(bulb);
+    var mats = {
+      rod: new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.22 }),
+      ring: new T.MeshStandardMaterial({ color: 0xbf9455, roughness: 0.5, metalness: 0.28, side: T.DoubleSide }),
+      disc: new T.MeshStandardMaterial({ color: 0xbf9455, roughness: 0.55, metalness: 0.28, side: T.DoubleSide }),
+      led: new T.MeshStandardMaterial({ color: 0xe6e1d6, roughness: 0.6, metalness: 0, emissive: 0xffd49a, emissiveIntensity: 0.06 }),
+      hl: new T.MeshStandardMaterial({ color: 0xff7b3a, roughness: 0.4, metalness: 0.15, emissive: 0x401505 }),
+      line: new T.LineBasicMaterial({ color: 0xbf9455 }),
+      lineFrame: new T.LineBasicMaterial({ color: 0xbf9455 }),
+      lineHl: new T.LineBasicMaterial({ color: 0xff7b3a })
+    };
+    Object.assign(view, { ok: true, T: T, renderer: renderer, scene: scene, camera: camera, controls: controls, root: root, mats: mats, dyn: [], anims: [],
+      lights: { hemi: hemi, l1: l1, l2: l2, l3: l3, bulb: bulb }, lit: null,
+      ray: new T.Raycaster(), ndc: new T.Vector2(), ZERO: new T.Matrix4().makeScale(0, 0, 0), M: new T.Matrix4() });
+    applyColors();
+    var stage = $('#stage');
+    function resize() {
+      var w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+      renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+    resize();
+    if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener('resize', resize);
+    var down = null, canvas = renderer.domElement;
+    canvas.addEventListener('pointerdown', function (e) { down = { x: e.clientX, y: e.clientY, t: performance.now() }; $('#stHint').classList.add('gone'); });
+    canvas.addEventListener('pointerup', function (e) {
+      if (!down) return;
+      if (Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && performance.now() - down.t < 700) pick(e.clientX, e.clientY);
+      down = null;
+    });
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mq.addEventListener) mq.addEventListener('change', applyColors); else if (mq.addListener) mq.addListener(applyColors);
+    }
+    new MutationObserver(applyColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+    var last = performance.now();
+    function loop(now) {
+      var dt = Math.min(64, now - last); last = now;
+      stepAnims(dt);
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+  function applyColors() {
+    if (!view.ok) return;
+    var T = view.T;
+    view.renderer.setClearColor(new T.Color(tok('--stage', '#1c1f23')), 1);
+    view.colRod = new T.Color(tok('--rod', '#bf9455'));
+    view.colMer = view.colRod.clone().lerp(new T.Color(0xffffff), 0.3);
+    view.colHl = new T.Color(tok('--hl', '#ff7b3a'));
+    view.mats.ring.color.copy(view.colRod);
+    view.mats.disc.color.copy(view.colRod).multiplyScalar(view.lit ? 0.42 : 0.9);
+    view.mats.line.color.copy(view.colRod);
+    view.mats.lineFrame.color.copy(view.colRod).multiplyScalar(0.8);
+    view.mats.lineHl.color.copy(view.colHl);
+    view.mats.hl.color.copy(view.colHl);
+    refreshInstanceColors();
+  }
+  function rebuild3D() {
+    if (!view.ok) return;
+    var T = view.T, des = state.des, p = state.p, r = p.d / 2;
+    finishExtract(true);
+    view.dyn.forEach(function (o) { view.root.remove(o); if (o.geometry) o.geometry.dispose(); });
+    view.dyn = [];
+    var gC = toGeo(arcTubeData(des.cur.R, des.cur.phi0, des.cur.phi1, r, 96, 10));
+    var gM = toGeo(arcTubeData(des.mer.R, des.mer.phi0, des.mer.phi1, r, 64, 10));
+    var cur = new T.InstancedMesh(gC, view.mats.rod, des.nCur);
+    var mer = new T.InstancedMesh(gM, view.mats.rod, Math.max(1, des.nMer));
+    cur.frustumCulled = false; mer.frustumCulled = false;
+    var M = view.M;
+    des.rods.forEach(function (rd) { (rd.type === 'cur' ? cur : mer).setMatrixAt(rd.inst, frameToMatrix(rd.frame, M)); });
+    if (!des.nMer) mer.setMatrixAt(0, view.ZERO);
+    cur.instanceMatrix.needsUpdate = true; mer.instanceMatrix.needsUpdate = true;
+    var ring = new T.Mesh(toGeo(ringMesh(des)), view.mats.ring);
+    var disc = new T.Mesh(toGeo(discMesh(des)), view.mats.disc);
+    // tiras LED: en el mismo plano de cada meridiano, pegadas por debajo
+    var gL = toGeo(arcTubeData(des.led.R, PI / 2 - des.led.th1, PI / 2 - des.led.th0, des.led.d / 2, 48, 12));
+    var led = new T.InstancedMesh(gL, view.mats.led, Math.max(1, des.nMer));
+    led.frustumCulled = false;
+    des.rods.forEach(function (rd) { if (rd.type === 'mer') led.setMatrixAt(rd.inst, frameToMatrix(rd.frame, M)); });
+    if (!des.nMer) led.setMatrixAt(0, view.ZERO);
+    led.instanceMatrix.needsUpdate = true;
+    view.lights.bulb.position.set(0, 0, des.zDiscTop * 0.3);
+    // líneas (ejes de las varillas, en orden de armado)
+    var n = des.rods.length, arr = new Float32Array(n * LS * 6);
+    des.rods.forEach(function (rd, i) {
+      var pc = rd.type === 'cur' ? des.cur : des.mer;
+      var prev = applyFrame(rd.frame, [pc.R * Math.cos(pc.phi0), pc.R * Math.sin(pc.phi0), 0]);
+      for (var j = 1; j <= LS; j++) {
+        var ph = pc.phi0 + (pc.phi1 - pc.phi0) * j / LS;
+        var w = applyFrame(rd.frame, [pc.R * Math.cos(ph), pc.R * Math.sin(ph), 0]);
+        var o = (i * LS + j - 1) * 6;
+        arr[o] = prev[0]; arr[o + 1] = prev[1]; arr[o + 2] = prev[2]; arr[o + 3] = w[0]; arr[o + 4] = w[1]; arr[o + 5] = w[2];
+        prev = w;
+      }
+    });
+    var lg = new T.BufferGeometry(); lg.setAttribute('position', new T.BufferAttribute(arr, 3)); lg.computeBoundingSphere();
+    var rodLines = new T.LineSegments(lg, view.mats.line);
+    var fr = [];
+    function circle(rr, z, segs) { for (var i = 0; i < segs; i++) { var t0 = 2 * PI * i / segs, t1 = 2 * PI * (i + 1) / segs; fr.push(rr * Math.cos(t0), rr * Math.sin(t0), z, rr * Math.cos(t1), rr * Math.sin(t1), z); } }
+    circle(des.a, 0, 200); circle(p.dd / 2, des.zDiscTop, 80);
+    var fg = new T.BufferGeometry(); fg.setAttribute('position', new T.BufferAttribute(new Float32Array(fr), 3));
+    var frameLines = new T.LineSegments(fg, view.mats.lineFrame);
+    var hg = new T.BufferGeometry(); hg.setAttribute('position', new T.BufferAttribute(new Float32Array((LS + 1) * 3), 3));
+    var hlLine = new T.Line(hg, view.mats.lineHl);
+    view.geoC = gC; view.geoM = gM;
+    view.objs = { cur: cur, mer: mer, ring: ring, disc: disc, led: led, rodLines: rodLines, frameLines: frameLines, hlLine: hlLine };
+    [cur, mer, ring, disc, led, rodLines, frameLines, hlLine].forEach(function (o) { view.root.add(o); view.dyn.push(o); });
+    refreshInstanceColors();
+    applyBuild();
+    applyMode();
+    updateHlLine();
+    if (!view.framed) { goView('tq', true); view.framed = true; }
+  }
+  function refreshInstanceColors() {
+    if (!view.ok || !view.objs || !view.colRod) return;
+    var o = view.objs, des = state.des;
+    des.rods.forEach(function (rd, i) {
+      (rd.type === 'cur' ? o.cur : o.mer).setColorAt(rd.inst, i === state.sel ? view.colHl : (rd.type === 'mer' ? view.colMer : view.colRod));
+    });
+    if (!des.nMer) o.mer.setColorAt(0, view.colMer);
+    if (o.cur.instanceColor) o.cur.instanceColor.needsUpdate = true;
+    if (o.mer.instanceColor) o.mer.instanceColor.needsUpdate = true;
+  }
+  function updateHlLine() {
+    if (!view.ok || !view.objs) return;
+    var rd = state.des.rods[state.sel], pc = rd.type === 'cur' ? state.des.cur : state.des.mer;
+    var attr = view.objs.hlLine.geometry.attributes.position;
+    for (var j = 0; j <= LS; j++) {
+      var ph = pc.phi0 + (pc.phi1 - pc.phi0) * j / LS, w = applyFrame(rd.frame, [pc.R * Math.cos(ph), pc.R * Math.sin(ph), 0]);
+      attr.setXYZ(j, w[0], w[1], w[2]);
+    }
+    attr.needsUpdate = true; view.objs.hlLine.geometry.computeBoundingSphere();
+    applyMode();
+  }
+  function applyMode() {
+    if (!view.ok || !view.objs) return;
+    var o = view.objs, solid = state.mode !== 'lineas', des = state.des;
+    o.cur.visible = solid; o.mer.visible = solid && des.nMer > 0; o.ring.visible = solid; o.disc.visible = solid;
+    o.led.visible = solid && des.nMer > 0 && state.build >= des.rods.length;
+    o.rodLines.visible = !solid; o.frameLines.visible = !solid;
+    o.hlLine.visible = !solid && state.sel < state.build && !view.ex;
+    setLit(state.mode === 'luz' && o.led.visible);
+  }
+  function setLit(lit) {
+    if (!view.ok || view.lit === lit) return;
+    view.lit = lit;
+    var L = view.lights, m = view.mats.led;
+    L.hemi.intensity = lit ? 0.3 : 0.75; L.l1.intensity = lit ? 0.28 : 0.85; L.l2.intensity = lit ? 0.16 : 0.6; L.l3.intensity = lit ? 0.12 : 0.32;
+    L.bulb.intensity = lit ? 1.05 : 0;
+    m.color.set(lit ? 0xfff6e6 : 0xe6e1d6); m.emissiveIntensity = lit ? 1.15 : 0.06;
+    if (view.colRod) view.mats.disc.color.copy(view.colRod).multiplyScalar(lit ? 0.42 : 0.9);
+  }
+  function applyBuild() {
+    if (!view.ok || !view.objs) return;
+    var o = view.objs, des = state.des, b = state.build;
+    o.mer.count = Math.max(0, Math.min(b, des.nMer));
+    o.cur.count = Math.max(0, Math.min(b - des.nMer, des.nCur));
+    o.rodLines.geometry.setDrawRange(0, b * LS * 2);
+    applyMode();
+  }
+  function pick(cx, cy) {
+    if (!view.ok || !view.objs || view.ex) return;
+    var rect = view.renderer.domElement.getBoundingClientRect();
+    view.ndc.set(((cx - rect.left) / rect.width) * 2 - 1, -((cy - rect.top) / rect.height) * 2 + 1);
+    view.ray.setFromCamera(view.ndc, view.camera);
+    var des = state.des, hit = -1, i;
+    if (state.mode !== 'lineas') {
+      var hits = view.ray.intersectObjects([view.objs.cur, view.objs.mer].filter(function (x) { return x.visible; }), false);
+      for (i = 0; i < hits.length; i++) {
+        var h = hits[i]; if (h.instanceId == null || h.instanceId >= h.object.count) continue;
+        var isCur = h.object === view.objs.cur;
+        hit = des.rods.findIndex(function (rd) { return (rd.type === 'cur') === isCur && rd.inst === h.instanceId; });
+        if (hit >= 0) break;
+      }
+    } else {
+      view.ray.params.Line.threshold = Math.max(5, state.p.d * 1.6);
+      var lh = view.ray.intersectObject(view.objs.rodLines, false);
+      for (i = 0; i < lh.length; i++) { var ri = Math.floor(Math.floor(lh[i].index / 2) / LS); if (ri < state.build) { hit = ri; break; } }
+    }
+    if (hit >= 0) select(hit);
+  }
+  function select(i) {
+    var n = state.des.rods.length;
+    state.sel = ((i % n) + n) % n;
+    renderSel(); refreshInstanceColors(); updateHlLine();
+  }
+  // animaciones
+  function tween(ms, fn, done) {
+    if (reduceMotion || ms <= 0) { fn(1); if (done) done(); return null; }
+    var a = { t: 0, ms: ms, fn: fn, done: done, dead: false }; view.anims.push(a); return a;
+  }
+  function stepAnims(dt) {
+    if (!view.anims.length) return;
+    view.anims = view.anims.filter(function (a) {
+      if (a.dead) return false;
+      a.t = Math.min(1, a.t + dt / a.ms);
+      var e = a.t < 0.5 ? 2 * a.t * a.t : 1 - Math.pow(-2 * a.t + 2, 2) / 2;
+      a.fn(e);
+      if (a.t >= 1) { if (a.done) a.done(); return false; }
+      return true;
+    });
+  }
+  function flyTo(pos, tgt, instant) {
+    if (view.fly) view.fly.dead = true;
+    var p0 = view.camera.position.clone(), t0 = view.controls.target.clone();
+    view.fly = tween(instant ? 0 : 700, function (e) {
+      view.camera.position.lerpVectors(p0, pos, e); view.controls.target.lerpVectors(t0, tgt, e);
+    });
+  }
+  function fitDist(Rb) {
+    var cam = view.camera, vf = cam.fov * PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * cam.aspect);
+    return Rb / Math.sin(Math.min(vf, hf) / 2);
+  }
+  function goView(name, instant) {
+    if (!view.ok) return;
+    var des = state.des, p = state.p, Rb = Math.hypot(des.a + p.aw / 2, p.H / 2) * 1.04, dir, tgt;
+    if (name === 'abajo') { dir = [0, -0.03, -1]; tgt = [0, 0, p.H * 0.4]; }
+    else if (name === 'arriba') { dir = [0, -0.03, 1]; tgt = [0, 0, p.H * 0.4]; }
+    else if (name === 'lado') { dir = [0, -1, 0.04]; tgt = [0, 0, p.H * 0.45]; }
+    else { dir = [0.62, -0.68, -0.4]; tgt = [0, 0, p.H * 0.38]; }
+    var L = Math.hypot(dir[0], dir[1], dir[2]), d = fitDist(Rb);
+    flyTo(m2t([tgt[0] + dir[0] / L * d, tgt[1] + dir[1] / L * d, tgt[2] + dir[2] / L * d]), m2t(tgt), instant);
+    state.view = name;
+    $$('[data-view]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.view === name ? 'true' : 'false'); });
+  }
+  // sacar una varilla
+  function flatFrame(pc) {
+    var des = state.des, p = state.p, phim = (pc.phi0 + pc.phi1) / 2, half = (pc.phi1 - pc.phi0) / 2;
+    var c = Math.cos(-phim), s = Math.sin(-phim), gap = Math.max(70, des.a * 0.2);
+    return { e1: [c, s, 0], e2: [-s, c, 0], n: [0, 0, 1], pos: [des.a + p.aw / 2 + gap - pc.R * Math.cos(half), 0, p.H * 0.35] };
+  }
+  function setDim(on) {
+    var m = view.mats;
+    [m.rod, m.ring, m.disc, m.led].forEach(function (x) { x.transparent = on; x.opacity = on ? 0.14 : 1; x.depthWrite = !on; x.needsUpdate = true; });
+    [m.line, m.lineFrame].forEach(function (x) { x.transparent = on; x.opacity = on ? 0.22 : 1; x.needsUpdate = true; });
+  }
+  function extract() {
+    if (!view.ok || !view.objs || view.ex) return;
+    var T = view.T, des = state.des, p = state.p, rd = des.rods[state.sel], pc = rd.type === 'cur' ? des.cur : des.mer;
+    if (state.sel >= state.build) { state.build = des.rods.length; $('#buildRange').value = state.build; applyBuild(); renderBuildLabel(); }
+    var M0 = frameToMatrix(rd.frame, new T.Matrix4()), M1 = frameToMatrix(flatFrame(pc), new T.Matrix4());
+    var mesh = new T.Mesh(rd.type === 'cur' ? view.geoC : view.geoM, view.mats.hl);
+    mesh.matrixAutoUpdate = false; mesh.matrix.copy(M0); view.root.add(mesh);
+    var inst = rd.type === 'cur' ? view.objs.cur : view.objs.mer;
+    inst.setMatrixAt(rd.inst, view.ZERO); inst.instanceMatrix.needsUpdate = true;
+    var p0 = new T.Vector3(), q0 = new T.Quaternion(), s0 = new T.Vector3(), p1 = new T.Vector3(), q1 = new T.Quaternion(), s1 = new T.Vector3();
+    M0.decompose(p0, q0, s0); M1.decompose(p1, q1, s1);
+    var lift = des.a * 0.35;
+    view.ex = { rd: rd, mesh: mesh, inst: inst, M0: M0, p0: p0, q0: q0, p1: p1, q1: q1, s1: s1, lift: lift, state: 'out' };
+    setDim(true); applyMode();
+    var ex = view.ex;
+    ex.anim = tween(1100, function (e) { setExPose(ex, e); });
+    // cámara: encuadra lámpara + pieza
+    var xEnd = des.a + p.aw / 2 + Math.max(70, des.a * 0.2), xMax = xEnd + pc.sag, xMin = -(des.a + p.aw / 2);
+    var Rb = Math.max((xMax - xMin) / 2, pc.chord / 2) * 1.06, tgt = [(xMin + xMax) / 2, 0, p.H * 0.32], dir = [0.12, -0.7, 1];
+    var L = Math.hypot(dir[0], dir[1], dir[2]), d = fitDist(Rb);
+    flyTo(m2t([tgt[0] + dir[0] / L * d, tgt[1] + dir[1] / L * d, tgt[2] + dir[2] / L * d]), m2t(tgt));
+    $$('[data-view]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+    var qty = rd.type === 'cur' ? des.nCur : des.nMer;
+    $('#exName').textContent = rd.label + ' · ' + qty + ' por lámpara';
+    $('#exDims').textContent = 'R ' + nf(pc.R) + ' · ' + nf(deg(pc.Th)) + '° · largo ' + nf(pc.L) + ' · cuerda ' + nf(pc.chord);
+    $('#stBottom').hidden = true; $('#stBottomEx').hidden = false;
+    state.piece = rd.type; renderPiece();
+  }
+  function setExPose(ex, e) {
+    var T = view.T, pp = ex.p0.clone().lerp(ex.p1, e); pp.z += Math.sin(PI * e) * ex.lift;
+    var qq = ex.q0.clone().slerp(ex.q1, e);
+    ex.mesh.matrix.compose(pp, qq, ex.s1); ex.mesh.matrixWorldNeedsUpdate = true;
+  }
+  function returnRod() {
+    var ex = view.ex; if (!ex || ex.state !== 'out') return;
+    ex.state = 'back'; if (ex.anim) ex.anim.dead = true;
+    tween(900, function (e) { setExPose(ex, 1 - e); }, function () { finishExtract(false); });
+    goView(state.view === 'tq' || !state.view ? 'tq' : state.view);
+  }
+  function finishExtract(silent) {
+    var ex = view.ex; if (!ex) return;
+    if (ex.anim) ex.anim.dead = true;
+    view.root.remove(ex.mesh);
+    if (!silent) { ex.inst.setMatrixAt(ex.rd.inst, ex.M0); ex.inst.instanceMatrix.needsUpdate = true; }
+    view.ex = null; setDim(false); applyMode();
+    $('#stBottom').hidden = false; $('#stBottomEx').hidden = true;
+  }
+
+  /* ============ archivos ============ */
+  function L1(s) { return String(s).replace(/[–—]/g, '-').replace(/[“”]/g, '"').replace(/≈/g, 'aprox.').replace(/→/g, '->'); }
+  function DXF() { this.e = []; }
+  DXF.prototype.g = function () { for (var i = 0; i < arguments.length; i += 2) { var v = arguments[i + 1]; this.e.push(arguments[i] + '\n' + (typeof v === 'number' ? v.toFixed(4) : v) + '\n'); } return this; };
+  DXF.prototype.line = function (x1, y1, x2, y2, l) { return this.g(0, 'LINE', 8, l, 10, x1, 20, y1, 30, 0, 11, x2, 21, y2, 31, 0); };
+  DXF.prototype.circle = function (x, y, r, l) { return this.g(0, 'CIRCLE', 8, l, 10, x, 20, y, 30, 0, 40, r); };
+  DXF.prototype.arc = function (x, y, r, a0, a1, l) { return this.g(0, 'ARC', 8, l, 10, x, 20, y, 30, 0, 40, r, 50, a0, 51, a1); };
+  DXF.prototype.text = function (x, y, h, s) { return this.g(0, 'TEXT', 8, 'TEXTO', 10, x, 20, y, 30, 0, 40, h, 1, L1(s).replace(/[^\x20-\x7e]/g, function (c) { return ({ 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n', '°': ' grados', 'Ø': 'D', '×': 'x', '·': '-' })[c] || ''; })); };
+  DXF.prototype.poly = function (pts, l) { this.g(0, 'POLYLINE', 8, l, 66, '1', 70, '0'); var me = this; pts.forEach(function (q) { me.g(0, 'VERTEX', 8, l, 10, q[0], 20, q[1], 30, 0); }); return this.g(0, 'SEQEND', 8, l); };
+  // polilínea cerrada con arcos: cada vértice [x, y, bulge] (bulge = tan(ángulo/4), positivo = antihorario)
+  DXF.prototype.polyB = function (vs, l) {
+    this.g(0, 'POLYLINE', 8, l, 66, '1', 70, '1'); var me = this;
+    vs.forEach(function (v) { me.g(0, 'VERTEX', 8, l, 10, v[0], 20, v[1], 30, 0, 42, (v[2] || 0).toFixed(10)); });
+    return this.g(0, 'SEQEND', 8, l);
+  };
+  // El aro de láser en el DXF: arcos exactos, como los DXF que se mandaron a Metal Cortes.
+  function dxfRingInto(d, des, l) {
+    var c = des.ring;
+    d.circle(0, 0, c.Rext, l);
+    if (des.nMer && c.muesca) {
+      var h = c.slotW / 2, r = c.Rint, beta = Math.asin(h / r), u0 = Math.sqrt(r * r - h * h), rc = c.notchR - h, vs = [];
+      var angs = c.merAng.map(function (x) { return x * PI / 180; });
+      angs.forEach(function (a, i) {
+        var nx = i + 1 < angs.length ? angs[i + 1] : angs[0] + 2 * PI, ux = Math.cos(a), uy = Math.sin(a);
+        var P = function (su, sv, b) { return [su * ux - sv * uy, su * uy + sv * ux, b]; };
+        vs.push(P(u0, -h, 0), P(rc, -h, 1), P(rc, h, 0), P(u0, h, Math.tan(((nx - beta) - (a + beta)) / 4)));
+      });
+      d.polyB(vs, l);
+    } else {
+      d.circle(0, 0, c.Rint, l);
+      if (des.nMer) c.merAng.forEach(function (x) {
+        var a = x * PI / 180, h = c.slotW / 2, sl = c.slotL / 2 - h, ux = Math.cos(a), uy = Math.sin(a);
+        var P = function (su, sv, b) { return [(c.slotC + su) * ux - sv * uy, (c.slotC + su) * uy + sv * ux, b]; };
+        d.polyB([P(-sl, h, 0), P(sl, h, -1), P(sl, -h, 0), P(-sl, -h, -1)], l);
+      });
+    }
+    c.seatAng.forEach(function (x) { var a = x * PI / 180; d.circle(c.rSeat * Math.cos(a), c.rSeat * Math.sin(a), c.seatD / 2, l); });
+  }
+  function dxfRingLaser() { var d = new DXF(); dxfRingInto(d, state.des, 'CORTE'); return d.toString(); }
+  function dxfDiscLaser() { var d = new DXF(), p = state.p; d.circle(0, 0, p.dd / 2, 'CORTE'); d.circle(0, 0, HOLE / 2, 'CORTE'); return d.toString(); }
+  DXF.prototype.toString = function () { return '0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n9\n$INSUNITS\n70\n4\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n' + this.e.join('') + '0\nENDSEC\n0\nEOF\n'; };
+
+  function dxfPiece(pc, title, qty) {
+    var d = new DXF(), r = state.p.d / 2, half = (pc.phi1 - pc.phi0) / 2, yc = -pc.R * Math.cos(half), hd = deg(half);
+    var a0 = 90 - hd, a1 = 90 + hd;
+    d.arc(0, yc, pc.R, a0, a1, 'EJE'); d.arc(0, yc, pc.R + r, a0, a1, 'CONTORNO'); d.arc(0, yc, pc.R - r, a0, a1, 'CONTORNO');
+    [a0, a1].forEach(function (an) { var t = an * PI / 180; d.line((pc.R + r) * Math.cos(t), yc + (pc.R + r) * Math.sin(t), (pc.R - r) * Math.cos(t), yc + (pc.R - r) * Math.sin(t), 'CONTORNO'); });
+    d.line(-pc.chord / 2, 0, pc.chord / 2, 0, 'REFERENCIA'); d.line(0, 0, 0, pc.sag, 'REFERENCIA'); d.circle(0, yc, 2, 'REFERENCIA');
+    d.text(-pc.chord / 2, -22, 8, title + ' - hacer ' + qty + ' - varilla D' + state.p.d + ' mm');
+    d.text(-pc.chord / 2, -34, 6, 'R eje ' + pc.R.toFixed(2) + ' mm  angulo ' + deg(pc.Th).toFixed(2) + ' grados  cuerda ' + pc.chord.toFixed(2) + ' mm  flecha ' + pc.sag.toFixed(2) + ' mm  largo ' + pc.L.toFixed(2) + ' mm');
+    return d.toString();
+  }
+  function dxfPlan() {
+    var d = new DXF(), des = state.des, p = state.p;
+    dxfRingInto(d, des, 'ARO'); d.circle(0, 0, des.a, 'ARO_EJE'); d.circle(0, 0, p.dd / 2, 'DISCO'); d.circle(0, 0, HOLE / 2, 'DISCO');
+    des.rods.forEach(function (rd) {
+      var pc = rd.type === 'cur' ? des.cur : des.mer, pts = [];
+      for (var j = 0; j <= 48; j++) { var ph = pc.phi0 + (pc.phi1 - pc.phi0) * j / 48, w = applyFrame(rd.frame, [pc.R * Math.cos(ph), pc.R * Math.sin(ph), 0]); pts.push([w[0], w[1]]); }
+      d.poly(pts, rd.type === 'cur' ? 'CURVAS_' + rd.side : 'MERIDIANOS');
+    });
+    for (var k = 0; k < des.N; k++) { var t = k * des.paso; d.text((des.a + p.aw + 30) * Math.cos(t) - 10, (des.a + p.aw + 30) * Math.sin(t) - 3, 8, (k * 360 / des.N).toFixed(1)); }
+    d.text(-des.a, -des.a - p.aw - 50, 10, 'Planta de armado 1:1 - aro D' + p.D + ' al eje - ' + des.N + ' petalos - angulos en grados');
+    return d.toString();
+  }
+  function stlBuffer(parts, name) {
+    var ntri = 0; parts.forEach(function (pt) { ntri += (pt.d.idx.length / 3) * pt.frames.length; });
+    var buf = new ArrayBuffer(84 + 50 * ntri), dv = new DataView(buf), head = ('Roseta ' + name).slice(0, 79), i;
+    for (i = 0; i < head.length; i++) dv.setUint8(i, head.charCodeAt(i) & 0x7f);
+    dv.setUint32(80, ntri, true);
+    var o = 84;
+    parts.forEach(function (pt) {
+      var P = pt.d.pos, I = pt.d.idx, nv = P.length / 3;
+      pt.frames.forEach(function (f) {
+        var Tq = new Float32Array(P.length);
+        for (var v = 0; v < nv; v++) { var w = applyFrame(f, [P[3 * v], P[3 * v + 1], P[3 * v + 2]]); Tq[3 * v] = w[0]; Tq[3 * v + 1] = w[1]; Tq[3 * v + 2] = w[2]; }
+        for (var t = 0; t < I.length; t += 3) {
+          var A = 3 * I[t], B = 3 * I[t + 1], C = 3 * I[t + 2];
+          var ux = Tq[B] - Tq[A], uy = Tq[B + 1] - Tq[A + 1], uz = Tq[B + 2] - Tq[A + 2], vx = Tq[C] - Tq[A], vy = Tq[C + 1] - Tq[A + 1], vz = Tq[C + 2] - Tq[A + 2];
+          var nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, l = Math.hypot(nx, ny, nz) || 1;
+          dv.setFloat32(o, nx / l, true); dv.setFloat32(o + 4, ny / l, true); dv.setFloat32(o + 8, nz / l, true); o += 12;
+          [A, B, C].forEach(function (k) { dv.setFloat32(o, Tq[k], true); dv.setFloat32(o + 4, Tq[k + 1], true); dv.setFloat32(o + 8, Tq[k + 2], true); o += 12; });
+          dv.setUint16(o, 0, true); o += 2;
+        }
+      });
+    });
+    return buf;
+  }
+  function lampParts() {
+    var des = state.des, p = state.p, r = p.d / 2, parts = [];
+    parts.push({ d: arcTubeData(des.cur.R, des.cur.phi0, des.cur.phi1, r, 80, 10), frames: des.rods.filter(function (x) { return x.type === 'cur'; }).map(function (x) { return x.frame; }) });
+    if (des.nMer) parts.push({ d: arcTubeData(des.mer.R, des.mer.phi0, des.mer.phi1, r, 56, 10), frames: des.rods.filter(function (x) { return x.type === 'mer'; }).map(function (x) { return x.frame; }) });
+    parts.push({ d: ringMesh(des), frames: [IDF] });
+    parts.push({ d: discMesh(des), frames: [IDF] });
+    return parts;
+  }
+  function svgTemplateFile() {
+    var des = state.des, p = state.p, r = p.d / 2;
+    var items = [{ pc: des.cur, name: 'CURVA', qty: des.nCur }];
+    if (des.nMer) items.push({ pc: des.mer, name: 'MERIDIANO', qty: des.nMer });
+    var maxC = Math.max.apply(null, items.map(function (x) { return x.pc.chord; }));
+    var W = Math.ceil(maxC + 2 * r + 40), y = 20, body = '';
+    items.forEach(function (it) {
+      var g = flatGeom(it.pc), baseY = y + 8 + g.sag + r;
+      function X(x) { return (W / 2 + x).toFixed(2); }
+      function Y(v) { return (baseY - v).toFixed(2); }
+      function pl(pts) { return pts.map(function (q, i) { return (i ? 'L' : 'M') + X(q[0]) + ' ' + Y(q[1]); }).join(''); }
+      var eA = g.at(it.pc.phi0), eB = g.at(it.pc.phi1);
+      body += '<path d="' + pl(g.arc(g.R + r, 240)) + '" fill="none" stroke="#000" stroke-width="0.3"/>';
+      body += '<path d="' + pl(g.arc(g.R - r, 240)) + '" fill="none" stroke="#000" stroke-width="0.3"/>';
+      body += '<path d="' + pl([g.at(it.pc.phi0, g.R + r), g.at(it.pc.phi0, g.R - r)]) + pl([g.at(it.pc.phi1, g.R + r), g.at(it.pc.phi1, g.R - r)]) + '" fill="none" stroke="#000" stroke-width="0.3"/>';
+      body += '<path d="' + pl(g.arc(g.R, 240)) + '" fill="none" stroke="#2a5fa3" stroke-width="0.2" stroke-dasharray="4 1.5 0.8 1.5"/>';
+      body += '<path d="' + pl([eA, eB]) + pl([[0, 0], [0, g.sag]]) + '" fill="none" stroke="#b3332b" stroke-width="0.25"/>';
+      body += '<text x="' + X(0) + '" y="' + (baseY + 7).toFixed(2) + '" font-size="4" text-anchor="middle" font-family="Arial, sans-serif">' + esc(it.name + ' · ' + it.qty + ' por lámpara · R ' + nf(it.pc.R) + ' mm al eje · ' + nf(deg(it.pc.Th)) + '° · cuerda ' + nf(it.pc.chord) + ' · flecha ' + nf(it.pc.sag) + ' · largo ' + nf(it.pc.L) + ' · varilla ' + rodTxt(p.d)) + '</text>';
+      body += '<text x="' + X(g.hubEnd[0]) + '" y="' + (baseY + 13).toFixed(2) + '" font-size="3.2" text-anchor="' + (g.hubEnd[0] > 0 ? 'end' : 'start') + '" font-family="Arial, sans-serif">punta al centro</text>';
+      body += '<text x="' + X(g.rimEnd[0]) + '" y="' + (baseY + 13).toFixed(2) + '" font-size="3.2" text-anchor="' + (g.rimEnd[0] > 0 ? 'end' : 'start') + '" font-family="Arial, sans-serif">punta al aro</text>';
+      y = baseY + 22;
+    });
+    var bar = '<path d="M10 ' + (y + 6) + 'H110"' + ' stroke="#000" stroke-width="0.4" fill="none"/>';
+    for (var t = 0; t <= 100; t += 10) bar += '<path d="M' + (10 + t) + ' ' + (y + 6) + 'v' + (t % 50 ? -2.5 : -4) + '" stroke="#000" stroke-width="0.3" fill="none"/>';
+    bar += '<text x="113" y="' + (y + 6.5) + '" font-size="3.5" font-family="Arial, sans-serif">100 mm (verificar al imprimir)</text>';
+    var H = Math.ceil(y + 14);
+    return '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="' + W + 'mm" height="' + H + 'mm" viewBox="0 0 ' + W + ' ' + H + '">' +
+      '<rect width="' + W + '" height="' + H + '" fill="#ffffff"/>' +
+      '<text x="10" y="11" font-size="5" font-weight="bold" font-family="Arial, sans-serif">Lámpara roseta · plantillas a escala 1:1 · medidas en mm</text>' +
+      '<text x="10" y="16" font-size="3.4" font-family="Arial, sans-serif">Aro Ø' + nf0(p.D) + ' al eje · domo ' + nf0(p.H) + ' · ' + p.N + ' pétalos. Imprimir al 100 % (sin ajustar a la página).</text>' +
+      body + bar + '</svg>';
+  }
+  function clipSeg(x1, y1, x2, y2, xmin, ymin, xmax, ymax) {
+    var t0 = 0, t1 = 1, dx = x2 - x1, dy = y2 - y1, P = [-dx, dx, -dy, dy], Q = [x1 - xmin, xmax - x1, y1 - ymin, ymax - y1];
+    for (var i = 0; i < 4; i++) {
+      if (P[i] === 0) { if (Q[i] < 0) return null; }
+      else { var t = Q[i] / P[i]; if (P[i] < 0) { if (t > t1) return null; if (t > t0) t0 = t; } else { if (t < t0) return null; if (t < t1) t1 = t; } }
+    }
+    return [x1 + t0 * dx, y1 + t0 * dy, x1 + t1 * dx, y1 + t1 * dy];
+  }
+  function buildPdf() {
+    var J = window.jspdf && window.jspdf.jsPDF;
+    if (!J) throw new Error('no cargó el generador de PDF; revisa la conexión y recarga la página');
+    var doc = new J({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+    var PW = 279.4, PH = 215.9, des = state.des, p = state.p, sh = state.sh, c = des.cur;
+    var y = 30;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.text(L1('Lámpara roseta · plantillas 1:1'), 12, 16);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(90);
+    doc.text(L1('Aro Ø' + nf0(p.D) + ' mm al eje · domo de ' + nf0(p.H) + ' mm · ' + p.N + ' pétalos · varilla ' + rodTxt(p.d) + ' de acero 1018 · medidas en mm'), 12, 22);
+    doc.setTextColor(0);
+    function block(title, rows) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text(L1(title), 12, y); y += 6;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      rows.forEach(function (rw) { doc.text(L1(rw[0]), 14, y); doc.text(L1(rw[1]), 72, y); y += 5.2; });
+      y += 3;
+    }
+    var nL = p.n + (p.n === 1 ? ' lámpara' : ' lámparas');
+    block('CURVA · pieza única · hacer ' + des.nCur + ' por lámpara', [
+      ['Radio de doblez (eje)', nf(c.R) + ' mm'], ['Ángulo / largo', nf(deg(c.Th)) + '° / ' + nf(c.L) + ' mm'],
+      ['Cuerda / flecha', nf(c.chord) + ' mm / ' + nf(c.sag) + ' mm'], ['Corte de varilla', nf0(sh.bC.cut) + ' mm · ' + sh.bC.per + ' por barra de 6 m'],
+      ['Barras para ' + nL, sh.bC.bars + ' (' + nf0(sh.bC.qty) + ' piezas)'],
+      ['Horma, acero 1018', 'calibrada ' + nf0(sh.formC[0]) + ' · laminada ' + nf0(sh.formC[1]) + ' mm']
+    ]);
+    if (des.nMer) block('MERIDIANO (luz) · hacer ' + des.nMer + ' por lámpara · por dentro', [
+      ['Radio de doblez (eje)', nf(des.mer.R) + ' mm'], ['Ángulo / largo', nf(deg(des.mer.Th)) + '° / ' + nf(des.mer.L) + ' mm'],
+      ['Cuerda / flecha', nf(des.mer.chord) + ' mm / ' + nf(des.mer.sag) + ' mm'], ['Corte de varilla', nf0(sh.bM.cut) + ' mm · ' + sh.bM.per + ' por barra de 6 m'],
+      ['Barras para ' + nL, sh.bM.bars + ' (' + nf0(sh.bM.qty) + ' piezas)'],
+      ['Horma, acero 1018', 'calibrada ' + nf0(sh.formM[0]) + ' · laminada ' + nf0(sh.formM[1]) + ' mm']
+    ]);
+    block('Trazar sin impresora (método del cordel)', [
+      ['Centro del doblez', nf(c.R - c.sag) + ' mm debajo del centro de la cuerda'], ['Cordel', nf(c.R) + ' mm, del clavo al lápiz']
+    ]);
+    var off = offsets(c), tx = 168, ty = 30;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text(L1('Tabla de trazado de la curva'), tx, ty); ty += 5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(90);
+    doc.text(L1('Sobre la cuerda de ' + nf(c.chord) + ' mm, a cada lado del centro:'), tx, ty); ty += 6; doc.setTextColor(0); doc.setFontSize(10);
+    off.rows.forEach(function (rw, i) { doc.text(L1((i ? '± ' : '') + nf0(rw[0]) + ' mm'), tx + 2, ty); doc.text(L1(nf(rw[1]) + ' mm'), tx + 64, ty, { align: 'right' }); ty += 5; });
+    // dibujo reducido
+    var g = flatGeom(c), bw = 150, bh = Math.max(40, PH - 30 - Math.max(y, ty) - 6), sc = Math.min(bw / (g.chord + 20), bh / (g.R + 14));
+    var ox = 12 + bw / 2, oy = Math.max(y, ty) + 6 + (g.sag + 6) * sc;
+    function polyPdf(pts) { for (var i = 1; i < pts.length; i++) doc.line(ox + pts[i - 1][0] * sc, oy - pts[i - 1][1] * sc, ox + pts[i][0] * sc, oy - pts[i][1] * sc); }
+    doc.setDrawColor(150, 110, 60); doc.setLineWidth(Math.max(0.4, p.d * sc)); polyPdf(g.arc(g.R, 120));
+    doc.setDrawColor(180, 50, 43); doc.setLineWidth(0.25);
+    var eA = g.at(c.phi0), eB = g.at(c.phi1); polyPdf([eA, eB]); polyPdf([[0, 0], [0, g.sag]]); polyPdf([eA, [0, g.yc], eB]);
+    doc.setFontSize(8); doc.setTextColor(180, 50, 43);
+    doc.text(L1('cuerda ' + nf(c.chord)), ox, oy + 4, { align: 'center' }); doc.text(L1('flecha ' + nf(c.sag)), ox + 2, oy - g.sag * sc / 2);
+    doc.text(L1('R ' + nf(c.R) + ' · ' + nf(deg(c.Th)) + '°'), ox, oy - g.yc * sc + 4, { align: 'center' });
+    doc.setTextColor(0); doc.setDrawColor(0);
+    doc.setFontSize(8.5); doc.setTextColor(100);
+    doc.text(L1('Las hojas siguientes forman la plantilla a tamaño real. Imprímalas al 100 % (sin "ajustar a la página"), verifique que la barra mida 100 mm y únalas por las cruces.'), 12, PH - 9);
+    doc.setTextColor(0);
+    tiles(doc, c, 'CURVA · ' + des.nCur + ' por lámpara');
+    if (des.nMer) tiles(doc, des.mer, 'MERIDIANO · ' + des.nMer + ' por lámpara');
+    return doc.output('arraybuffer');
+  }
+  function tiles(doc, pc, title) {
+    var PW = 279.4, PH = 215.9, M = 8, top = 24, bottom = 20, ov = 12, uw = PW - 2 * M, uh = PH - top - bottom;
+    var r = state.p.d / 2, g = flatGeom(pc);
+    var bx0 = -g.chord / 2 - r - 10, bx1 = g.chord / 2 + r + 10, by0 = -16, by1 = g.sag + r + 10;
+    var W = bx1 - bx0, H = by1 - by0;
+    var cols = W <= uw ? 1 : Math.ceil((W - ov) / (uw - ov)), rows = H <= uh ? 1 : Math.ceil((H - ov) / (uh - ov));
+    var offX = cols === 1 ? (uw - W) / 2 : 0, offY = rows === 1 ? (uh - H) / 2 : 0;
+    var segs = [];
+    function addPoly(pts, st) { for (var i = 1; i < pts.length; i++) segs.push([pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1], st]); }
+    addPoly(g.arc(g.R + r, 260), 'k'); addPoly(g.arc(g.R - r, 260), 'k'); addPoly(g.arc(g.R, 260), 'e');
+    addPoly([g.at(pc.phi0, g.R + r), g.at(pc.phi0, g.R - r)], 'k'); addPoly([g.at(pc.phi1, g.R + r), g.at(pc.phi1, g.R - r)], 'k');
+    var eA = g.at(pc.phi0), eB = g.at(pc.phi1);
+    addPoly([eA, eB], 'c'); addPoly([[0, 0], [0, g.sag]], 'c');
+    [eA, eB].forEach(function (e) { var dx = -e[0], dy = g.yc - e[1], l = Math.hypot(dx, dy); addPoly([e, [e[0] + dx / l * 25, e[1] + dy / l * 25]], 'c'); });
+    var n = cols * rows, idx = 0;
+    for (var row = 0; row < rows; row++) for (var col = 0; col < cols; col++) {
+      idx++;
+      doc.addPage('letter', 'landscape');
+      var wx0 = bx0 + col * (uw - ov) - offX, wyT = by1 - row * (uh - ov) + offY, wx1 = wx0 + uw, wy0 = wyT - uh;
+      var PX = function (x) { return M + (x - wx0); }, PY = function (v) { return top + (wyT - v); };
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(0);
+      doc.text(L1(title + ' · plantilla 1:1 · hoja ' + idx + ' de ' + n), M, 12);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(90);
+      doc.text(L1('Imprimir al 100 % (sin "ajustar a la página"). Verifique la barra de 100 mm. Una las hojas haciendo coincidir las cruces.'), M, 17.5);
+      doc.setTextColor(0);
+      segs.forEach(function (s) {
+        var cl = clipSeg(s[0], s[1], s[2], s[3], wx0, wy0, wx1, wyT); if (!cl) return;
+        if (s[4] === 'k') { doc.setDrawColor(0); doc.setLineWidth(0.35); doc.setLineDashPattern([], 0); }
+        else if (s[4] === 'e') { doc.setDrawColor(40, 95, 163); doc.setLineWidth(0.2); doc.setLineDashPattern([3, 1.2, 0.6, 1.2], 0); }
+        else { doc.setDrawColor(179, 51, 43); doc.setLineWidth(0.25); doc.setLineDashPattern([], 0); }
+        doc.line(PX(cl[0]), PY(cl[1]), PX(cl[2]), PY(cl[3]));
+      });
+      doc.setLineDashPattern([], 0); doc.setDrawColor(0); doc.setLineWidth(0.3);
+      var cx = [], cy = [];
+      if (col > 0) cx.push(wx0 + ov / 2); if (col < cols - 1) cx.push(wx1 - ov / 2);
+      if (row > 0) cy.push(wyT - ov / 2); if (row < rows - 1) cy.push(wy0 + ov / 2);
+      function crossAt(x, v) { doc.line(PX(x) - 4, PY(v), PX(x) + 4, PY(v)); doc.line(PX(x), PY(v) - 4, PX(x), PY(v) + 4); }
+      cx.forEach(function (x) { crossAt(x, wy0 + 8); crossAt(x, wyT - 8); doc.setLineDashPattern([1, 2], 0); doc.line(PX(x), PY(wyT), PX(x), PY(wy0)); doc.setLineDashPattern([], 0); });
+      cy.forEach(function (v) { crossAt(wx0 + 8, v); crossAt(wx1 - 8, v); doc.setLineDashPattern([1, 2], 0); doc.line(PX(wx0), PY(v), PX(wx1), PY(v)); doc.setLineDashPattern([], 0); });
+      doc.setFontSize(9);
+      var ly = Math.max(6, g.sag * 0.4);
+      if (0 > wx0 + 40 && 0 < wx1 - 40 && ly > wy0 + 4 && ly < wyT - 4) doc.text(L1('R ' + nf(pc.R) + ' al eje · ' + nf(deg(pc.Th)) + '° · cuerda ' + nf(pc.chord) + ' · varilla ' + rodTxt(state.p.d)), PX(0), PY(ly), { align: 'center' });
+      [[g.hubEnd, 'punta al centro'], [g.rimEnd, 'punta al aro']].forEach(function (it) {
+        var e = it[0]; if (e[0] > wx0 + 2 && e[0] < wx1 - 2 && -8 > wy0) doc.text(it[1], PX(e[0]), PY(-8), { align: e[0] > 0 ? 'right' : 'left' });
+      });
+      var by = PH - 9;
+      doc.setLineWidth(0.4); doc.line(M, by, M + 100, by);
+      for (var t = 0; t <= 100; t += 10) doc.line(M + t, by, M + t, by - (t % 50 ? 2.5 : 4));
+      doc.setFontSize(8); doc.text('100 mm', M + 103, by);
+    }
+  }
+  function leeme() {
+    var des = state.des, p = state.p;
+    return L1(summaryText()) + '\n\nArchivos (todo en milímetros):\n' +
+      '- curva_1a1.dxf: la curva acostada, escala 1:1. Capas EJE (eje de la varilla), CONTORNO (para corte láser o plasma), REFERENCIA (cuerda, flecha y centro del doblez).\n' +
+      (des.nMer ? '- meridiano_1a1.dxf: igual, para los meridianos.\n' : '') +
+      '- aro_laser_1a1.dxf: el aro para corte láser (capa CORTE), con ' + L1(ringHolesTxt(des)) + '.\n' +
+      '- disco_laser_1a1.dxf: el disco central para corte láser (capa CORTE), con la perforación de Ø' + nf(HOLE) + '.\n' +
+      '- planta_armado_1a1.dxf: vista desde arriba con el aro, el disco y todas las varillas, para marcar los puntos de soldadura.\n' +
+      '- plantilla_1a1.svg: plantillas para imprimir en plotter al 100 %.\n' +
+      '- curva.stl' + (des.nMer ? ' / meridiano.stl' : '') + ': la pieza sola en 3D, acostada.\n' +
+      '- lampara_completa.stl: la estructura armada (Z hacia arriba, cara de arriba del aro en Z = 0). Sin las tiras LED.\n' +
+      '- parametros.json: las medidas usadas.\n';
+  }
+  async function buildZip() {
+    if (!window.JSZip) throw new Error('no cargó el compresor ZIP; revisa la conexión y recarga la página');
+    var des = state.des, p = state.p, r = p.d / 2, sh = state.sh, rg = des.ring, zip = new window.JSZip();
+    zip.file('LEEME.txt', leeme());
+    zip.file('parametros.json', JSON.stringify({
+      parametros: p, varilla: rodTxt(p.d) + ' acero 1018',
+      curva: { cantidad_por_lampara: des.nCur, radio_eje: des.cur.R, angulo_grados: deg(des.cur.Th), largo: des.cur.L, cuerda: des.cur.chord, flecha: des.cur.sag, corte: sh.bC.cut, horma_calibrada: sh.formC[0], horma_laminada: sh.formC[1] },
+      meridiano: des.nMer ? { cantidad_por_lampara: des.nMer, por_dentro_mm: des.mer.inside, radio_eje: des.mer.R, angulo_grados: deg(des.mer.Th), largo: des.mer.L, cuerda: des.mer.chord, flecha: des.mer.sag, corte: sh.bM.cut, horma_calibrada: sh.formM[0], horma_laminada: sh.formM[1], llega_al_aro_grados: des.mer.incl, cruces_r_planta: des.crossR } : null,
+      aro: { diam_exterior: 2 * rg.Rext, diam_interior: 2 * rg.Rint, espesor: p.at, muescas: rg.muesca, hueco_meridiano: des.nMer ? [rg.slotW, rg.slotL] : null, asiento_V_diam: rg.seatD, asientos_en_diam: p.D },
+      disco: { diametro: p.dd, espesor: p.at, perforacion: HOLE, cara_de_arriba_sobre_el_aro: des.zDiscTop },
+      luz: des.nMer ? { tramos: des.N, largo_tramo: des.led.tramo, metros_por_lampara: sh.ledLamp / 1000 } : null,
+      compra: { lamparas: p.n, barras_6m: sh.nBars, barras_curvas: sh.bC.bars, barras_meridianos: sh.bM ? sh.bM.bars : 0, kg: sh.kgBuy, precio_barra: p.precio, total: sh.cost }
+    }, null, 2));
+    zip.file('curva_1a1.dxf', dxfPiece(des.cur, 'CURVA', des.nCur));
+    if (des.nMer) zip.file('meridiano_1a1.dxf', dxfPiece(des.mer, 'MERIDIANO', des.nMer));
+    zip.file('aro_laser_1a1.dxf', dxfRingLaser());
+    zip.file('disco_laser_1a1.dxf', dxfDiscLaser());
+    zip.file('planta_armado_1a1.dxf', dxfPlan());
+    zip.file('plantilla_1a1.svg', svgTemplateFile());
+    zip.file('curva.stl', stlBuffer([{ d: arcTubeData(des.cur.R, des.cur.phi0, des.cur.phi1, r, 120, 16), frames: [IDF] }], 'curva'));
+    if (des.nMer) zip.file('meridiano.stl', stlBuffer([{ d: arcTubeData(des.mer.R, des.mer.phi0, des.mer.phi1, r, 90, 16), frames: [IDF] }], 'meridiano'));
+    zip.file('lampara_completa.stl', stlBuffer(lampParts(), 'lampara'));
+    return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  }
+  function fileBase() { var p = state.p; return 'roseta_D' + p.D + '_H' + p.H + '_' + p.N + 'p'; }
+
+  /* ============ descargas (capacidad del visor) ============ */
+  // Publicada en su propio dominio (sin Claude y sin marco), la página descarga y guarda con el navegador.
+  var STANDALONE = !(window.claude && typeof window.claude.use === 'function') && (function () { try { return window.top === window.self; } catch (e) { return false; } })();
+  var DL_BTNS = ['#dlPdf', '#dlSvg', '#dlZip'];
+  function dlUnavailable(text) {
+    DL_BTNS.forEach(function (s) { $(s).disabled = true; });
+    $('#dlStatus').textContent = text || 'Las descargas no están disponibles en esta vista.';
+  }
+  function saveLocal(filename, data) {
+    var type = { pdf: 'application/pdf', svg: 'image/svg+xml', zip: 'application/zip' }[filename.split('.').pop()] || 'application/octet-stream';
+    var blob = data instanceof Blob ? data : new Blob([data], { type: type });
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+  }
+  async function initDownloads() {
+    if (STANDALONE) { state.dlLocal = true; DL_BTNS.forEach(function (s) { $(s).disabled = false; }); $('#dlStatus').textContent = ''; return; }
+    if (!window.claude || typeof window.claude.use !== 'function') { dlUnavailable('Las descargas funcionan cuando la página se abre en Claude.'); return; }
+    var dl = null;
+    try { dl = await window.claude.use('downloads'); } catch (e) { dl = null; }
+    if (!dl) { dlUnavailable(); return; }
+    state.dl = dl;
+    DL_BTNS.forEach(function (s) { $(s).disabled = false; });
+    $('#dlStatus').textContent = '';
+  }
+  var busy = false;
+  async function offer(filename, make) {
+    var st = $('#dlStatus');
+    if (!state.dl && !state.dlLocal) { st.textContent = 'Las descargas no están disponibles en esta vista.'; return; }
+    if (busy) return;
+    busy = true; st.textContent = 'Preparando ' + filename + '…';
+    var data;
+    try { data = await make(); }
+    catch (e) { st.textContent = 'No se pudo preparar el archivo: ' + (e && e.message ? e.message : e); busy = false; return; }
+    if (state.dlLocal) {
+      try { saveLocal(filename, data); st.textContent = 'Descargado: ' + filename; } catch (e) { st.textContent = 'No se pudo descargar el archivo.'; }
+      busy = false; return;
+    }
+    try {
+      var res = await state.dl.save({ filename: filename, data: data });
+      st.textContent = res && res.status === 'delivered' ? 'Archivo entregado.' : 'Listo: ' + filename;
+    } catch (e) {
+      var c = e && e.code;
+      if (c === 'declined') st.textContent = 'Descarga cancelada.';
+      else if (c === 'rate_limited') st.textContent = 'Ya hay una descarga esperando confirmación; espera un momento.';
+      else if (c === 'rejected_extension' || c === 'extension_not_enabled') st.textContent = 'Este formato no se puede descargar aquí.';
+      else if (c === 'too_large') st.textContent = 'El archivo es demasiado grande para esta vista.';
+      else if (c === 'bad_request' || c === 'transform_error') st.textContent = 'No se pudo armar el archivo.';
+      else dlUnavailable();
+    }
+    busy = false;
+  }
+
+  /* ============ diseños guardados (base de datos del artifact) ============ */
+  function dbUnavailable(text) {
+    $('#saveForm').hidden = true;
+    $('#savedList').innerHTML = '<li class="empty">' + esc(text || 'Guardar diseños no está disponible en esta vista. Tus medidas igual quedan guardadas en este navegador.') + '</li>';
+  }
+  // Diseños guardados en este navegador, para la página publicada fuera de Claude
+  var LOCAL_KEY = 'roseta.disenos.v1';
+  function localList() { try { var l = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function localWrite(l) { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(l)); return true; } catch (e) { return false; } }
+  function renderLocal() {
+    renderSaved(localList().sort(function (a, b) { return (b.creado || 0) - (a.creado || 0); }).map(function (x) { return { id: x.id, data: function () { return x; } }; }));
+  }
+  function initLocalDb() {
+    state.db = { collection: function () { return {
+      add: function (doc) { var l = localList(); l.push(Object.assign({ id: 'd' + Date.now().toString(36) }, doc)); if (!localWrite(l)) return Promise.reject({ code: 'quota_exceeded' }); renderLocal(); return Promise.resolve(); },
+      doc: function (id) { return { delete: function () { localWrite(localList().filter(function (x) { return x.id !== id; })); renderLocal(); return Promise.resolve(); } }; }
+    }; } };
+    state.canWrite = true; $('#saveBtn').disabled = false;
+    $('#disLead').textContent = 'Guarda las medidas que te gusten. Quedan guardadas en este navegador.';
+    renderLocal();
+  }
+  async function initDb() {
+    if (STANDALONE) { initLocalDb(); return; }
+    if (!window.claude || typeof window.claude.use !== 'function') { dbUnavailable('Guardar diseños funciona cuando la página se abre en Claude. Tus medidas igual quedan guardadas en este navegador.'); return; }
+    var db = null;
+    try { db = await window.claude.use('db'); } catch (e) { db = null; }
+    if (!db) { dbUnavailable(); return; }
+    state.db = db;
+    var user = null, can = null;
+    try { user = await window.claude.use('user'); } catch (e) { user = null; }
+    try { can = user ? await user.can('data.write') : null; } catch (e) { can = null; }
+    state.canWrite = can !== false;
+    if (!state.canWrite) { $('#saveForm').hidden = true; $('#disLead').textContent = 'Diseños guardados por el dueño de la página. Ábrelos para ver sus medidas.'; }
+    else $('#saveBtn').disabled = false;
+    var loaded = false;
+    var timer = setTimeout(function () { if (!loaded) $('#saveStatus').textContent = 'La lista de diseños todavía no responde; puede estar desactualizada.'; }, 10000);
+    try {
+      db.collection('disenos').orderBy('creado', 'desc').limit(100).onSnapshot(function (snap) {
+        if (!snap.metadata.fromCache) { loaded = true; clearTimeout(timer); if (/no responde/.test($('#saveStatus').textContent)) $('#saveStatus').textContent = ''; }
+        renderSaved(snap.docs);
+      }, function () { loaded = true; clearTimeout(timer); $('#saveStatus').textContent = 'No se pudo cargar la lista de diseños.'; });
+    } catch (e) { clearTimeout(timer); dbUnavailable(); }
+  }
+  function renderSaved(docs) {
+    var ul = $('#savedList');
+    ul.innerHTML = '';
+    if (!docs.length) { ul.innerHTML = '<li class="empty">Aún no hay diseños guardados. Ponle nombre a las medidas de arriba y guárdalas.</li>'; return; }
+    docs.forEach(function (d) {
+      var data = d.data() || {}, li = document.createElement('li');
+      var info = document.createElement('div');
+      var nm = document.createElement('span'); nm.className = 's-name'; nm.textContent = data.nombre || 'Sin nombre';
+      var sm = document.createElement('span'); sm.className = 's-sum'; sm.textContent = data.resumen || '';
+      info.appendChild(nm); info.appendChild(sm);
+      var btns = document.createElement('div'); btns.className = 's-btns';
+      var open = document.createElement('button'); open.type = 'button'; open.className = 'btn small'; open.textContent = 'Abrir';
+      open.addEventListener('click', function () {
+        if (data.parametros) { setParams(data.parametros); $('#saveStatus').textContent = 'Abierto: ' + (data.nombre || 'diseño'); $('#medidas').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); }
+      });
+      btns.appendChild(open);
+      if (state.canWrite) {
+        var del = document.createElement('button'); del.type = 'button'; del.className = 'btn small'; del.textContent = 'Borrar';
+        var armed = 0;
+        del.addEventListener('click', async function () {
+          if (!armed) { armed = setTimeout(function () { armed = 0; del.textContent = 'Borrar'; }, 3500); del.textContent = '¿Seguro? Borrar'; return; }
+          clearTimeout(armed); armed = 0; del.disabled = true;
+          try { await state.db.collection('disenos').doc(d.id).delete(); $('#saveStatus').textContent = 'Borrado: ' + (data.nombre || 'diseño'); }
+          catch (e) { del.disabled = false; del.textContent = 'Borrar'; $('#saveStatus').textContent = 'No se pudo borrar.'; }
+        });
+        btns.appendChild(del);
+      }
+      li.appendChild(info); li.appendChild(btns); ul.appendChild(li);
+    });
+  }
+  function resumenText() {
+    var des = state.des, p = state.p;
+    return 'Ø' + nf0(p.D) + ' × ' + nf0(p.H) + ' · ' + p.N + ' pétalos · ' + des.nCur + ' curvas R ' + nf(des.cur.R) + ' · ' + nf(deg(des.cur.Th)) + '° · varilla ' + rodShort(p.d) + (des.nMer ? ' · meridianos por dentro' : '');
+  }
+
+  /* ============ eventos ============ */
+  function wire() {
+    $$('[data-view]').forEach(function (b) { b.addEventListener('click', function () { if (view.ex) finishExtract(false); goView(b.dataset.view); }); });
+    $$('[data-mode]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        state.mode = b.dataset.mode;
+        $$('[data-mode]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+        applyMode();
+      });
+    });
+    $('#selPrev').addEventListener('click', function () { select(state.sel - 1); });
+    $('#selNext').addEventListener('click', function () { select(state.sel + 1); });
+    $('#btnExtract').addEventListener('click', extract);
+    $('#btnReturn').addEventListener('click', returnRod);
+    $('#btnPlano').addEventListener('click', function () { $('#varilla').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); });
+    $$('[data-piece]').forEach(function (b) { b.addEventListener('click', function () { state.piece = b.dataset.piece; renderPiece(); }); });
+    $('#btnReset').addEventListener('click', function () { setParams(DEF); });
+    $('#buildRange').addEventListener('input', function () {
+      if (view.ex) finishExtract(false);
+      state.build = Number($('#buildRange').value); stopPlay(); applyBuild(); renderBuildLabel();
+    });
+    $('#buildPlay').addEventListener('click', function () { if (playing) stopPlay(); else startPlay(); });
+    $('#dlPdf').addEventListener('click', function () { offer(fileBase() + '_plantillas_carta.pdf', function () { return buildPdf(); }); });
+    $('#dlSvg').addEventListener('click', function () { offer(fileBase() + '_plantilla_1a1.svg', function () { return svgTemplateFile(); }); });
+    $('#dlZip').addEventListener('click', function () { offer(fileBase() + '_taller.zip', buildZip); });
+    $('#copyTxt').addEventListener('click', function () {
+      var t = summaryText(), st = $('#copyStatus'), area = $('#copyArea');
+      function fallback() { area.hidden = false; area.value = t; area.focus(); area.select(); st.textContent = 'Selecciona y copia el texto.'; }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { st.textContent = 'Medidas copiadas.'; area.hidden = true; }, fallback);
+        else fallback();
+      } catch (e) { fallback(); }
+    });
+    $('#saveName').addEventListener('input', function () { $('#saveName').dataset.touched = '1'; });
+    $('#saveForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!state.db || !state.canWrite) return;
+      var nombre = ($('#saveName').value || '').trim() || defaultName(), btn = $('#saveBtn'), st = $('#saveStatus');
+      btn.disabled = true; st.textContent = 'Guardando…';
+      try {
+        await state.db.collection('disenos').add({ nombre: nombre.slice(0, 60), parametros: Object.assign({}, state.p), resumen: resumenText(), creado: Date.now() });
+        st.textContent = 'Guardado: ' + nombre; $('#saveName').dataset.touched = ''; $('#saveName').value = defaultName();
+      } catch (err) {
+        var c = err && err.code;
+        if (c === 'quota_exceeded') st.textContent = 'No hay espacio para más diseños: borra alguno.';
+        else if (c === 'invalid_argument') { st.textContent = 'No tienes permiso para guardar diseños en esta página.'; state.canWrite = false; $('#saveForm').hidden = true; }
+        else st.textContent = 'No se pudo guardar. Intenta de nuevo.';
+      }
+      btn.disabled = !state.canWrite;
+    });
+  }
+  var playing = null;
+  function startPlay() {
+    var total = state.des.rods.length;
+    if (view.ex) finishExtract(false);
+    if (state.build >= total) state.build = 0;
+    $('#buildPlay').textContent = 'Pausar';
+    var acc = 0, rate = total / 7000;
+    playing = setInterval(function () {
+      acc += 50 * rate; var add = Math.floor(acc); acc -= add;
+      state.build = Math.min(total, state.build + add);
+      $('#buildRange').value = state.build; applyBuild(); renderBuildLabel();
+      if (state.build >= total) stopPlay();
+    }, 50);
+  }
+  function stopPlay() { if (playing) clearInterval(playing); playing = null; $('#buildPlay').textContent = 'Ver armado'; }
+
+  /* ============ arranque ============ */
+  var saved = null;
+  // v3: lámpara de Ø80, varilla de 1/4", meridianos por dentro y lámina de 4,5 mm (lo guardado con versiones anteriores se ignora)
+  try { saved = JSON.parse(localStorage.getItem('roseta.params.v3') || 'null'); } catch (e) { saved = null; }
+  buildFields();
+  buildPresets();
+  wire();
+  init3D();
+  setParams(saved || DEF);
+  initDownloads();
+  initDb();
+  window.__roseta = { state: state, computeDesign: computeDesign, buildPdf: buildPdf, buildZip: buildZip, svgTemplateFile: svgTemplateFile };
+})();
+</script>
+</body>
+</html>
