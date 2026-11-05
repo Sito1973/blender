@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Diseñador de la lámpara roseta en varilla de 1/4&quot;: modelo 3D, plantillas 1:1, corte láser del aro y compra de varilla.">
+<meta name="description" content="Diseñador de la lámpara roseta en varilla de 1/4&quot;: modelo 3D, plantillas 1:1, corte láser del aro y del disco, y compra de varilla.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23bf9455' stroke-width='3'/%3E%3Cpath d='M16 3v26M3 16h26M6.8 6.8l18.4 18.4M25.2 6.8 6.8 25.2' stroke='%23bf9455' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23855818'/%3E%3C/svg%3E">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Diseñador Roseta</title>
@@ -166,6 +166,7 @@ input[type="range"] { width: 100%; accent-color: var(--brass); margin: 4px 0; }
 .note { font-size: 0.92rem; padding: 10px 12px; border-radius: 8px; background: var(--brass-soft); }
 .note.info { background: transparent; border: 1px solid var(--line); color: var(--muted); }
 .quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.dl-group { display: grid; gap: 8px; }
 .quick .chip { padding: 6px 10px; font: 500 0.82rem/1 var(--font-mono); }
 .seg.light { background: var(--panel); border-color: var(--line); backdrop-filter: none; }
 .seg.light button { color: var(--muted); font-size: 0.82rem; }
@@ -321,13 +322,32 @@ details .table-wrap { border: 0; border-radius: 0; }
       <h3>Tabla de trazado</h3>
       <p class="hint" id="pzTableLead"></p>
       <div class="table-wrap"><table id="pzTable"></table></div>
-      <h3>Descargar</h3>
-      <div class="actions">
-        <button type="button" class="btn primary" id="dlPdf" disabled>Plantilla 1:1 en hojas carta (PDF)</button>
-        <button type="button" class="btn" id="dlSvg" disabled>Plantilla 1:1 para plotter (SVG)</button>
-        <button type="button" class="btn" id="dlZip" disabled>Paquete para el taller (ZIP)</button>
+    </section>
+
+    <section class="block" id="descargas" aria-labelledby="hDescargas">
+      <h2 id="hDescargas">Descargas</h2>
+      <div class="dl-group">
+        <h3>Varillas · curvas y meridianos</h3>
+        <div class="actions">
+          <button type="button" class="btn primary" id="dlPdf" disabled>Plantillas 1:1 en hojas carta (PDF)</button>
+          <button type="button" class="btn" id="dlSvg" disabled>Plantilla 1:1 para plotter (SVG)</button>
+        </div>
       </div>
-      <p class="hint">El ZIP trae los DXF a escala 1:1 (la curva, el meridiano, la planta de armado y el aro y el disco para el corte láser), los STL, la plantilla SVG y las medidas.</p>
+      <div class="dl-group">
+        <h3>Aro y disco · corte láser</h3>
+        <div class="actions">
+          <button type="button" class="btn primary" id="dlLaser" disabled>Aro y disco para el láser (PDF)</button>
+          <button type="button" class="btn" id="dlLaserZip" disabled>PDF y DXF del aro y el disco (ZIP)</button>
+        </div>
+        <p class="hint">El PDF trae cantidades, medidas, la lámina y los dibujos del aro y del disco, listo para mandar al taller de corte. El ZIP le suma los DXF a escala 1:1.</p>
+      </div>
+      <div class="dl-group">
+        <h3>Todo junto</h3>
+        <div class="actions">
+          <button type="button" class="btn" id="dlZip" disabled>Paquete para el taller (ZIP)</button>
+        </div>
+        <p class="hint">Trae los dos PDF, los DXF a escala 1:1 (curva, meridiano, planta de armado, aro y disco), los STL, la plantilla SVG y las medidas.</p>
+      </div>
       <p class="status" id="dlStatus" aria-live="polite">Preparando descargas…</p>
     </section>
 
@@ -979,8 +999,8 @@ details .table-wrap { border: 0; border-radius: 0; }
     var s = '';
     s += step('Aro', 'Mándalo a cortar en láser en lámina de ' + V(nfd(p.at) + ' mm') + ': Ø' + V(nf0(2 * rg.Rext) + ' × Ø' + nf0(2 * rg.Rint)) + ', con ' + ringHolesTxt(des) + '. ' +
       (rg.seatAng.length ? 'Los huecos de las V van cada ' + nf(pasoD) + '° sobre Ø' + nf0(p.D) + (des.nMer ? ' y las ' + hueco + 's corridas ' + nf(deg(des.merOff)) + '° de ellos' : '') + '. ' : '') +
-      'El DXF va en el ZIP: aro_laser_1a1.dxf.');
-    s += step('Disco central', 'De la misma lámina: Ø' + V(nf0(p.dd) + ' mm') + ' con perforación de Ø' + nf(HOLE) + ' para el niple roscado de la lámpara (disco_laser_1a1.dxf).');
+      'El PDF y los DXF para el láser están en Descargas.');
+    s += step('Disco central', 'De la misma lámina: Ø' + V(nf0(p.dd) + ' mm') + ' con perforación de Ø' + nf(HOLE) + ' para el niple roscado de la lámpara. Va en el mismo PDF del aro.');
     s += step('Montaje', 'Apoya el aro en una mesa plana y sostén el disco centrado, con su cara de arriba a ' + V(nf0(des.zDiscTop) + ' mm') + ' sobre la cara de arriba del aro. Un tubo o un taco en el centro sirve de soporte.');
     if (des.nMer) s += step('Meridianos', 'Van primero y por dentro. Apoya cada uno en el borde del disco y mételo por su ' + hueco + ' del aro hasta la cara de abajo; suéldalo por arriba y por abajo. Llega al aro a ' + V(nf0(des.mer.incl) + '°') + ' de la horizontal, ' + nf(des.a - des.mer.rTop) + ' mm más hacia el centro que las curvas. Dan la forma del domo y sirven de guía.');
     s += step('Curvas A', 'La curva 01A va con su punta en el disco a ' + V(nf(c.hub.az) + '°') + ' y su punta en el aro a ' + V(nf(c.rim.az) + '°') + (des.nMer ? ', por encima de los meridianos' : '') + '. Cada curva siguiente se corre ' + nf(pasoD) + '°. Para ubicar el plano de la curva, su punto medio queda a ' + V(nf0(c.mid.z) + ' mm') + ' de altura y a ' + nf0(c.mid.r) + ' mm del centro.');
@@ -1593,9 +1613,189 @@ details .table-wrap { border: 0; border-radius: 0; }
       doc.setFontSize(8); doc.text('100 mm', M + 103, by);
     }
   }
+  /* ---------- PDF para el corte láser: aro y disco (igual al de Metal Cortes) ---------- */
+  function sheetFit(des) {
+    var c = des.ring, p = des.p, GAP = 10, cell = 2 * c.Rext + GAP;
+    function perSheet(w, h) { return Math.floor((Math.max(w, h) - GAP) / cell) * Math.floor((Math.min(w, h) - GAP) / cell); }
+    // discos dentro del hueco de un aro: grilla con paso de un disco más 10 mm
+    var pitch = p.dd + GAP, lim = c.Rint - GAP - p.dd / 2, k = Math.floor(lim / pitch), inHole = 0, i, j;
+    for (i = -k; i <= k; i++) for (j = -k; j <= k; j++) if (Math.hypot(i * pitch, j * pitch) <= lim) inHole++;
+    return { inHole: inHole, sheets: [[1220, 2440], [1500, 3000]].map(function (s) { var per = perSheet(s[0], s[1]); return { w: s[0], h: s[1], per: per, need: per ? Math.ceil(p.n / per) : 0 }; }) };
+  }
+  function buildLaserPdf() {
+    var J = window.jspdf && window.jspdf.jsPDF;
+    if (!J) throw new Error('no cargó el generador de PDF; revisa la conexión y recarga la página');
+    var doc = new J({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+    var PW = 215.9, PH = 279.4, M = 16, W = PW - 2 * M;
+    var des = state.des, p = state.p, sh = state.sh, c = des.ring, n = p.n, fit = sheetFit(des);
+    var esp = nfd(p.at), NL = n + (n === 1 ? ' lámpara' : ' lámparas'), hueco = c.muesca ? 'muesca' : 'ranura';
+    var INK = [21, 24, 28], MUT = [89, 98, 108], BRASS = [133, 88, 24], SOFT = [243, 237, 225], LINE = [204, 210, 216], COTA = [179, 51, 43], PLATE = [141, 148, 156];
+    function fillC(a) { doc.setFillColor(a[0], a[1], a[2]); }
+    function drawC(a) { doc.setDrawColor(a[0], a[1], a[2]); }
+    function T(s, x, y, size, bold, color, align) {
+      doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size); var k = color || INK; doc.setTextColor(k[0], k[1], k[2]);
+      doc.text(L1(s), x, y, align ? { align: align } : undefined);
+    }
+    function wrap(s, x, y, w, size, color) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(size); var k = color || INK; doc.setTextColor(k[0], k[1], k[2]);
+      var lines = doc.splitTextToSize(L1(s), w); doc.text(lines, x, y, { lineHeightFactor: 1.35 });
+      return y + lines.length * size * 0.3528 * 1.35;
+    }
+    function header(eyebrow, title, sub) {
+      T(eyebrow, M, 18, 8, true, BRASS); T(title, M, 28, 20, true, INK);
+      return sub ? wrap(sub, M, 35, W, 9, MUT) + 3 : 36;
+    }
+    function footer(page) {
+      drawC(LINE); doc.setLineWidth(0.3); doc.line(M, PH - 14, PW - M, PH - 14);
+      T('Lámpara roseta · corte láser · ' + NL + ' · acero de ' + esp + ' mm · medidas en mm', M, PH - 9, 7.5, false, MUT);
+      T(String(page), PW - M, PH - 9, 7.5, false, MUT, 'right');
+    }
+    function table(y, cols, widths, rows) {
+      var rh = 7.4, x;
+      fillC(SOFT); doc.rect(M, y, W, rh, 'F');
+      x = M; cols.forEach(function (h, i) { T(h, x + 2.5, y + 4.9, 7, true, MUT); x += widths[i]; });
+      y += rh;
+      rows.forEach(function (r) {
+        x = M; r.forEach(function (v, i) { T(v, x + 2.5, y + 4.9, 8.5, i === 0, INK); x += widths[i]; });
+        drawC(LINE); doc.setLineWidth(0.25); doc.line(M, y + rh, M + W, y + rh);
+        y += rh;
+      });
+      return y;
+    }
+    function notes(y, title, items) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+      var blocks = items.map(function (s) { return doc.splitTextToSize(L1(s), W - 16); });
+      var h = 15 + blocks.reduce(function (a, b) { return a + b.length * 4.1 + 1.6; }, 0);
+      fillC(SOFT); doc.roundedRect(M, y, W, h, 1.5, 1.5, 'F');
+      T(title, M + 5, y + 7, 7.5, true, BRASS);
+      var yy = y + 13;
+      blocks.forEach(function (b) {
+        T('•', M + 5, yy, 9, true, BRASS);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(INK[0], INK[1], INK[2]);
+        doc.text(b, M + 10, yy, { lineHeightFactor: 1.38 }); yy += b.length * 4.1 + 1.6;
+      });
+      return y + h + 5;
+    }
+    function plate(contours, k, cx, cy) {
+      contours.forEach(function (ct) { ct.forEach(function (q, i) { var X = cx + q[0] * k, Y = cy - q[1] * k; if (i) doc.lineTo(X, Y); else doc.moveTo(X, Y); }); doc.close(); });
+    }
+    var holesTxt = (des.nMer ? des.N + ' ' + hueco + 's y ' : '') + c.seatAng.length + ' huecos';
+    var discsTxt = fit.inHole >= n ? 'los ' + n + ' caben dentro de un aro' : fit.inHole ? 'caben ' + fit.inHole + ' dentro de cada aro' : 'van en lámina aparte';
+
+    // ---- hoja 1: resumen para el taller ----
+    var y = header('CORTE LÁSER · METAL CORTES · LÁMPARA DE Ø' + nf0(p.D / 10) + ' CM', 'AROS Y DISCOS EN LÁMINA DE ' + esp + ' MM',
+      'Piezas planas para ' + NL + '. Medidas en mm. Los DXF van a escala 1:1, con las medidas exactas de la pieza (sin compensar el corte).');
+    var tiles = [[String(n), 'AROS', 'Ø' + nf0(2 * c.Rext) + ' × Ø' + nf0(2 * c.Rint)], [String(n), 'DISCOS', 'Ø' + nf0(p.dd) + ' con perforación'],
+      [esp + ' mm', 'ESPESOR', 'acero al carbono HR / A36'], ['1:1', 'DXF', 'uno por pieza']];
+    var tw = (W - 12) / 4;
+    tiles.forEach(function (t, i) {
+      var x = M + i * (tw + 4);
+      fillC(SOFT); doc.roundedRect(x, y, tw, 22, 1.5, 1.5, 'F');
+      T(t[0], x + 4, y + 10, 17, true, i < 2 ? BRASS : INK); T(t[1], x + 4, y + 15.5, 7, true, INK); T(t[2], x + 4, y + 19.5, 6.5, false, MUT);
+    });
+    y += 32;
+    T('PIEZAS', M, y, 10, true, INK);
+    y = table(y + 3, ['PIEZA', 'CANT.', 'MEDIDAS', 'ARCHIVO DXF'], [34, 16, 86, W - 136], [
+      ['Aro de abajo', String(n), 'Ø' + nf0(2 * c.Rext) + ' × Ø' + nf0(2 * c.Rint) + ' · ' + holesTxt, 'aro_laser_1a1.dxf'],
+      ['Disco central', String(n), 'Ø' + nf0(p.dd) + ' · perforación central Ø' + nf(HOLE), 'disco_laser_1a1.dxf']
+    ]);
+    y = wrap('Cada aro lleva ' + (des.nMer ? des.N + ' ' + (c.muesca ? 'muescas abiertas desde el borde de adentro' : 'ranuras') + ', de ' + nf(c.slotW) + ' × ' + nf(c.slotL) +
+      ' mm, radiales, donde entran los meridianos de varilla de ' + rodShort(p.d) + ', y ' : '') + c.seatAng.length + ' huecos de Ø' + nf(c.seatD) +
+      ' donde se asientan las puntas de las curvas. El disco lleva una perforación central de Ø' + nf(HOLE) + ' para el niple roscado de la lámpara.', M, y + 5.5, W, 8.5, MUT) + 6;
+    T('LÁMINA', M, y, 10, true, INK);
+    y = table(y + 3, ['LÁMINA', 'AROS POR LÁMINA', 'LÁMINAS PARA ' + n, 'DISCOS'], [44, 38, 38, W - 120], fit.sheets.map(function (s) {
+      return [nf0(s.w) + ' × ' + nf0(s.h) + ' mm', s.per ? String(s.per) : 'no cabe', s.need ? String(s.need) : '-', discsTxt];
+    })) + 8;
+    y = notes(y, 'PARA METAL CORTES', [
+      'Cantidad: ' + n + ' aros y ' + n + ' discos. Acero al carbono laminado en caliente (HR, A36 o similar) de ' + esp + ' mm.',
+      'Los DXF están en milímetros, escala 1:1, capa CORTE. Las cotas son de la pieza terminada: tolerancia normal del láser (±0,3 mm).',
+      des.nMer ? 'Las ' + hueco + 's ya traen la holgura para la varilla de ' + rodShort(p.d) + ': no hay que agrandarlas. Van radiales, apuntando al centro del aro.'
+        : 'Los huecos ya traen la holgura para la varilla de ' + rodShort(p.d) + ': no hay que agrandarlos.',
+      fit.inHole >= n ? 'Los ' + n + ' discos caben dentro del hueco de un aro, así que no necesitan lámina aparte.' : 'Discos: ' + discsTxt + '.',
+      'Entregar sin escoria ni rebaba, y planos (los aros no deben quedar alabeados).'
+    ]);
+    notes(y, 'OJO CON EL MATERIAL DE LOS AROS', [
+      'Cada aro pesa ' + nf(sh.kgRing) + ' kg, pero el centro que sobra es un disco de Ø' + nf0(2 * c.Rint) + ' de unos ' + nf0(PI * c.Rint * c.Rint * p.at * 7.85e-6) + ' kg. Pregunta si cobran la lámina completa o solo lo usado.',
+      'Peso por pieza: aro ' + nf(sh.kgRing) + ' kg, disco ' + nf(sh.kgDisc) + ' kg. Para ' + NL + ': ' + nf(n * (sh.kgRing + sh.kgDisc)) + ' kg de piezas terminadas.'
+    ]);
+    footer(1);
+
+    // ---- hoja 2: dibujos ----
+    doc.addPage('letter', 'portrait');
+    y = header('CORTE LÁSER · DIBUJOS', 'LAS DOS PIEZAS');
+    T('AROS · HACER ' + n, M, y + 4, 11, true, INK);
+    var rc = ringContours(des), rDraw = 40, kR = rDraw / c.Rext, cx = PW / 2, cy = y + 16 + rDraw;
+    fillC(PLATE); drawC(INK); doc.setLineWidth(0.12);
+    plate([rc.outer].concat(rc.holes), kR, cx, cy); doc.fillStrokeEvenOdd();
+    drawC(COTA); doc.setLineWidth(0.3);
+    var yTop = cy - rDraw - 5, ri = c.Rint * kR;
+    doc.line(cx - rDraw, yTop, cx + rDraw, yTop); doc.line(cx - rDraw, yTop - 1.5, cx - rDraw, yTop + 1.5); doc.line(cx + rDraw, yTop - 1.5, cx + rDraw, yTop + 1.5);
+    T('Ø exterior ' + nf0(2 * c.Rext), cx, yTop - 2, 8, true, COTA, 'center');
+    doc.line(cx - ri, cy, cx + ri, cy); doc.line(cx - ri, cy - 1.5, cx - ri, cy + 1.5); doc.line(cx + ri, cy - 1.5, cx + ri, cy + 1.5);
+    T('Ø interior ' + nf0(2 * c.Rint), cx, cy - 2, 8, true, COTA, 'center');
+    T('ancho ' + nfd(p.aw) + ' · espesor ' + esp, cx, cy + 5, 8, false, MUT, 'center');
+    // detalle: la banda del aro desenrollada, con un asiento de V y la muesca de al lado
+    var aS = c.seatAng.length ? c.seatAng[0] : 0;
+    var aM = des.nMer ? (c.merAng.filter(function (x) { return x > aS; })[0] || c.merAng[0] + 360) : aS + 180 / des.N;
+    var t0 = aS - 3, t1 = aM + 3, arc = (t1 - t0) * PI / 180 * c.rSeat, bwMax = W - 30;
+    var s = Math.max(0.5, Math.floor(bwMax / arc * 2) / 2), bx0 = M + 26, byTop = cy + rDraw + 18;
+    var BX = function (th) { return bx0 + (th - t0) * PI / 180 * c.rSeat * s; }, BY = function (r) { return byTop + (c.Rext - r) * s; };
+    T('DETALLE · ESCALA ' + nfd(s) + ':1 · el aro desenrollado', M, byTop - 8, 8, true, BRASS);
+    var yO = BY(c.Rext), yI = BY(c.Rint), bxB = BX(t1);
+    fillC(PLATE); doc.rect(bx0, yO, bxB - bx0, yI - yO, 'F');
+    doc.setFillColor(255, 255, 255);
+    if (c.seatAng.length) doc.circle(BX(aS), BY(c.rSeat), c.seatD / 2 * s, 'F');
+    var sx = BX(aM), hw = c.slotW / 2 * s;
+    if (des.nMer) {
+      if (c.muesca) { var yb = BY(c.notchR - c.slotW / 2); doc.rect(sx - hw, yb, 2 * hw, yI - yb + 0.5, 'F'); doc.circle(sx, yb, hw, 'F'); }
+      else { var ya = BY(c.slotC + c.slotL / 2 - c.slotW / 2), yc2 = BY(c.slotC - c.slotL / 2 + c.slotW / 2); doc.rect(sx - hw, ya, 2 * hw, yc2 - ya, 'F'); doc.circle(sx, ya, hw, 'F'); doc.circle(sx, yc2, hw, 'F'); }
+    }
+    drawC(INK); doc.setLineWidth(0.2); doc.line(bx0, yO, bxB, yO); doc.line(bx0, yI, bxB, yI);
+    T('borde de afuera', bx0 - 2, yO + 2.5, 7, false, MUT, 'right'); T('borde de adentro', bx0 - 2, yI, 7, false, MUT, 'right');
+    if (c.seatAng.length) {
+      drawC(COTA); doc.setLineWidth(0.25); doc.line(BX(aS), BY(c.rSeat) - c.seatD / 2 * s, BX(aS), yO - 1.5);
+      T('Ø' + nf(c.seatD), BX(aS), yO - 3, 8, true, COTA, 'center');
+    }
+    if (des.nMer) {
+      // rótulo de la muesca arriba de la banda, con línea guía desde el fondo de la muesca
+      drawC(COTA); doc.setLineWidth(0.25); doc.line(sx, c.muesca ? BY(c.notchR) : BY(c.slotC + c.slotL / 2), sx, yO - 10.5);
+      T(hueco + ' ' + nf(c.slotW) + ' × ' + nf(c.slotL), sx + 1.5, yO - 7.5, 8, true, COTA);
+      if (c.muesca) T('abierta desde el borde de adentro', sx + 1.5, yO - 3.5, 7, false, COTA);
+    }
+    T(nfd(aS) + '° · V de dos curvas', BX(aS), yI + 5, 7.5, false, INK, 'center');
+    if (des.nMer) T(nfd(aM) + '° · meridiano', sx, yI + 5, 7.5, false, INK, 'center');
+    T(nfd(aM - aS) + '° entre el hueco y la ' + (des.nMer ? hueco : 'siguiente V') + ' · cada ' + nfd(360 / des.N) + '° se repite' +
+      (des.nMer && c.muesca ? ' · quedan ' + nfd(c.Rext - c.notchR) + ' mm de material detrás de la muesca' : ''), (bx0 + bxB) / 2, yI + 11, 7.5, false, MUT, 'center');
+    // discos
+    var yD = yI + 22;
+    T('DISCOS · HACER ' + n, M, yD, 11, true, INK);
+    var dr = 16, dk = dr / (p.dd / 2), dcx = M + 26, dcy = yD + 8 + dr;
+    fillC(PLATE); drawC(INK); doc.setLineWidth(0.12);
+    plate([circlePts(0, 0, p.dd / 2, 96), circlePts(0, 0, HOLE / 2, 24)], dk, dcx, dcy); doc.fillStrokeEvenOdd();
+    drawC(COTA); doc.setLineWidth(0.3); doc.line(dcx - dr, dcy + dr + 4, dcx + dr, dcy + dr + 4);
+    T('Ø ' + nf0(p.dd) + ' · espesor ' + esp, dcx, dcy + dr + 9, 8, true, COTA, 'center');
+    T('perforación central Ø' + nf(HOLE), dcx, dcy + dr + 13.5, 8, true, COTA, 'center');
+    var nx = M + 62, nw = PW - M - nx;
+    var yy = wrap((des.nMer ? (c.muesca ? 'Muescas' : 'Ranuras') + ': los ' + des.N + ' meridianos (luz LED) van por dentro de las curvas y llegan al aro a ' + nf0(des.mer.incl) + '°, ' +
+      nf(des.a - des.mer.rTop) + ' mm más hacia el centro. Entran por la ' + hueco + (c.muesca ? ' desde el borde de adentro' : '') + ', bajan hasta la cara de abajo y se sueldan por arriba y por abajo. ' : '') +
+      'Huecos: en cada uno se asientan las puntas de las dos curvas que forman la V; la soldadura rellena el hueco.', nx, yD + 6, nw, 8.5, INK);
+    wrap('Peso por pieza: aro ' + nf(sh.kgRing) + ' kg, disco ' + nf(sh.kgDisc) + ' kg. Para ' + NL + ': ' + nf(n * (sh.kgRing + sh.kgDisc)) + ' kg de piezas terminadas.', nx, yy + 3, nw, 8.5, MUT);
+    footer(2);
+    return doc.output('arraybuffer');
+  }
+  async function buildLaserZip() {
+    if (!window.JSZip) throw new Error('no cargó el compresor ZIP; revisa la conexión y recarga la página');
+    var zip = new window.JSZip();
+    zip.file('corte_laser_aro_y_disco.pdf', buildLaserPdf());
+    zip.file('aro_laser_1a1.dxf', dxfRingLaser());
+    zip.file('disco_laser_1a1.dxf', dxfDiscLaser());
+    return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  }
   function leeme() {
     var des = state.des, p = state.p;
     return L1(summaryText()) + '\n\nArchivos (todo en milímetros):\n' +
+      '- corte_laser_aro_y_disco.pdf: para el taller de corte láser. Cantidades, medidas, lámina y dibujos del aro y del disco.\n' +
+      '- plantillas_varillas_carta.pdf: plantillas 1:1 de la curva' + (des.nMer ? ' y el meridiano' : '') + ' en hojas carta, con sus medidas.\n' +
       '- curva_1a1.dxf: la curva acostada, escala 1:1. Capas EJE (eje de la varilla), CONTORNO (para corte láser o plasma), REFERENCIA (cuerda, flecha y centro del doblez).\n' +
       (des.nMer ? '- meridiano_1a1.dxf: igual, para los meridianos.\n' : '') +
       '- aro_laser_1a1.dxf: el aro para corte láser (capa CORTE), con ' + L1(ringHolesTxt(des)) + '.\n' +
@@ -1623,6 +1823,8 @@ details .table-wrap { border: 0; border-radius: 0; }
     if (des.nMer) zip.file('meridiano_1a1.dxf', dxfPiece(des.mer, 'MERIDIANO', des.nMer));
     zip.file('aro_laser_1a1.dxf', dxfRingLaser());
     zip.file('disco_laser_1a1.dxf', dxfDiscLaser());
+    zip.file('corte_laser_aro_y_disco.pdf', buildLaserPdf());
+    zip.file('plantillas_varillas_carta.pdf', buildPdf());
     zip.file('planta_armado_1a1.dxf', dxfPlan());
     zip.file('plantilla_1a1.svg', svgTemplateFile());
     zip.file('curva.stl', stlBuffer([{ d: arcTubeData(des.cur.R, des.cur.phi0, des.cur.phi1, r, 120, 16), frames: [IDF] }], 'curva'));
@@ -1635,7 +1837,7 @@ details .table-wrap { border: 0; border-radius: 0; }
   /* ============ descargas (capacidad del visor) ============ */
   // Publicada en su propio dominio (sin Claude y sin marco), la página descarga y guarda con el navegador.
   var STANDALONE = !(window.claude && typeof window.claude.use === 'function') && (function () { try { return window.top === window.self; } catch (e) { return false; } })();
-  var DL_BTNS = ['#dlPdf', '#dlSvg', '#dlZip'];
+  var DL_BTNS = ['#dlPdf', '#dlSvg', '#dlZip', '#dlLaser', '#dlLaserZip'];
   function dlUnavailable(text) {
     DL_BTNS.forEach(function (s) { $(s).disabled = true; });
     $('#dlStatus').textContent = text || 'Las descargas no están disponibles en esta vista.';
@@ -1788,6 +1990,8 @@ details .table-wrap { border: 0; border-radius: 0; }
     $('#dlPdf').addEventListener('click', function () { offer(fileBase() + '_plantillas_carta.pdf', function () { return buildPdf(); }); });
     $('#dlSvg').addEventListener('click', function () { offer(fileBase() + '_plantilla_1a1.svg', function () { return svgTemplateFile(); }); });
     $('#dlZip').addEventListener('click', function () { offer(fileBase() + '_taller.zip', buildZip); });
+    $('#dlLaser').addEventListener('click', function () { offer(fileBase() + '_corte_laser_aro_disco.pdf', function () { return buildLaserPdf(); }); });
+    $('#dlLaserZip').addEventListener('click', function () { offer(fileBase() + '_corte_laser.zip', buildLaserZip); });
     $('#copyTxt').addEventListener('click', function () {
       var t = summaryText(), st = $('#copyStatus'), area = $('#copyArea');
       function fallback() { area.hidden = false; area.value = t; area.focus(); area.select(); st.textContent = 'Selecciona y copia el texto.'; }
@@ -1841,7 +2045,7 @@ details .table-wrap { border: 0; border-radius: 0; }
   setParams(saved || DEF);
   initDownloads();
   initDb();
-  window.__roseta = { state: state, computeDesign: computeDesign, buildPdf: buildPdf, buildZip: buildZip, svgTemplateFile: svgTemplateFile };
+  window.__roseta = { state: state, computeDesign: computeDesign, buildPdf: buildPdf, buildZip: buildZip, svgTemplateFile: svgTemplateFile, buildLaserPdf: buildLaserPdf, buildLaserZip: buildLaserZip };
 })();
 </script>
 </body>
