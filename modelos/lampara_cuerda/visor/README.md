@@ -12,9 +12,10 @@ o con los dedos, y se actualiza al cambiar las medidas.
   ecuador** (el ancho) y **altura**.
 - En *Más ajustes*: diámetro de abajo, altura del ecuador, separación del
   doble aro, grosor de la cuerda, número de hebras y abombado.
-- Elegir entre las **dos cuerdas de las fotos**: opción 1 caramelo (algodón
-  mate) y opción 2 beige (con brillo). Cada una muestra la foto real del rollo.
-  También hay otros colores y un selector libre.
+- Elegir la **textura de la cuerda** entre los dos hilos de las fotos: opción 1
+  caramelo (algodón mate y velloso) y opción 2 beige (filamentos con brillo).
+  Cada tarjeta muestra unas hebras de cerca con su textura, y la lámpara se ve
+  con esas fibras, no con un color plano.
 - Ver las cotas sobre el modelo, encender la luz de noche y cambiar el metal
   de los aros.
 - **Ver solo la estructura metálica**: quita la cuerda y muestra los aros, las
@@ -28,7 +29,8 @@ o con los dedos, y se actualiza al cambiar las medidas.
   horizontal:
   1. Presentación con la cuerda elegida: render con cotas, render con la luz
      encendida y ficha.
-  2. Las dos opciones de cuerda lado a lado, con la foto real de cada una.
+  2. Las dos opciones de cuerda lado a lado: render, textura en el modelo y
+     foto real de cada una.
   3. Plano de frente acotado a escala (1:5 con las medidas originales).
   4. Planta con las varillas a 0°, 90°, 180° y 270°, render de la estructura y
      detalle de una varilla (largo y ángulo).
@@ -62,10 +64,14 @@ desplegar el servicio.
 
 ## Dominio
 
-El subdominio necesita un registro DNS en Cloudflare, igual que `roseta`:
+`lampara.cocinandosonrisas.co` tiene en Cloudflare un registro A hacia el
+servidor de Easypanel, en **solo DNS** (nube gris), igual que `roseta`:
 
 | Tipo | Nombre | Contenido | Proxy |
 | --- | --- | --- | --- |
 | A | `lampara` | `135.181.136.149` | Solo DNS (nube gris) |
 
-Easypanel saca el certificado HTTPS solo cuando el nombre ya apunta al servidor.
+El certificado HTTPS lo saca Easypanel con Let's Encrypt. Si se activa el proxy
+de Cloudflare (nube naranja), el sitio da error 526, porque Cloudflare exige un
+certificado válido en el servidor y Let's Encrypt no puede validar el dominio
+a través del proxy.

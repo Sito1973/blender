@@ -203,20 +203,12 @@ details.bloque[open] > summary { margin-bottom: 10px; }
   border: 1px solid var(--line); background: var(--bg); border-radius: var(--radius);
   padding: 6px 6px 9px;
 }
-.opcion img, .opcion .opcion-color { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 6px; display: block; margin-bottom: 5px; }
+.opcion img, .opcion .opcion-color { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 6px; display: block; margin-bottom: 5px; background: var(--line); }
 .opcion-nombre { font-weight: 600; font-size: 14.5px; line-height: 1.2; }
 .opcion-sub { font-size: 13px; color: var(--muted); }
 .opcion[aria-pressed="true"] { border-color: var(--acc); box-shadow: 0 0 0 1px var(--acc); }
 .opcion:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 .colores { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.chip-color {
-  width: 34px; height: 34px; border-radius: 50%;
-  border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--line);
-  cursor: pointer; padding: 0;
-}
-.chip-color[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--acc); }
-.color-libre { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
-.color-libre input { width: 38px; height: 34px; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--bg); cursor: pointer; }
 .sub { margin: 14px 0 8px; font-size: 14px; font-weight: 600; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -309,10 +301,8 @@ details.bloque[open] > summary { margin-bottom: 10px; }
 
     <section class="bloque">
       <h2>Acabados</h2>
-      <p class="sub">Cuerda</p>
+      <p class="sub">Textura de la cuerda</p>
       <div class="opciones" id="opciones"></div>
-      <p class="sub">Otros colores</p>
-      <div class="colores" id="colores"></div>
       <p class="sub">Aros de arriba y abajo</p>
       <div class="chips" id="metales"></div>
     </section>
@@ -396,13 +386,6 @@ const CUERDAS = [
   { id: "beige", hex: "#d0b596", titulo: "Opción 2 · Beige", corto: "beige", acabado: "con brillo", brillo: true },
 ];
 
-const COLORES = [
-  { hex: "#a88b63", nombre: "Natural" },
-  { hex: "#d8ccb3", nombre: "Crudo" },
-  { hex: "#4b3527", nombre: "Café oscuro" },
-  { hex: "#8a877f", nombre: "Gris" },
-  { hex: "#2b2724", nombre: "Negro" },
-];
 
 const METALES = {
   cobre: { nombre: "Cobre", color: "#a8714a", metalness: 1, roughness: 0.34 },
@@ -443,7 +426,8 @@ function leerURL() {
   if (num("di") !== null) { P.di = num("di"); P.diIgual = false; }
   if (num("hc") !== null) { P.hc = num("hc"); P.hcCentro = false; }
   if (num("n") !== null) { P.n = num("n"); P.nAuto = false; }
-  if (/^[0-9a-f]{6}$/i.test(q.get("c") || "")) P.color = "#" + q.get("c").toLowerCase();
+  const cuerda = CUERDAS.find((o) => o.id === q.get("cuerda") || o.hex.slice(1) === (q.get("c") || "").toLowerCase());
+  if (cuerda) P.color = cuerda.hex;
   if (METALES[q.get("m")]) P.metal = q.get("m");
   if (q.get("luz") === "1") P.luz = true;
   if (q.get("med") === "0") P.medidas = false;
@@ -460,7 +444,7 @@ function urlActual() {
   if (P.dc !== 6) q.set("dc", r(P.dc));
   if (!P.nAuto) q.set("n", String(P.n));
   if (P.ab !== 0) q.set("ab", r(P.ab));
-  if (P.color !== CUERDAS[0].hex) q.set("c", P.color.slice(1));
+  if (opcionCuerda().id !== CUERDAS[0].id) q.set("cuerda", opcionCuerda().id);
   if (P.metal !== "cobre") q.set("m", P.metal);
   if (P.luz) q.set("luz", "1");
   if (!P.medidas) q.set("med", "0");
@@ -543,12 +527,16 @@ function caminoCapa(muestras, capa, n, d, a) {
   });
 }
 
-function indicesTubo(n, K) {
-  const idx = new (n * K > 65000 ? Uint32Array : Uint16Array)((n - 1) * K * 6);
+// Malla de tubo con la costura duplicada (K + 1 puntos por anillo) para que la
+// textura no se corte; las normales de la costura se promedian después.
+const TEX_LARGO = 0.02;        // una repetición de la textura cada 2 cm a lo largo de la hebra
+
+function indicesTubo(n, K1) {
+  const idx = new (n * K1 > 65000 ? Uint32Array : Uint16Array)((n - 1) * (K1 - 1) * 6);
   let o = 0;
   for (let j = 0; j < n - 1; j++) {
-    for (let k = 0; k < K; k++) {
-      const a = j * K + k, b = j * K + ((k + 1) % K), c = a + K, d = b + K;
+    for (let k = 0; k < K1 - 1; k++) {
+      const a = j * K1 + k, b = a + 1, c = a + K1, d = b + K1;
       idx[o++] = a; idx[o++] = b; idx[o++] = c;
       idx[o++] = b; idx[o++] = d; idx[o++] = c;
     }
@@ -556,10 +544,23 @@ function indicesTubo(n, K) {
   return idx;
 }
 
+function cerrarCostura(g, n, K1) {
+  g.computeVertexNormals();
+  const nor = g.attributes.normal.array;
+  for (let j = 0; j < n; j++) {
+    const a = j * K1 * 3, b = (j * K1 + K1 - 1) * 3;
+    const x = nor[a] + nor[b], y = nor[a + 1] + nor[b + 1], z = nor[a + 2] + nor[b + 2];
+    const l = Math.hypot(x, y, z) || 1;
+    nor[a] = nor[b] = x / l;
+    nor[a + 1] = nor[b + 1] = y / l;
+    nor[a + 2] = nor[b + 2] = z / l;
+  }
+}
+
 // Tubo sobre un recorrido plano (en el plano r-y, a ángulo 0), con la sección girando.
 function tuboPlano(pts, perfil, fase, pasoTorsion) {
-  const n = pts.length, K = perfil.length;
-  const pos = new Float32Array(n * K * 3);
+  const n = pts.length, K = perfil.length, K1 = K + 1;
+  const pos = new Float32Array(n * K1 * 3), uv = new Float32Array(n * K1 * 2);
   let s = 0;
   for (let j = 0; j < n; j++) {
     const [x, y] = pts[j];
@@ -570,20 +571,24 @@ function tuboPlano(pts, perfil, fase, pasoTorsion) {
     const Nx = -ty, Ny = tx;                  // normal dentro del plano; binormal = +z
     if (j > 0) s += Math.hypot(x - pts[j - 1][0], y - pts[j - 1][1]);
     const alfa = pasoTorsion ? fase + (2 * Math.PI * s) / pasoTorsion : 0;
-    for (let k = 0; k < K; k++) {
-      const [R, th] = perfil[k];
+    for (let k = 0; k <= K; k++) {
+      const [R, th] = perfil[k % K];
       const f = th + alfa;
       const c = Math.cos(f) * R, sn = Math.sin(f) * R;
-      const o = (j * K + k) * 3;
+      const o = (j * K1 + k) * 3;
       pos[o] = x + c * Nx;
       pos[o + 1] = y + c * Ny;
       pos[o + 2] = sn;
+      // u a lo largo de la hebra; v alrededor (cada cabo es una franja de la textura)
+      uv[(j * K1 + k) * 2] = s / TEX_LARGO;
+      uv[(j * K1 + k) * 2 + 1] = (3 * k) / K + 0.5;
     }
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  g.setIndex(new THREE.BufferAttribute(indicesTubo(n, K), 1));
-  g.computeVertexNormals();
+  g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  g.setIndex(new THREE.BufferAttribute(indicesTubo(n, K1), 1));
+  cerrarCostura(g, n, K1);
   return { geo: g, largo: s };
 }
 
@@ -604,7 +609,9 @@ function vueltaEspiral(R, y0, a, vueltas, sentido, perfil, segs) {
   let largo = 0;
   for (let j = 1; j <= segs; j++) largo += Math.hypot(C[j][0] - C[j - 1][0], C[j][1] - C[j - 1][1], C[j][2] - C[j - 1][2]);
   const tercios = Math.max(1, Math.round((3 * largo) / PASO_TORSION));  // cierra sin salto entre vueltas
-  const pos = new Float32Array((segs + 1) * K * 3);
+  const tramos = Math.max(1, Math.round(largo / TEX_LARGO));               // textura continua entre vueltas
+  const K1 = K + 1;
+  const pos = new Float32Array((segs + 1) * K1 * 3), uv = new Float32Array((segs + 1) * K1 * 2);
   const t = new THREE.Vector3(), nn = new THREE.Vector3(), bb = new THREE.Vector3();
   for (let j = 0; j <= segs; j++) {
     t.fromArray(T[j]).normalize();
@@ -612,19 +619,22 @@ function vueltaEspiral(R, y0, a, vueltas, sentido, perfil, segs) {
     bb.crossVectors(t, nn).normalize();
     nn.crossVectors(bb, t).normalize();
     const alfa = (tercios * (2 * Math.PI) / 3) * (j / segs);
-    for (let k = 0; k < K; k++) {
-      const [Rk, th] = perfil[k];
+    for (let k = 0; k <= K; k++) {
+      const [Rk, th] = perfil[k % K];
       const f = th + alfa, c = Math.cos(f) * Rk, s = Math.sin(f) * Rk;
-      const o = (j * K + k) * 3;
+      const o = (j * K1 + k) * 3;
       pos[o] = C[j][0] + c * nn.x + s * bb.x;
       pos[o + 1] = C[j][1] + c * nn.y + s * bb.y;
       pos[o + 2] = C[j][2] + c * nn.z + s * bb.z;
+      uv[(j * K1 + k) * 2] = (tramos * j) / segs;
+      uv[(j * K1 + k) * 2 + 1] = (3 * k) / K + 0.5;
     }
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  g.setIndex(new THREE.BufferAttribute(indicesTubo(segs + 1, K), 1));
-  g.computeVertexNormals();
+  g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  g.setIndex(new THREE.BufferAttribute(indicesTubo(segs + 1, K1), 1));
+  cerrarCostura(g, segs + 1, K1);
   return { geo: g, largo };
 }
 
@@ -745,18 +755,168 @@ const matCable = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.
 const matBombillo = new THREE.MeshStandardMaterial({ color: 0xfff7ea, emissive: 0xffc98a, emissiveIntensity: 0.15, roughness: 0.2 });
 
 function opcionCuerda() {
-  return CUERDAS.find((o) => o.hex === P.color) || null;
+  return CUERDAS.find((o) => o.hex === P.color) || CUERDAS[0];
+}
+
+// --- Texturas de los dos hilos -------------------------------------------------
+// Cada textura es un cabo de la cuerda: fibras a lo largo, más oscuro en las
+// uniones entre cabos. El caramelo es algodón mate y velloso; el beige tiene
+// filamentos lisos con brillo.
+function azarRepetible(semilla) {
+  let x = semilla >>> 0;
+  return () => {
+    x = (x + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(x ^ (x >>> 15), 1 | x);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const texturasCache = {};
+function texturasHilo(op) {
+  if (texturasCache[op.id]) return texturasCache[op.id];
+  const N = 512;
+  const lienzo = () => { const c = document.createElement("canvas"); c.width = c.height = N; return c; };
+  const cColor = lienzo(), cRelieve = lienzo(), cRug = lienzo();
+  const gc = cColor.getContext("2d"), gr = cRelieve.getContext("2d"), gu = cRug.getContext("2d");
+  const azar = azarRepetible(op.brillo ? 911 : 337);
+  // Trazo que se repite por los bordes, para que la textura empate.
+  const trazo = (g, x, y, largo, ang, ancho, estilo) => {
+    g.strokeStyle = estilo;
+    g.lineWidth = ancho;
+    const dx = Math.cos(ang) * largo, dy = Math.sin(ang) * largo;
+    for (const ox of [-N, 0, N]) {
+      for (const oy of [-N, 0, N]) {
+        g.beginPath();
+        g.moveTo(x + ox, y + oy);
+        g.lineTo(x + ox + dx, y + oy + dy);
+        g.stroke();
+      }
+    }
+  };
+  gc.fillStyle = op.hex;
+  gc.fillRect(0, 0, N, N);
+  gr.fillStyle = "rgb(128,128,128)";
+  gr.fillRect(0, 0, N, N);
+  gu.fillStyle = op.brillo ? "rgb(118,118,118)" : "rgb(222,222,222)";
+  gu.fillRect(0, 0, N, N);
+  // Sombra en las uniones entre cabos (bordes de la franja) y lomo más claro.
+  const gradC = gc.createLinearGradient(0, 0, 0, N);
+  gradC.addColorStop(0, "rgba(0,0,0,0.34)");
+  gradC.addColorStop(0.22, "rgba(0,0,0,0)");
+  gradC.addColorStop(0.5, "rgba(255,255,255,0.07)");
+  gradC.addColorStop(0.78, "rgba(0,0,0,0)");
+  gradC.addColorStop(1, "rgba(0,0,0,0.34)");
+  gc.fillStyle = gradC;
+  gc.fillRect(0, 0, N, N);
+  const gradR = gr.createLinearGradient(0, 0, 0, N);
+  gradR.addColorStop(0, "rgb(70,70,70)");
+  gradR.addColorStop(0.5, "rgb(170,170,170)");
+  gradR.addColorStop(1, "rgb(70,70,70)");
+  gr.fillStyle = gradR;
+  gr.fillRect(0, 0, N, N);
+  // Fibras a lo largo del cabo, un poco inclinadas.
+  const fibras = op.brillo ? 1300 : 1700;
+  for (let i = 0; i < fibras; i++) {
+    const x = azar() * N, y = azar() * N;
+    const largo = (op.brillo ? 120 : 50) + azar() * (op.brillo ? 260 : 150);
+    const ang = 0.16 + (azar() - 0.5) * (op.brillo ? 0.08 : 0.2);
+    const ancho = 0.8 + azar() * (op.brillo ? 1.4 : 1.8);
+    // En el caramelo pesan más las fibras oscuras, para no aclarar el color de la cuerda.
+    const claro = azar() < (op.brillo ? 0.5 : 0.4);
+    const a = claro ? (op.brillo ? 0.1 : 0.06) + azar() * (op.brillo ? 0.16 : 0.1) : 0.1 + azar() * 0.16;
+    trazo(gc, x, y, largo, ang, ancho, claro ? `rgba(255,248,236,${a})` : `rgba(30,18,8,${a})`);
+    trazo(gr, x, y, largo, ang, ancho, claro ? `rgba(235,235,235,${a + 0.15})` : `rgba(25,25,25,${a + 0.15})`);
+  }
+  if (op.brillo) {
+    // Filamentos que brillan: más claros y menos rugosos.
+    for (let i = 0; i < 420; i++) {
+      const x = azar() * N, y = N * (0.18 + azar() * 0.64);
+      const largo = 40 + azar() * 160, ang = 0.16 + (azar() - 0.5) * 0.06, ancho = 1 + azar() * 1.6;
+      trazo(gc, x, y, largo, ang, ancho, `rgba(255,252,246,${0.16 + azar() * 0.3})`);
+      trazo(gu, x, y, largo, ang, ancho + 1, `rgba(28,28,28,${0.45 + azar() * 0.4})`);
+    }
+  } else {
+    // Pelusa del algodón: fibras cortas sueltas en todas las direcciones.
+    for (let i = 0; i < 1400; i++) {
+      const x = azar() * N, y = azar() * N;
+      trazo(gc, x, y, 5 + azar() * 16, azar() * Math.PI * 2, 0.8, `rgba(255,244,226,${0.05 + azar() * 0.07})`);
+    }
+  }
+  const tex = (c, color) => {
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    if (color) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  texturasCache[op.id] = { color: tex(cColor, true), relieve: tex(cRelieve), rugosidad: tex(cRug) };
+  return texturasCache[op.id];
+}
+
+// Muestra renderizada de cada cuerda (unas hebras de cerca): va en las tarjetas y en el PDF.
+const vistasPrevias = {};
+function vistaPreviaCuerda(op, lado = 320) {
+  const escena = new THREE.Scene();
+  escena.environment = scene.environment;
+  escena.environmentIntensity = 0.7;
+  escena.background = new THREE.Color(0xe7dfd3);
+  const mat = new THREE.MeshPhysicalMaterial({ metalness: 0 });
+  configurarCuerda(mat, op);
+  const d = 0.006, perfil = perfilTrebol(18, d / 2), grupo = new THREE.Group();
+  for (let i = -6; i <= 6; i++) {
+    const pts = [];
+    for (let j = 0; j <= 240; j++) pts.push([-0.07 + (0.14 * j) / 240, i * d * 1.04]);
+    grupo.add(new THREE.Mesh(tuboPlano(pts, perfil, i * 1.3, PASO_TORSION).geo, mat));
+  }
+  grupo.rotation.z = -0.55;
+  escena.add(grupo);
+  const luz = new THREE.DirectionalLight(0xfff2e2, 2.6);
+  luz.position.set(-0.4, 0.6, 1);
+  escena.add(luz);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.005, 1);
+  cam.position.set(0, 0, 0.075);
+  cam.lookAt(0, 0, 0);
+  const exposicion = renderer.toneMappingExposure;
+  renderer.toneMappingExposure = 1;
+  renderer.setPixelRatio(1);
+  renderer.setSize(lado, lado, false);
+  renderer.render(escena, cam);
+  const url = renderer.domElement.toDataURL("image/jpeg", 0.9);
+  grupo.traverse((x) => { if (x.geometry) x.geometry.dispose(); });
+  mat.dispose();
+  renderer.toneMappingExposure = exposicion;
+  ajustarTamano();
+  return url;
+}
+
+function prepararVistasPrevias() {
+  for (const o of CUERDAS) {
+    vistasPrevias[o.id] = vistaPreviaCuerda(o);
+    const img = document.querySelector(`img[data-textura="${o.id}"]`);
+    if (img) img.src = vistasPrevias[o.id];
+  }
+  pedirRender();
+}
+
+function configurarCuerda(mat, op) {
+  const tx = texturasHilo(op);
+  const nuevo = mat.map !== tx.color;
+  mat.color.set(0xffffff);
+  mat.map = tx.color;
+  mat.bumpMap = tx.relieve;
+  mat.bumpScale = op.brillo ? 1.2 : 1.8;
+  mat.roughnessMap = tx.rugosidad;
+  mat.roughness = 1;
+  mat.sheen = op.brillo ? 0.6 : 0.35;
+  mat.sheenRoughness = op.brillo ? 0.35 : 0.55;
+  mat.sheenColor.set(op.hex).offsetHSL(0, op.brillo ? -0.12 : 0, op.brillo ? 0.14 : 0.1);
+  mat.specularIntensity = op.brillo ? 1 : 0.5;
+  if (nuevo) mat.needsUpdate = true;
 }
 
 function aplicarColores() {
-  const op = opcionCuerda();
-  const brillo = !!(op && op.brillo);
-  matCuerda.color.set(P.color);
-  matCuerda.sheenColor.set(P.color).offsetHSL(0, brillo ? -0.12 : 0, brillo ? 0.14 : 0.1);
-  matCuerda.roughness = brillo ? 0.42 : 0.8;
-  matCuerda.sheen = brillo ? 0.6 : 0.35;
-  matCuerda.sheenRoughness = brillo ? 0.35 : 0.55;
-  matCuerda.specularIntensity = brillo ? 1 : 0.5;
+  configurarCuerda(matCuerda, opcionCuerda());
   const m = METALES[P.metal];
   matMetal.color.set(m.color);
   matMetal.metalness = m.metalness;
@@ -1340,8 +1500,7 @@ function sincronizarPanel() {
   $("#k-piso").checked = P.piso;
   $("#k-giro").checked = P.giro;
   $("#k-estructura").checked = P.estructura;
-  document.querySelectorAll(".chip-color, .opcion").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hex === P.color)));
-  $("#color-libre").value = P.color;
+  document.querySelectorAll(".opcion").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hex === P.color)));
   document.querySelectorAll("#metales .chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.metal === P.metal)));
   document.querySelectorAll("#calidades .chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.calidad === P.calidad)));
 }
@@ -1356,7 +1515,7 @@ function actualizarResumen() {
     ["Hebras", `${D.n} por cono · ${2 * D.n} en total`],
     ["Entre hebras (ecuador)", `${(Math.round(D.separacionEcuador * 10000) / 10).toLocaleString("es-CO")} mm`],
     ["Cuerda aprox.", `${Math.round(D.cuerda).toLocaleString("es-CO")} m de ${String(P.dc).replace(".", ",")} mm`],
-    ["Cuerda elegida", opcionCuerda() ? `${opcionCuerda().corto}, ${opcionCuerda().acabado}` : `color ${P.color}`],
+    ["Cuerda elegida", `${opcionCuerda().corto}, ${opcionCuerda().acabado}`],
   ];
   $("#resumen").innerHTML = filas.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("");
   const avisos = [];
@@ -1399,33 +1558,12 @@ function montarPanel() {
     b.type = "button";
     b.className = "opcion";
     b.dataset.hex = o.hex;
-    const foto = (window.MUESTRAS || {})[o.id];
-    b.innerHTML = (foto ? `<img src="${foto}" alt="Foto de la cuerda ${o.corto}">` : `<span class="opcion-color" style="background:${o.hex}"></span>`) +
+    b.innerHTML = `<img alt="Textura de la cuerda ${o.corto}" data-textura="${o.id}">` +
       `<span class="opcion-nombre">${o.titulo}</span><span class="opcion-sub">${o.acabado}</span>`;
     b.addEventListener("click", () => { P.color = o.hex; aplicarColores(); sincronizarPanel(); actualizarResumen(); guardarURL(); pedirRender(); });
     opciones.appendChild(b);
   }
 
-  const colores = $("#colores");
-  for (const c of COLORES) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "chip-color";
-    b.dataset.hex = c.hex;
-    b.title = c.nombre;
-    b.setAttribute("aria-label", c.nombre);
-    b.style.background = c.hex;
-    b.addEventListener("click", () => { P.color = c.hex; aplicarColores(); sincronizarPanel(); actualizarResumen(); guardarURL(); pedirRender(); });
-    colores.appendChild(b);
-  }
-  const libre = document.createElement("label");
-  libre.className = "color-libre";
-  libre.innerHTML = `<input type="color" id="color-libre" aria-label="Otro color"> Otro`;
-  colores.appendChild(libre);
-  libre.querySelector("input").addEventListener("input", (e) => {
-    P.color = e.target.value.toLowerCase();
-    aplicarColores(); sincronizarPanel(); actualizarResumen(); guardarURL(); pedirRender();
-  });
 
   const metales = $("#metales");
   for (const [id, m] of Object.entries(METALES)) {
@@ -1622,7 +1760,6 @@ function datosTaller() {
   const bh = BANDA_ALTO * 100, yBS = alto - bh / 2;
   const dr = Dc / 2 - ds / 2, dy = yBS - yS;
   const op = opcionCuerda();
-  const col = COLORES.find((x) => x.hex === P.color);
   return {
     W: c(D.W), H: alto, ds, di, Dc, yS, yI, sep: c(D.sepC), bh, yBS,
     alambre: ALAMBRE_R * 2000,
@@ -1631,7 +1768,7 @@ function datosTaller() {
     vueltas: D.vueltas, forro: D.forro, sepEcuadorMm: D.separacionEcuador * 1000,
     varilla: { dr, dy, L: Math.hypot(dr, dy), ang: THREE.MathUtils.radToDeg(Math.atan2(dy, dr)) },
     colorHex: P.color,
-    colorNombre: op ? `${op.corto} (${op.acabado})` : col ? col.nombre.toLowerCase() : `personalizado (${P.color})`,
+    colorNombre: `${op.corto} (${op.acabado})`,
     metal: METALES[P.metal],
     url: urlActual(),
   };
@@ -1751,7 +1888,7 @@ function paginaPresentacion(doc, g, T, imgs) {
 
 // Página 2: las dos opciones de cuerda, lado a lado.
 function paginaOpciones(doc, g, T, imgs) {
-  encabezadoPDF(doc, g, "Dos opciones de cuerda", "La misma lámpara y las mismas medidas; solo cambia la cuerda. Las fotos pequeñas son las muestras reales.");
+  encabezadoPDF(doc, g, "Dos opciones de cuerda", "La misma lámpara y las mismas medidas; solo cambia la cuerda: su textura en el modelo y la muestra real.");
   const gap = 7, colW = (HOJA.W - 2 * HOJA.M - gap) / 2, h = colW * 0.75;
   CUERDAS.forEach((o, i) => {
     const x = HOJA.M + i * (colW + gap), y = 31;
@@ -1766,27 +1903,21 @@ function paginaOpciones(doc, g, T, imgs) {
       g.tinta(BLANCO);
       doc.text("Elegida en el visor", x + 5.5, y + 7.1);
     }
-    const yb = y + h + 6;
-    const foto = (window.MUESTRAS || {})[o.id];
-    if (foto) {
-      doc.addImage(foto, "JPEG", x, yb, 30, 30);
-    } else {
-      g.relleno(rgbHex(o.hex));
-      doc.rect(x, yb, 30, 30, "F");
-    }
-    g.fuente("normal", 7.5); g.tinta(GRIS);
-    doc.text("Muestra real", x, yb + 34);
-    const xt = x + 34, wn = 52, hn = wn * 0.75;
+    const yb = y + h + 5, wn = 52, hn = wn * 0.75, lado = 30;
     g.fuente("bold", 12); g.tinta(TINTA);
-    doc.text(o.titulo, xt, yb + 5);
-    g.fuente("normal", 8.6); g.tinta(GRIS);
-    const texto = `Cuerda torcida de ${fx(T.cuerdaMm)} mm, ${o.acabado}. Color de referencia ${o.hex.toUpperCase()}. Lleva unos ${fx(T.cuerdaTotal, 0)} m.`;
-    doc.text(doc.splitTextToSize(texto, colW - 34 - wn - 4), xt, yb + 11, { lineHeightFactor: 1.25 });
-    g.relleno(rgbHex(o.hex));
-    doc.rect(xt, yb + 26, 10, 4, "F");
-    doc.addImage(imgs.opciones[o.id].noche, "JPEG", x + colW - wn, yb, wn, hn);
+    doc.text(o.titulo, x, yb + 4.5);
+    const textura = vistasPrevias[o.id], foto = (window.MUESTRAS || {})[o.id];
+    if (textura) doc.addImage(textura, "JPEG", x, yb + 8, lado, lado);
+    if (foto) doc.addImage(foto, "JPEG", x + lado + 3, yb + 8, lado, lado);
     g.fuente("normal", 7.5); g.tinta(GRIS);
-    doc.text("Con la luz encendida", x + colW - wn, yb + hn + 4);
+    doc.text("Textura en el modelo", x, yb + lado + 12);
+    if (foto) doc.text("Muestra real", x + lado + 3, yb + lado + 12);
+    g.fuente("normal", 8.4); g.tinta(GRIS);
+    const texto = `Cuerda torcida de ${fx(T.cuerdaMm)} mm, ${o.acabado}. Color de referencia ${o.hex.toUpperCase()}. Lleva unos ${fx(T.cuerdaTotal, 0)} m.`;
+    doc.text(doc.splitTextToSize(texto, colW - wn - 6), x, yb + lado + 17.5, { lineHeightFactor: 1.2 });
+    doc.addImage(imgs.opciones[o.id].noche, "JPEG", x + colW - wn, yb + 8, wn, hn);
+    g.fuente("normal", 7.5); g.tinta(GRIS);
+    doc.text("Con la luz encendida", x + colW - wn, yb + 8 + hn + 4);
   });
 }
 
@@ -2169,6 +2300,7 @@ aplicarLuz();
 sincronizarPanel();
 actualizarResumen();
 irAVista("tres", true);
+prepararVistasPrevias();
 requestAnimationFrame(bucle);
 if (esMovil) $("#ayuda").textContent = "Un dedo para girar · pellizca para acercar · dos dedos para mover";
 
