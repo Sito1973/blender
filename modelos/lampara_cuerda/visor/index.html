@@ -197,6 +197,17 @@ details.bloque[open] > summary { margin-bottom: 10px; }
   border-left: 3px solid var(--cota);
 }
 
+.opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opcion {
+  display: grid; gap: 2px; text-align: left; cursor: pointer;
+  border: 1px solid var(--line); background: var(--bg); border-radius: var(--radius);
+  padding: 6px 6px 9px;
+}
+.opcion img, .opcion .opcion-color { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 6px; display: block; margin-bottom: 5px; }
+.opcion-nombre { font-weight: 600; font-size: 14.5px; line-height: 1.2; }
+.opcion-sub { font-size: 13px; color: var(--muted); }
+.opcion[aria-pressed="true"] { border-color: var(--acc); box-shadow: 0 0 0 1px var(--acc); }
+.opcion:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 .colores { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .chip-color {
   width: 34px; height: 34px; border-radius: 50%;
@@ -277,7 +288,7 @@ details.bloque[open] > summary { margin-bottom: 10px; }
   <aside id="panel">
     <header class="panel-h">
       <h1>Lámpara de cuerda</h1>
-      <p>Doble cono forrado en cuerda torcida de algodón, con doble aro en el centro. Cambia las medidas y la lámpara se actualiza al instante.</p>
+      <p>Doble cono forrado en cuerda torcida, con doble aro en el centro. Cambia las medidas y la lámpara se actualiza al instante.</p>
     </header>
 
     <section class="bloque">
@@ -298,7 +309,9 @@ details.bloque[open] > summary { margin-bottom: 10px; }
 
     <section class="bloque">
       <h2>Acabados</h2>
-      <p class="sub">Color de la cuerda</p>
+      <p class="sub">Cuerda</p>
+      <div class="opciones" id="opciones"></div>
+      <p class="sub">Otros colores</p>
       <div class="colores" id="colores"></div>
       <p class="sub">Aros de arriba y abajo</p>
       <div class="chips" id="metales"></div>
@@ -346,6 +359,7 @@ details.bloque[open] > summary { margin-bottom: 10px; }
   }, 15000);
 </script>
 
+<script src="muestras.js" defer></script>
 <script type="module">
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -376,8 +390,13 @@ const CAMPOS = [
   { id: "ab", grupo: "mas", nombre: "Abombado", nota: "0 deja los conos rectos, como queda la cuerda tensada entre los aros.", min: -2, max: 5, paso: 0.1, unidad: "cm", def: 0 },
 ];
 
+// Las dos cuerdas de las fotos.
+const CUERDAS = [
+  { id: "caramelo", hex: "#7e5e3c", titulo: "Opción 1 · Caramelo", corto: "caramelo", acabado: "algodón mate", brillo: false },
+  { id: "beige", hex: "#d0b596", titulo: "Opción 2 · Beige", corto: "beige", acabado: "con brillo", brillo: true },
+];
+
 const COLORES = [
-  { hex: "#7e5e3c", nombre: "Caramelo (cuerda de la foto)" },
   { hex: "#a88b63", nombre: "Natural" },
   { hex: "#d8ccb3", nombre: "Crudo" },
   { hex: "#4b3527", nombre: "Café oscuro" },
@@ -407,7 +426,7 @@ function valoresIniciales() {
     if (c.enlace) p[c.enlace.id] = c.enlace.def;
   }
   Object.assign(p, {
-    color: COLORES[0].hex, metal: "cobre",
+    color: CUERDAS[0].hex, metal: "cobre",
     medidas: true, luz: false, piso: true, giro: false, estructura: false,
     calidad: esMovil ? "media" : "alta",
   });
@@ -441,7 +460,7 @@ function urlActual() {
   if (P.dc !== 6) q.set("dc", r(P.dc));
   if (!P.nAuto) q.set("n", String(P.n));
   if (P.ab !== 0) q.set("ab", r(P.ab));
-  if (P.color !== COLORES[0].hex) q.set("c", P.color.slice(1));
+  if (P.color !== CUERDAS[0].hex) q.set("c", P.color.slice(1));
   if (P.metal !== "cobre") q.set("m", P.metal);
   if (P.luz) q.set("luz", "1");
   if (!P.medidas) q.set("med", "0");
@@ -725,9 +744,19 @@ const matAlambre = new THREE.MeshStandardMaterial({ color: 0x1e1b18, metalness: 
 const matCable = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.6 });
 const matBombillo = new THREE.MeshStandardMaterial({ color: 0xfff7ea, emissive: 0xffc98a, emissiveIntensity: 0.15, roughness: 0.2 });
 
+function opcionCuerda() {
+  return CUERDAS.find((o) => o.hex === P.color) || null;
+}
+
 function aplicarColores() {
+  const op = opcionCuerda();
+  const brillo = !!(op && op.brillo);
   matCuerda.color.set(P.color);
-  matCuerda.sheenColor.set(P.color).offsetHSL(0, 0, 0.1);
+  matCuerda.sheenColor.set(P.color).offsetHSL(0, brillo ? -0.12 : 0, brillo ? 0.14 : 0.1);
+  matCuerda.roughness = brillo ? 0.42 : 0.8;
+  matCuerda.sheen = brillo ? 0.6 : 0.35;
+  matCuerda.sheenRoughness = brillo ? 0.35 : 0.55;
+  matCuerda.specularIntensity = brillo ? 1 : 0.5;
   const m = METALES[P.metal];
   matMetal.color.set(m.color);
   matMetal.metalness = m.metalness;
@@ -1311,7 +1340,7 @@ function sincronizarPanel() {
   $("#k-piso").checked = P.piso;
   $("#k-giro").checked = P.giro;
   $("#k-estructura").checked = P.estructura;
-  document.querySelectorAll(".chip-color").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hex === P.color)));
+  document.querySelectorAll(".chip-color, .opcion").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hex === P.color)));
   $("#color-libre").value = P.color;
   document.querySelectorAll("#metales .chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.metal === P.metal)));
   document.querySelectorAll("#calidades .chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.calidad === P.calidad)));
@@ -1327,6 +1356,7 @@ function actualizarResumen() {
     ["Hebras", `${D.n} por cono · ${2 * D.n} en total`],
     ["Entre hebras (ecuador)", `${(Math.round(D.separacionEcuador * 10000) / 10).toLocaleString("es-CO")} mm`],
     ["Cuerda aprox.", `${Math.round(D.cuerda).toLocaleString("es-CO")} m de ${String(P.dc).replace(".", ",")} mm`],
+    ["Cuerda elegida", opcionCuerda() ? `${opcionCuerda().corto}, ${opcionCuerda().acabado}` : `color ${P.color}`],
   ];
   $("#resumen").innerHTML = filas.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("");
   const avisos = [];
@@ -1363,6 +1393,19 @@ function cambiar(arrastrando) {
 function montarPanel() {
   CAMPOS.forEach(crearCampo);
 
+  const opciones = $("#opciones");
+  for (const o of CUERDAS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "opcion";
+    b.dataset.hex = o.hex;
+    const foto = (window.MUESTRAS || {})[o.id];
+    b.innerHTML = (foto ? `<img src="${foto}" alt="Foto de la cuerda ${o.corto}">` : `<span class="opcion-color" style="background:${o.hex}"></span>`) +
+      `<span class="opcion-nombre">${o.titulo}</span><span class="opcion-sub">${o.acabado}</span>`;
+    b.addEventListener("click", () => { P.color = o.hex; aplicarColores(); sincronizarPanel(); actualizarResumen(); guardarURL(); pedirRender(); });
+    opciones.appendChild(b);
+  }
+
   const colores = $("#colores");
   for (const c of COLORES) {
     const b = document.createElement("button");
@@ -1372,7 +1415,7 @@ function montarPanel() {
     b.title = c.nombre;
     b.setAttribute("aria-label", c.nombre);
     b.style.background = c.hex;
-    b.addEventListener("click", () => { P.color = c.hex; aplicarColores(); sincronizarPanel(); guardarURL(); pedirRender(); });
+    b.addEventListener("click", () => { P.color = c.hex; aplicarColores(); sincronizarPanel(); actualizarResumen(); guardarURL(); pedirRender(); });
     colores.appendChild(b);
   }
   const libre = document.createElement("label");
@@ -1381,7 +1424,7 @@ function montarPanel() {
   colores.appendChild(libre);
   libre.querySelector("input").addEventListener("input", (e) => {
     P.color = e.target.value.toLowerCase();
-    aplicarColores(); sincronizarPanel(); guardarURL(); pedirRender();
+    aplicarColores(); sincronizarPanel(); actualizarResumen(); guardarURL(); pedirRender();
   });
 
   const metales = $("#metales");
@@ -1496,12 +1539,16 @@ function dibujarEtiquetas(g, w, h, escala) {
 }
 
 // Render fuera de pantalla con una vista y una luz fijas (para el PDF).
-function capturar({ vista = "tres", noche = false, estructura = false, medidas = false, piso = true, ancho = 1600, alto = 1200, acercar = 1 }) {
+function capturar({ vista = "tres", noche = false, estructura = false, medidas = false, piso = true, ancho = 1600, alto = 1200, acercar = 1, color = null }) {
   const antes = {
-    luz: P.luz, estructura: P.estructura, piso: P.piso, medidas: P.medidas,
+    luz: P.luz, estructura: P.estructura, piso: P.piso, medidas: P.medidas, color: P.color,
     pos: camera.position.clone(), objetivo: controls.target.clone(),
   };
   animacion = null;
+  if (color) {
+    P.color = color;
+    aplicarColores();
+  }
   Object.assign(P, { luz: noche, estructura, piso, medidas });
   aplicarLuz();
   visibilidadModo();
@@ -1525,7 +1572,8 @@ function capturar({ vista = "tres", noche = false, estructura = false, medidas =
   dibujarEtiquetas(g, ancho, alto, ancho / 820);
   const url = c.toDataURL("image/jpeg", 0.9);
 
-  Object.assign(P, { luz: antes.luz, estructura: antes.estructura, piso: antes.piso, medidas: antes.medidas });
+  Object.assign(P, { luz: antes.luz, estructura: antes.estructura, piso: antes.piso, medidas: antes.medidas, color: antes.color });
+  aplicarColores();
   camera.position.copy(antes.pos);
   controls.target.copy(antes.objetivo);
   camera.lookAt(antes.objetivo);
@@ -1573,6 +1621,7 @@ function datosTaller() {
   const alto = c(D.H), yS = c(D.yS), yI = c(D.yI);
   const bh = BANDA_ALTO * 100, yBS = alto - bh / 2;
   const dr = Dc / 2 - ds / 2, dy = yBS - yS;
+  const op = opcionCuerda();
   const col = COLORES.find((x) => x.hex === P.color);
   return {
     W: c(D.W), H: alto, ds, di, Dc, yS, yI, sep: c(D.sepC), bh, yBS,
@@ -1582,7 +1631,7 @@ function datosTaller() {
     vueltas: D.vueltas, forro: D.forro, sepEcuadorMm: D.separacionEcuador * 1000,
     varilla: { dr, dy, L: Math.hypot(dr, dy), ang: THREE.MathUtils.radToDeg(Math.atan2(dy, dr)) },
     colorHex: P.color,
-    colorNombre: col ? col.nombre.replace(/\s*\(.*\)$/, "").toLowerCase() : `personalizado (${P.color})`,
+    colorNombre: op ? `${op.corto} (${op.acabado})` : col ? col.nombre.toLowerCase() : `personalizado (${P.color})`,
     metal: METALES[P.metal],
     url: urlActual(),
   };
@@ -1655,12 +1704,12 @@ function piesPDF(doc, g, url) {
 
 // Página 1: presentación para el arquitecto.
 function paginaPresentacion(doc, g, T, imgs) {
-  encabezadoPDF(doc, g, "Lámpara colgante de cuerda", `Ø ${fx(T.W)} × ${fx(T.H)} cm · doble aro en el centro · cuerda de algodón torcida de ${fx(T.cuerdaMm)} mm`);
+  encabezadoPDF(doc, g, "Lámpara colgante de cuerda", `Ø ${fx(T.W)} × ${fx(T.H)} cm · doble aro en el centro · cuerda torcida de ${fx(T.cuerdaMm)} mm`);
   const x0 = HOJA.M, y0 = 31, w0 = 178, h0 = w0 * 0.75;
   doc.addImage(imgs.principal, "JPEG", x0, y0, w0, h0);
   g.color(LINEA); g.trazo(0.2); doc.rect(x0, y0, w0, h0, "S");
   g.fuente("normal", 9); g.tinta(GRIS);
-  const desc = `Dos conos de cuerda de algodón torcida, tendida en hebras desde las bocas hasta un doble aro forrado en el centro. Bocas con banda de metal de ${fx(T.bh)} cm. Cotas del render en centímetros.`;
+  const desc = `Dos conos de cuerda torcida, tendida en hebras desde las bocas hasta un doble aro forrado en el centro. Bocas con banda de metal de ${fx(T.bh)} cm. Cotas del render en centímetros. La página 2 compara las dos opciones de cuerda.`;
   doc.text(doc.splitTextToSize(desc, w0), x0, y0 + h0 + 6);
 
   const cx = 200, cw = HOJA.W - HOJA.M - cx, hn = cw * 0.75;
@@ -1678,7 +1727,7 @@ function paginaPresentacion(doc, g, T, imgs) {
     ["Boca de arriba", `Ø ${fx(T.ds)} cm`],
     ["Boca de abajo", `Ø ${fx(T.di)} cm`],
     ["Doble aro", `a ${fx(T.yI)} y ${fx(T.yS)} cm desde abajo`],
-    ["Cuerda", `algodón torcido de ${fx(T.cuerdaMm)} mm, ${T.colorNombre}`],
+    ["Cuerda", `torcida de ${fx(T.cuerdaMm)} mm, ${T.colorNombre}`],
     ["Bandas", T.metal.nombre.toLowerCase()],
     ["Luz", "bombillo globo G95, rosca E27"],
     ["Cable", `${fx(LARGO_CABLE * 100)} cm hasta el florón`],
@@ -1700,7 +1749,48 @@ function paginaPresentacion(doc, g, T, imgs) {
   doc.textWithLink("lampara.cocinandosonrisas.co", cx, y, { url: T.url });
 }
 
-// Página 2: plano de frente con cotas, para el taller.
+// Página 2: las dos opciones de cuerda, lado a lado.
+function paginaOpciones(doc, g, T, imgs) {
+  encabezadoPDF(doc, g, "Dos opciones de cuerda", "La misma lámpara y las mismas medidas; solo cambia la cuerda. Las fotos pequeñas son las muestras reales.");
+  const gap = 7, colW = (HOJA.W - 2 * HOJA.M - gap) / 2, h = colW * 0.75;
+  CUERDAS.forEach((o, i) => {
+    const x = HOJA.M + i * (colW + gap), y = 31;
+    doc.addImage(imgs.opciones[o.id].dia, "JPEG", x, y, colW, h);
+    g.color(LINEA); g.trazo(0.2);
+    doc.rect(x, y, colW, h, "S");
+    if (o.hex === P.color) {
+      g.fuente("bold", 8);
+      const tw = doc.getTextWidth("Elegida en el visor");
+      g.relleno(COTA);
+      doc.roundedRect(x + 3, y + 3, tw + 5, 6, 1.5, 1.5, "F");
+      g.tinta(BLANCO);
+      doc.text("Elegida en el visor", x + 5.5, y + 7.1);
+    }
+    const yb = y + h + 6;
+    const foto = (window.MUESTRAS || {})[o.id];
+    if (foto) {
+      doc.addImage(foto, "JPEG", x, yb, 30, 30);
+    } else {
+      g.relleno(rgbHex(o.hex));
+      doc.rect(x, yb, 30, 30, "F");
+    }
+    g.fuente("normal", 7.5); g.tinta(GRIS);
+    doc.text("Muestra real", x, yb + 34);
+    const xt = x + 34, wn = 52, hn = wn * 0.75;
+    g.fuente("bold", 12); g.tinta(TINTA);
+    doc.text(o.titulo, xt, yb + 5);
+    g.fuente("normal", 8.6); g.tinta(GRIS);
+    const texto = `Cuerda torcida de ${fx(T.cuerdaMm)} mm, ${o.acabado}. Color de referencia ${o.hex.toUpperCase()}. Lleva unos ${fx(T.cuerdaTotal, 0)} m.`;
+    doc.text(doc.splitTextToSize(texto, colW - 34 - wn - 4), xt, yb + 11, { lineHeightFactor: 1.25 });
+    g.relleno(rgbHex(o.hex));
+    doc.rect(xt, yb + 26, 10, 4, "F");
+    doc.addImage(imgs.opciones[o.id].noche, "JPEG", x + colW - wn, yb, wn, hn);
+    g.fuente("normal", 7.5); g.tinta(GRIS);
+    doc.text("Con la luz encendida", x + colW - wn, yb + hn + 4);
+  });
+}
+
+// Página 3: plano de frente con cotas, para el taller.
 function paginaFrente(doc, g, T) {
   const area = { x0: HOJA.M, x1: HOJA.W - HOJA.M, y0: 32, y1: 194 };
   const sMax = Math.min((area.x1 - area.x0 - 70) / T.W, (area.y1 - area.y0 - 50) / T.H);
@@ -1831,7 +1921,7 @@ function paginaFrente(doc, g, T) {
   item((x, y) => { g.relleno(cMedio); doc.circle(x + 3.5, y, 1.6, "F"); g.relleno(OSCURO); doc.circle(x + 3.5, y, 0.5, "F"); }, "Aro del centro forrado");
 }
 
-// Página 3: planta con las varillas, render de la estructura y detalle de una varilla.
+// Página 4: planta con las varillas, render de la estructura y detalle de una varilla.
 function paginaPlanta(doc, g, T, imgs) {
   const area = { x0: HOJA.M, x1: HOJA.M + 150, y0: 32, y1: 194 };
   const sMax = Math.min((area.x1 - area.x0 - 30) / T.W, (area.y1 - area.y0 - 50) / T.W);
@@ -1969,7 +2059,7 @@ function tablaPDF(doc, g, x, y, anchos, cabecera, filas) {
   return y;
 }
 
-// Página 4: lista de piezas y materiales.
+// Página 5: lista de piezas y materiales.
 function paginaPiezas(doc, g, T) {
   encabezadoPDF(doc, g, "Lista de piezas y materiales", "Para el taller. Medidas en centímetros, salvo donde dice mm o m.");
   const pi = Math.PI;
@@ -1987,7 +2077,7 @@ function paginaPiezas(doc, g, T) {
   }
   filas.push(
     { celdas: ["Araña del portabombillo", "1", `3 brazos de ${fx(T.ds / 2 - 1.4)}`, "Dentro del aro superior, repartidos a 120°."] },
-    { celdas: ["Cuerda de algodón torcida", "", `${fx(T.cuerdaMm)} mm · ${fx(T.cuerdaTotal, 0)} m aprox.`, `Color ${T.colorNombre}. Comprar unos ${comprar} m (10 % más para amarres y desperdicio).`] },
+    { celdas: ["Cuerda torcida", "", `${fx(T.cuerdaMm)} mm · ${fx(T.cuerdaTotal, 0)} m aprox.`, `${T.colorNombre.charAt(0).toUpperCase() + T.colorNombre.slice(1)}. Comprar unos ${comprar} m (10 % más para amarres y desperdicio). La otra opción de cuerda lleva la misma cantidad.`] },
     { celdas: ["   Hebras del cono de arriba", String(T.n), `${fx(T.hebraSup)} cada una`, "Del aro superior al aro de arriba del centro. Cerca de la boca quedan en 3 capas."], estilo: sub },
     { celdas: ["   Hebras del cono de abajo", String(T.n), `${fx(T.hebraInf)} cada una`, "Del aro de abajo del centro al aro inferior."], estilo: sub },
     { celdas: ["   Forro de los aros del centro", "2", `${T.vueltas} vueltas · ${fx(T.forro, 1)} m cada uno`, "Cuerda enrollada en espiral; cada aro en sentido contrario."], estilo: sub },
@@ -2032,12 +2122,21 @@ async function generarPDF() {
       principal: capturar({ vista: "tres", medidas: true, ancho: 1800, alto: 1350 }),
       noche: capturar({ vista: "tres", noche: true, ancho: 1200, alto: 900, acercar: 0.72 }),
       estructura: capturar({ vista: "estructura", estructura: true, piso: false, ancho: 1200, alto: 900, acercar: 0.78 }),
+      opciones: {},
     };
+    for (const o of CUERDAS) {
+      imgs.opciones[o.id] = {
+        dia: capturar({ vista: "tres", color: o.hex, ancho: 1500, alto: 1125, acercar: 0.74 }),
+        noche: capturar({ vista: "tres", color: o.hex, noche: true, ancho: 900, alto: 675, acercar: 0.72 }),
+      };
+    }
     const T = datosTaller();
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
     doc.setProperties({ title: `Lámpara de cuerda Ø ${fx(T.W)} × ${fx(T.H)} cm`, subject: "Presentación y planos para el taller", creator: "lampara.cocinandosonrisas.co" });
     const g = herramientas(doc);
     paginaPresentacion(doc, g, T, imgs);
+    doc.addPage();
+    paginaOpciones(doc, g, T, imgs);
     doc.addPage();
     paginaFrente(doc, g, T);
     doc.addPage();
@@ -2046,7 +2145,7 @@ async function generarPDF() {
     paginaPiezas(doc, g, T);
     piesPDF(doc, g, T.url);
     doc.save(`lampara-cuerda-${Math.round(T.W)}x${Math.round(T.H)}.pdf`);
-    avisar("PDF descargado: presentación, plano de frente, planta y lista de piezas.");
+    avisar("PDF descargado: presentación, opciones de cuerda, plano de frente, planta y lista de piezas.");
   } catch (e) {
     console.error(e);
     avisar(`No se pudo generar el PDF (${e.message}).`);

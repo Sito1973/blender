@@ -2,8 +2,9 @@
 Lámpara colgante de cuerda torcida (forma de platillo / doble cono)
 ===================================================================
 
-Genera en Blender una lámpara colgante forrada con cuerda de algodón torcida
-de 3 cabos, inspirada en las lámparas de fibra natural tipo "platillo".
+Genera en Blender una lámpara colgante forrada con cuerda torcida de 3 cabos,
+inspirada en las lámparas de fibra natural tipo "platillo". Trae las dos
+cuerdas de las fotos: caramelo (algodón mate) y beige (con brillo).
 
 Medidas por defecto
     - Ancho (diámetro en el centro) .......... 80 cm
@@ -18,7 +19,9 @@ Cómo usarlo
     2. Desde la terminal (sin abrir Blender):
            blender -b -P lampara_cuerda.py -- --guardar lampara.blend
            blender -b -P lampara_cuerda.py -- --render render.png --muestras 128
-       Opciones: --vista producto|frente  --res 1080  --muestras 128
+           blender -b -P lampara_cuerda.py -- --cuerda beige --render beige.png
+       Opciones: --cuerda caramelo|beige  --vista producto|frente  --res 1080
+                 --muestras 128
 
 Todas las medidas se cambian en la sección PARÁMETROS. Ejecutar el script de
 nuevo borra la lámpara anterior y la vuelve a crear.
@@ -56,7 +59,14 @@ DIAM_CUERDA_MM = 6.0       # Grosor de la cuerda.
 PASO_TORSION_MM = 20.0     # Largo de una vuelta completa de los 3 cabos.
 NUM_HEBRAS = 288           # Hebras por cono, arriba y abajo (se redondea a múltiplo de 12,
                            # así una hebra cae justo sobre cada varilla).
-COLOR_CUERDA = "#7E5E3C"   # Café/caramelo tomado de la foto del rollo.
+CUERDA = "caramelo"        # Opción de cuerda: "caramelo" o "beige" (ver CUERDAS).
+CUERDAS = {
+    # Colores tomados de las fotos de los dos rollos.
+    "caramelo": {"nombre": "Opción 1: caramelo", "color": "#7E5E3C",   # algodón mate
+                 "rugosidad": 0.88, "especular": 0.3, "satinado": 0.45, "relieve": 0.3},
+    "beige": {"nombre": "Opción 2: beige con brillo", "color": "#D0B596",  # fibra brillante
+              "rugosidad": 0.36, "especular": 0.85, "satinado": 0.8, "relieve": 0.55},
+}
 VARIACION_HEBRAS = 0.35    # Irregularidad natural de las hebras (0 = perfectas).
 GIRO_HEBRAS_GRADOS = 0.0   # > 0 hace que las hebras bajen en espiral.
 
@@ -245,8 +255,9 @@ def material_base(nombre):
 
 
 def material_cuerda():
-    m, nt, salida = material_base("Cuerda_Algodon")
-    color = hex_a_lineal(COLOR_CUERDA)
+    op = CUERDAS[CUERDA]
+    m, nt, salida = material_base(f"Cuerda_{CUERDA.capitalize()}")
+    color = hex_a_lineal(op["color"])
     m.diffuse_color = color
 
     coord = nt.nodes.new("ShaderNodeTexCoord")
@@ -261,9 +272,9 @@ def material_cuerda():
     rampa = nt.nodes.new("ShaderNodeValToRGB")
     rampa.location = (-420, 200)
     rampa.color_ramp.elements[0].position = 0.3
-    rampa.color_ramp.elements[0].color = hex_a_lineal(COLOR_CUERDA, 0.78)
+    rampa.color_ramp.elements[0].color = hex_a_lineal(op["color"], 0.84)
     rampa.color_ramp.elements[1].position = 0.7
-    rampa.color_ramp.elements[1].color = hex_a_lineal(COLOR_CUERDA, 1.15)
+    rampa.color_ramp.elements[1].color = hex_a_lineal(op["color"], 1.12)
     nt.links.new(ruido_color.outputs["Fac"], rampa.inputs["Fac"])
 
     ruido_fibra = nt.nodes.new("ShaderNodeTexNoise")
@@ -274,7 +285,7 @@ def material_cuerda():
 
     relieve = nt.nodes.new("ShaderNodeBump")
     relieve.location = (-420, -200)
-    poner_entrada(relieve, ["Strength"], 0.3)
+    poner_entrada(relieve, ["Strength"], op["relieve"])
     poner_entrada(relieve, ["Distance"], 0.0003)
     nt.links.new(ruido_fibra.outputs["Fac"], relieve.inputs["Height"])
 
@@ -282,15 +293,15 @@ def material_cuerda():
     bsdf.location = (-150, 100)
     nt.links.new(rampa.outputs["Color"], bsdf.inputs["Base Color"])
     nt.links.new(relieve.outputs["Normal"], bsdf.inputs["Normal"])
-    poner_entrada(bsdf, ["Roughness"], 0.88)
-    poner_entrada(bsdf, ["Specular IOR Level", "Specular"], 0.3)
-    poner_entrada(bsdf, ["Sheen Weight", "Sheen"], 0.45)
+    poner_entrada(bsdf, ["Roughness"], op["rugosidad"])
+    poner_entrada(bsdf, ["Specular IOR Level", "Specular"], op["especular"])
+    poner_entrada(bsdf, ["Sheen Weight", "Sheen"], op["satinado"])
     poner_entrada(bsdf, ["Sheen Roughness"], 0.4)
 
     # Un poco de luz atraviesa el algodón: brilla cálido cuando el bombillo está prendido.
     translucido = nt.nodes.new("ShaderNodeBsdfTranslucent")
     translucido.location = (-150, -250)
-    translucido.inputs["Color"].default_value = hex_a_lineal(COLOR_CUERDA, 1.4)
+    translucido.inputs["Color"].default_value = hex_a_lineal(op["color"], 1.4)
     nt.links.new(relieve.outputs["Normal"], translucido.inputs["Normal"])
 
     mezcla = nt.nodes.new("ShaderNodeMixShader")
@@ -668,6 +679,7 @@ def construir_lampara():
           f"Centro a {medidas['centro_cm']} cm")
     print(f"  Doble aro en el centro, separados {medidas['separacion_aros_centro_cm']} cm "
           f"(a {round(z_centro_inf * 100, 1)} y {round(z_centro_sup * 100, 1)} cm de altura)")
+    print(f"  {CUERDAS[CUERDA]['nombre']} ({CUERDAS[CUERDA]['color']})")
     print(f"  Hebras por cono: {n}   Cuerda de {DIAM_CUERDA_MM:g} mm aprox.: "
           f"{medidas['cuerda_m']} m (sin contar amarres ni desperdicio)\n")
     return raiz, medidas
@@ -788,11 +800,15 @@ def argumentos():
     p.add_argument("--vista", choices=("producto", "frente"), default="producto")
     p.add_argument("--muestras", type=int)
     p.add_argument("--res", type=int, help="Resolución (lado mayor en píxeles)")
+    p.add_argument("--cuerda", choices=tuple(CUERDAS), help="Opción de cuerda")
     return p.parse_args(sys.argv[sys.argv.index("--") + 1:])
 
 
 def main():
+    global CUERDA
     args = argumentos()
+    if args is not None and args.cuerda:
+        CUERDA = args.cuerda
     _, medidas = construir_lampara()
     if CREAR_ESCENA:
         construir_escena()

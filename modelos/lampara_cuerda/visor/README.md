@@ -12,8 +12,11 @@ o con los dedos, y se actualiza al cambiar las medidas.
   ecuador** (el ancho) y **altura**.
 - En *Más ajustes*: diámetro de abajo, altura del ecuador, separación del
   doble aro, grosor de la cuerda, número de hebras y abombado.
-- Ver las cotas sobre el modelo, encender la luz de noche, cambiar el color de
-  la cuerda y el metal de los aros.
+- Elegir entre las **dos cuerdas de las fotos**: opción 1 caramelo (algodón
+  mate) y opción 2 beige (con brillo). Cada una muestra la foto real del rollo.
+  También hay otros colores y un selector libre.
+- Ver las cotas sobre el modelo, encender la luz de noche y cambiar el metal
+  de los aros.
 - **Ver solo la estructura metálica**: quita la cuerda y muestra los aros, las
   4 varillas de soporte (0°, 90°, 180° y 270°) y las uniones del doble aro.
 - Vistas rápidas: 3/4, frente, arriba, abajo y un acercamiento al doble aro.
@@ -21,13 +24,15 @@ o con los dedos, y se actualiza al cambiar las medidas.
   `?ds=30&de=90&h=45`), así el arquitecto abre exactamente la misma lámpara.
 - **Descargar imagen**: un PNG con el modelo, las cotas y una franja con las
   medidas.
-- **Descargar PDF para arquitecto y taller**: un solo PDF de 4 páginas, A4
+- **Descargar PDF para arquitecto y taller**: un solo PDF de 5 páginas, A4
   horizontal:
-  1. Presentación: render con cotas, render con la luz encendida y ficha.
-  2. Plano de frente acotado a escala (1:5 con las medidas originales).
-  3. Planta con las varillas a 0°, 90°, 180° y 270°, render de la estructura y
+  1. Presentación con la cuerda elegida: render con cotas, render con la luz
+     encendida y ficha.
+  2. Las dos opciones de cuerda lado a lado, con la foto real de cada una.
+  3. Plano de frente acotado a escala (1:5 con las medidas originales).
+  4. Planta con las varillas a 0°, 90°, 180° y 270°, render de la estructura y
      detalle de una varilla (largo y ángulo).
-  4. Lista de piezas y materiales: aros, varillas, uniones, cuerda y parte
+  5. Lista de piezas y materiales: aros, varillas, uniones, cuerda y parte
      eléctrica, con notas para el taller.
 
 El resumen calcula las hebras por cono, la separación entre hebras en el
@@ -38,20 +43,21 @@ ecuador, el diámetro de los aros del centro y los metros de cuerda aproximados.
 | Archivo | Qué es |
 | --- | --- |
 | `index.html` | Todo el visor en un solo archivo (Three.js 0.170 desde jsDelivr; jsPDF 2.5.1 desde cdnjs, solo al pedir el PDF) |
+| `muestras.js` | Fotos recortadas de las dos cuerdas (en base64), para el panel y el PDF |
 | `nginx.conf` | Configuración del servidor web |
 | `desplegar.py` | Publica o actualiza el visor en Easypanel |
 
 ## Publicar cambios
 
 El servicio `lampara` del proyecto `cocson` en Easypanel es un `nginx:1.27-alpine`
-con `index.html` y `nginx.conf` montados como archivos. Después de editar el
+con `index.html`, `muestras.js` y `nginx.conf` montados como archivos. Después de editar el
 visor:
 
 ```bash
 EASYPANEL_TOKEN=<token de Easypanel> python3 desplegar.py
 ```
 
-El script actualiza los dos archivos, revisa que el dominio exista y vuelve a
+El script actualiza los archivos, revisa que el dominio exista y vuelve a
 desplegar el servicio.
 
 ## Dominio

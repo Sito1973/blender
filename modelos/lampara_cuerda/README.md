@@ -1,8 +1,9 @@
 # Lámpara colgante de cuerda torcida
 
 Modelo procedural para Blender de una lámpara colgante tipo platillo: dos conos
-unidos en el centro por un doble aro. Va forrada con cuerda de algodón torcida
-de 3 cabos color café/caramelo.
+unidos en el centro por un doble aro, forrados con cuerda torcida de 3 cabos.
+Trae las dos cuerdas de las fotos: **opción 1 caramelo** (algodón mate) y
+**opción 2 beige** (con brillo).
 
 ## Medidas
 
@@ -14,9 +15,9 @@ de 3 cabos color café/caramelo.
 | Doble aro en el centro | 2 aros forrados de cuerda, separados 2 cm (a 24 y 26 cm de altura) |
 | Varillas de soporte | 4, a 0°, 90°, 180° y 270°, del aro de arriba (Ø 25) al aro de arriba del centro |
 | Bocas superior e inferior | Ø 25 cm, con banda metálica cobre de 1,5 cm |
-| Cuerda | 6 mm, torcida de 3 cabos |
+| Cuerda | 6 mm, torcida de 3 cabos: caramelo `#7E5E3C` (mate) o beige `#D0B596` (con brillo) |
 | Hebras | 288 por cono (arriba y abajo) |
-| Cuerda necesaria (aprox.) | ≈ 235 m, sin contar amarres ni desperdicio |
+| Cuerda necesaria (aprox.) | ≈ 234 m, sin contar amarres ni desperdicio |
 
 El script mide la lámpara terminada e imprime las medidas reales en la consola,
 junto con los metros de cuerda que usa el modelo.
@@ -50,6 +51,9 @@ blender -b -P lampara_cuerda.py -- --render render.png --res 1600 --muestras 128
 
 # Vista de frente con fondo claro
 blender -b -P lampara_cuerda.py -- --render frente.png --vista frente
+
+# La opción 2 (cuerda beige con brillo)
+blender -b -P lampara_cuerda.py -- --cuerda beige --render beige.png
 ```
 
 ## Cambiar la lámpara
@@ -67,7 +71,7 @@ vez borra la lámpara anterior y la vuelve a crear.
 | `DIAM_CUERDA_MM`, `PASO_TORSION_MM` | Grosor de la cuerda y qué tan apretada es su torsión |
 | `NUM_HEBRAS` | Densidad del tejido: más hebras tapan más la luz. Se redondea a múltiplo de 12 para que una hebra quede encima de cada varilla |
 | `NUM_VARILLAS`, `UNIR_AROS_CENTRO` | Varillas de soporte del cono de arriba (4 por defecto) y uniones entre los dos aros del centro |
-| `COLOR_CUERDA` | Color en hexadecimal; el actual se tomó de la foto del rollo |
+| `CUERDA`, `CUERDAS` | Cuerda que se usa (`"caramelo"` o `"beige"`) y el color, la rugosidad y el brillo de cada una, tomados de las fotos de los rollos |
 | `GIRO_HEBRAS_GRADOS` | Un valor mayor que 0 hace que las hebras bajen en espiral |
 | `POTENCIA_BOMBILLO_W` | Intensidad de la luz interior |
 | `PASO_MUESTREO_MM`, `PUNTOS_PERFIL` | Calidad de la malla (cuanto menor el paso, más fino) |

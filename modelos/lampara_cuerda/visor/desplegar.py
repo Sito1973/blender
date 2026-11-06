@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Publica el visor 3D de la lámpara en Easypanel.
 
-El servicio es un nginx con dos archivos montados (index.html y la
-configuración de nginx), igual que el diseñador "roseta". Si el servicio no
+El servicio es un nginx con tres archivos montados (index.html, muestras.js
+con las fotos de las cuerdas y la configuración de nginx), igual que el
+diseñador "roseta". Si el servicio no
 existe lo crea con su dominio; si ya existe, actualiza los archivos y lo
 vuelve a desplegar.
 
@@ -35,6 +36,7 @@ IMAGEN = "nginx:1.27-alpine"
 
 ARCHIVOS = [
     ("/usr/share/nginx/html/index.html", AQUI / "index.html"),
+    ("/usr/share/nginx/html/muestras.js", AQUI / "muestras.js"),
     ("/etc/nginx/conf.d/default.conf", AQUI / "nginx.conf"),
 ]
 
