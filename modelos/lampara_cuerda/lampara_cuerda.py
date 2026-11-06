@@ -6,9 +6,10 @@ Genera en Blender una lámpara colgante forrada con cuerda de algodón torcida
 de 3 cabos, inspirada en las lámparas de fibra natural tipo "platillo".
 
 Medidas por defecto
-    - Ancho (diámetro en el ecuador) ........ 80 cm
+    - Ancho (diámetro en el centro) .......... 80 cm
     - Alto total (de aro a aro) .............. 50 cm
-    - Ecuador (parte más ancha) .............. a 25 cm (justo en la mitad)
+    - Centro (parte más ancha) ............... a 25 cm (justo en la mitad)
+    - Doble aro en el centro ................. 2 aros forrados, separados 2 cm
     - Bocas superior e inferior .............. Ø 25 cm
 
 Cómo usarlo
@@ -37,9 +38,13 @@ from mathutils import Vector
 # =============================================================================
 
 # --- Forma (centímetros) -----------------------------------------------------
-ANCHO_CM = 80.0            # Diámetro exterior en el ecuador (parte más ancha).
+ANCHO_CM = 80.0            # Diámetro exterior en el centro (parte más ancha).
 ALTO_CM = 50.0             # Alto total, del borde del aro de arriba al de abajo.
-ALTURA_ECUADOR_CM = 25.0   # Altura del ecuador medida desde abajo.
+ALTURA_ECUADOR_CM = 25.0   # Altura del centro (mitad entre los dos aros del centro),
+                           # medida desde abajo.
+SEPARACION_AROS_CENTRO_CM = 2.0  # Distancia entre los dos aros del centro (de eje a
+                                 # eje del alambre). Con 2 cm los dos aros forrados
+                                 # quedan casi pegados, con una línea fina entre ellos.
 DIAM_BOCA_SUP_CM = 25.0    # Diámetro del aro metálico superior.
 DIAM_BOCA_INF_CM = 25.0    # Diámetro del aro metálico inferior.
 ABOMBADO_CM = 0.8          # Curvatura hacia afuera de cada cono (0 = cono recto).
@@ -405,7 +410,7 @@ def hebras(muestras, n, desfase, giro, rng, d, a, paso_torsion):
 
     Cerca de las bocas no caben todas lado a lado: se reparten en 3 capas
     (alturas 0, 1 y 2 en rotación) y se asientan en una sola capa hacia el
-    ecuador, donde hay espacio.
+    centro, donde hay espacio.
     """
     splines, tilts, largo_total = [], [], 0.0
     for i in range(n):
@@ -438,15 +443,19 @@ def hebras(muestras, n, desfase, giro, rng, d, a, paso_torsion):
     return splines, tilts, largo_total
 
 
-def espiral_ecuador(rc, ze, a, d, paso_torsion):
-    """Cuerda enrollada en espiral alrededor del aro del ecuador."""
+def espiral_ecuador(rc, ze, a, d, paso_torsion, sentido=1):
+    """Cuerda enrollada en espiral alrededor de un aro del centro.
+
+    sentido = 1 o -1 cambia la dirección del enrollado (los dos aros del
+    centro van en sentidos opuestos, como en espiga).
+    """
     vueltas = max(3, round(2.0 * math.pi * rc / d))
     por_vuelta = 24
     n = vueltas * por_vuelta
     pts = []
     for k in range(n):
         phi = 2.0 * math.pi * k / n
-        psi = 2.0 * math.pi * vueltas * k / n
+        psi = sentido * 2.0 * math.pi * vueltas * k / n
         rr = rc + a * math.cos(psi)
         pts.append((rr * math.cos(phi), rr * math.sin(phi), ze + a * math.sin(psi)))
     largo = sum(math.dist(pts[k], pts[(k + 1) % n]) for k in range(n))
@@ -522,17 +531,20 @@ def construir_lampara():
     n = max(6, 6 * round(NUM_HEBRAS / 6))      # múltiplo de 6, para rotar las capas
 
     a = wr + rr                                # centro del alambre -> centro de la cuerda
-    rc = W / 2.0 - a - rr                      # aro del ecuador (la cuerda llega a ANCHO_CM)
+    rc = W / 2.0 - a - rr                      # aros del centro (la cuerda llega a ANCHO_CM)
+    sep_centro = cm(SEPARACION_AROS_CENTRO_CM)
+    z_centro_sup = ZE + sep_centro / 2.0       # aro del centro de arriba
+    z_centro_inf = ZE - sep_centro / 2.0       # aro del centro de abajo
     z_banda_sup = H - bh / 2.0
     z_banda_inf = bh / 2.0
     r_banda_sup = cm(DIAM_BOCA_SUP_CM) / 2.0
     r_banda_inf = cm(DIAM_BOCA_INF_CM) / 2.0
 
-    def aro_interno(r_banda, z_banda, signo):
+    def aro_interno(r_banda, z_banda, z_centro, signo):
         """Aro del armazón escondido detrás de la banda metálica."""
         r, z = r_banda - 0.012, z_banda - signo * 0.008
         for _ in range(4):
-            dx, dz = (rc - r, ZE - z) if signo > 0 else (r - rc, z - ZE)
+            dx, dz = (rc - r, z_centro - z) if signo > 0 else (r - rc, z - z_centro)
             largo = math.hypot(dx, dz)
             nr, nz = -dz / largo, dx / largo
             sep = 2.0 * math.pi * (r + nr * a) / n
@@ -541,12 +553,15 @@ def construir_lampara():
             z = z_banda - nz * (a + levante)
         return (r, z)
 
-    A = aro_interno(r_banda_sup, z_banda_sup, +1)
-    B = (rc, ZE)
-    F = aro_interno(r_banda_inf, z_banda_inf, -1)
+    A = aro_interno(r_banda_sup, z_banda_sup, z_centro_sup, +1)
+    B_sup = (rc, z_centro_sup)
+    B_inf = (rc, z_centro_inf)
+    F = aro_interno(r_banda_inf, z_banda_inf, z_centro_inf, -1)
 
-    tramo_sup = muestrear_tramo(A, B, abombado, paso)
-    tramo_inf = muestrear_tramo(B, F, abombado, paso)
+    # Cono de arriba: del aro superior al aro del centro de arriba.
+    # Cono de abajo: del aro del centro de abajo al aro inferior.
+    tramo_sup = muestrear_tramo(A, B_sup, abombado, paso)
+    tramo_inf = muestrear_tramo(B_inf, F, abombado, paso)
 
     # --- Materiales ----------------------------------------------------------
     m_cuerda = material_cuerda()
@@ -565,26 +580,31 @@ def construir_lampara():
     cuerda_inf = curva("Cuerda_Cono_Inferior", col, raiz, s_inf, t_inf,
                        material=m_cuerda, bevel_obj=perfil)
 
-    pts_e, tl_e, l_e = espiral_ecuador(rc, ZE, a, d, paso_torsion)
-    cuerda_ecu = curva("Cuerda_Ecuador", col, raiz, [pts_e], [tl_e], ciclica=True,
-                       material=m_cuerda, bevel_obj=perfil)
+    # Doble aro del centro: cada aro va forrado con cuerda enrollada en espiral.
+    pts_es, tl_es, l_es = espiral_ecuador(rc, z_centro_sup, a, d, paso_torsion, 1)
+    pts_ei, tl_ei, l_ei = espiral_ecuador(rc, z_centro_inf, a, d, paso_torsion, -1)
+    cuerda_centro = curva("Cuerda_Aros_Centro", col, raiz, [pts_es, pts_ei],
+                          [tl_es, tl_ei], ciclica=True, material=m_cuerda,
+                          bevel_obj=perfil)
+    l_e = l_es + l_ei
 
     # --- Armazón metálico ----------------------------------------------------
     banda_sup = banda("Aro_Superior", col, raiz, r_banda_sup, z_banda_sup, bh, bt, m_cobre)
     banda_inf = banda("Aro_Inferior", col, raiz, r_banda_inf, z_banda_inf, bh, bt, m_cobre)
-    curva("Alambre_Ecuador", col, raiz, [circulo(rc, ZE)], ciclica=True,
-          material=m_negro, radio=wr)
+    curva("Alambres_Centro", col, raiz, [circulo(rc, z_centro_sup), circulo(rc, z_centro_inf)],
+          ciclica=True, material=m_negro, radio=wr)
     curva("Alambre_Aro_Sup", col, raiz, [circulo(A[0], A[1])], ciclica=True,
           material=m_negro, radio=wr)
     curva("Alambre_Aro_Inf", col, raiz, [circulo(F[0], F[1])], ciclica=True,
           material=m_negro, radio=wr)
+    perfil_rz = []
+    for tramo in (tramo_sup, tramo_inf):
+        puntos = [(r, z) for (_, r, z, _, _) in tramo]
+        perfil_rz += puntos[::4] + ([puntos[-1]] if (len(puntos) - 1) % 4 else [])
     costillas = []
     for k in range(NUM_COSTILLAS):
         ang = 2.0 * math.pi * (k + 0.25) / max(1, NUM_COSTILLAS)
-        perfil_rz = [(r, z) for (_, r, z, _, _) in tramo_sup] + \
-                    [(r, z) for (_, r, z, _, _) in tramo_inf[1:]]
-        costillas.append([(r * math.cos(ang), r * math.sin(ang), z)
-                          for (r, z) in perfil_rz[::4]])
+        costillas.append([(r * math.cos(ang), r * math.sin(ang), z) for (r, z) in perfil_rz])
     if costillas:
         curva("Costillas", col, raiz, costillas, material=m_negro, radio=wr)
 
@@ -623,19 +643,22 @@ def construir_lampara():
     perfil.hide_set(True)
 
     # --- Resumen ---------------------------------------------------------------
-    pantalla = [cuerda_sup, cuerda_inf, cuerda_ecu, banda_sup, banda_inf]
+    pantalla = [cuerda_sup, cuerda_inf, cuerda_centro, banda_sup, banda_inf]
     mn, mx = medir(pantalla)
     medidas = {
         "ancho_cm": round((mx.x - mn.x) * 100, 1),
         "fondo_cm": round((mx.y - mn.y) * 100, 1),
         "alto_cm": round((mx.z - mn.z) * 100, 1),
-        "ecuador_cm": round(ZE * 100, 1),
+        "centro_cm": round(ZE * 100, 1),
+        "separacion_aros_centro_cm": round(sep_centro * 100, 1),
         "hebras_por_cono": n,
         "cuerda_m": round(l_sup + l_inf + l_e, 1),
     }
     print("\n=== Lámpara de cuerda generada ===")
     print(f"  Ancho: {medidas['ancho_cm']} cm   Alto: {medidas['alto_cm']} cm   "
-          f"Ecuador a {medidas['ecuador_cm']} cm")
+          f"Centro a {medidas['centro_cm']} cm")
+    print(f"  Doble aro en el centro, separados {medidas['separacion_aros_centro_cm']} cm "
+          f"(a {round(z_centro_inf * 100, 1)} y {round(z_centro_sup * 100, 1)} cm de altura)")
     print(f"  Hebras por cono: {n}   Cuerda de {DIAM_CUERDA_MM:g} mm aprox.: "
           f"{medidas['cuerda_m']} m (sin contar amarres ni desperdicio)\n")
     return raiz, medidas
@@ -670,7 +693,7 @@ def construir_escena():
     pared.rotation_euler = (math.radians(90), 0.0, 0.0)
     col.objects.link(pared)
 
-    # Cámara principal (ligeramente por encima del ecuador, como en la foto).
+    # Cámara principal (ligeramente por encima del centro, como en la foto).
     cam_d = bpy.data.cameras.new("Camara_Lampara")
     cam_d.lens = 50
     cam = bpy.data.objects.new("Camara_Lampara", cam_d)
