@@ -20,6 +20,12 @@ de 3 cabos color café/caramelo.
 El script mide la lámpara terminada e imprime las medidas reales en la consola,
 junto con los metros de cuerda que usa el modelo.
 
+## Visor web
+
+La misma lámpara se puede ver y ajustar en el navegador, sin Blender:
+https://lampara.cocinandosonrisas.co. El código y las instrucciones para
+publicarlo están en [`visor/`](visor/README.md).
+
 ## Cómo usarlo
 
 **Dentro de Blender (4.2 o superior)**

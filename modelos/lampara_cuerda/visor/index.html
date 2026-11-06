@@ -1,0 +1,1442 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lámpara de cuerda · Visor 3D</title>
+<meta name="description" content="Visor 3D de la lámpara colgante de cuerda torcida con doble aro en el centro. Cambia el diámetro de arriba, el del ecuador y la altura, y mírala desde cualquier ángulo.">
+<meta name="theme-color" content="#2b241e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 1v7' stroke='%23855818' stroke-width='2'/%3E%3Cpath d='M11 8h10l9 7.4H2z' fill='%23a8714a'/%3E%3Cpath d='M2 16.6h28l-9 7.4H11z' fill='%23855818'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #ece6dd;
+  --panel: #f8f5f0;
+  --ink: #1d1a17;
+  --muted: #655c52;
+  --line: #d8cec1;
+  --acc: #855818;
+  --acc-ink: #fffaf0;
+  --acc-soft: #efe2cd;
+  --cota: #b3332b;
+  --stage: #c9b8a2;
+  --stage-ink: #2b241e;
+  --chip: rgba(248, 245, 240, 0.86);
+  --chip-ink: #2b241e;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Barlow", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121110; --panel: #1a1816; --ink: #ece6dc; --muted: #a59c90; --line: #322d28;
+    --acc: #dcab58; --acc-ink: #1a1307; --acc-soft: #30271a; --cota: #ff7366;
+    --chip: rgba(26, 24, 22, 0.84); --chip-ink: #ece6dc;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121110; --panel: #1a1816; --ink: #ece6dc; --muted: #a59c90; --line: #322d28;
+  --acc: #dcab58; --acc-ink: #1a1307; --acc-soft: #30271a; --cota: #ff7366;
+  --chip: rgba(26, 24, 22, 0.84); --chip-ink: #ece6dc;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+#app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 372px;
+  height: 100vh;
+  height: 100svh;
+}
+
+/* ---------- Escenario 3D ---------- */
+#stage {
+  position: relative;
+  overflow: hidden;
+  background: var(--stage);
+  min-height: 0;
+}
+#lienzo { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+#etiquetas { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.cota {
+  font: 600 12.5px/1 var(--font-mono);
+  color: #fff;
+  background: color-mix(in srgb, var(--cota) 92%, transparent);
+  padding: 5px 7px 4px;
+  border-radius: 6px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.cota.suave { background: rgba(43, 36, 30, 0.82); }
+
+.stage-top {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: max(12px, env(safe-area-inset-top)) 16px 0;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  pointer-events: none;
+}
+.ayuda {
+  margin: 0;
+  font-size: 13px;
+  color: var(--chip-ink);
+  background: var(--chip);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 6px 10px;
+  border-radius: 999px;
+  max-width: 100%;
+}
+.stage-bottom {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 0 16px max(14px, env(safe-area-inset-bottom));
+  display: flex; justify-content: center;
+  pointer-events: none;
+}
+.vistas {
+  pointer-events: auto;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
+  background: var(--chip);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 4px;
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+.vistas button {
+  border: 0; background: transparent; color: var(--chip-ink);
+  padding: 7px 13px; border-radius: 999px; cursor: pointer;
+  font-weight: 600; font-size: 14px; min-height: 36px;
+}
+.vistas button:hover { background: color-mix(in srgb, var(--chip-ink) 10%, transparent); }
+.vistas button[aria-pressed="true"] { background: var(--acc); color: var(--acc-ink); }
+.vistas button:focus-visible, .btn:focus-visible, .chip:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+
+.cargando, .error-3d {
+  position: absolute; inset: 0;
+  display: grid; place-items: center; text-align: center;
+  padding: 24px;
+  font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--stage-ink);
+  background: var(--stage);
+  transition: opacity 0.4s ease;
+}
+.error-3d { font-family: var(--font-body); font-size: 16px; font-weight: 500; }
+
+/* ---------- Panel ---------- */
+#panel {
+  overflow-y: auto;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  padding: 22px 20px 36px;
+  padding-right: max(20px, env(safe-area-inset-right));
+}
+.panel-h h1 {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 34px; line-height: 1; letter-spacing: 0.01em;
+  margin: 0 0 6px;
+}
+.panel-h p { margin: 0; color: var(--muted); font-size: 15px; }
+.bloque { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 16px; }
+.bloque h2 {
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+details.bloque > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+details.bloque > summary::-webkit-details-marker { display: none; }
+details.bloque > summary h2 { margin: 0; }
+details.bloque > summary::after { content: "+"; font: 600 20px/1 var(--font-mono); color: var(--muted); }
+details.bloque[open] > summary::after { content: "−"; }
+details.bloque[open] > summary { margin-bottom: 10px; }
+
+.campo { padding: 6px 0 12px; }
+.campo-fila { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.campo-fila label { font-weight: 600; font-size: 15.5px; }
+.campo-valor { display: inline-flex; align-items: baseline; gap: 4px; flex: none; }
+.campo-valor input {
+  width: 74px; text-align: right;
+  font-family: var(--font-mono); font-size: 15px; font-weight: 500;
+  padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg);
+}
+.campo-valor input:focus { outline: 2px solid var(--acc); outline-offset: 0; border-color: transparent; }
+.campo-valor input:disabled { opacity: 0.6; }
+.campo-valor .u { font-family: var(--font-mono); font-size: 13px; color: var(--muted); min-width: 22px; }
+.campo input[type="range"] { width: 100%; margin: 10px 0 2px; accent-color: var(--acc); height: 24px; }
+.campo input[type="range"]:disabled { opacity: 0.45; }
+.campo .nota { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.enlace { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 14px; cursor: pointer; }
+.enlace input { width: 18px; height: 18px; accent-color: var(--acc); margin: 0; }
+
+.resumen dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 14.5px; }
+.resumen dt { color: var(--muted); }
+.resumen dd { margin: 0; font-family: var(--font-mono); font-size: 13.5px; text-align: right; font-weight: 500; }
+.aviso {
+  margin: 12px 0 0; padding: 9px 11px; border-radius: 8px;
+  background: color-mix(in srgb, var(--cota) 12%, transparent);
+  color: var(--ink); font-size: 14px;
+  border-left: 3px solid var(--cota);
+}
+
+.colores { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip-color {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--line);
+  cursor: pointer; padding: 0;
+}
+.chip-color[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--acc); }
+.color-libre { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+.color-libre input { width: 38px; height: 34px; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--bg); cursor: pointer; }
+.sub { margin: 14px 0 8px; font-size: 14px; font-weight: 600; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line); background: var(--bg);
+  padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 14px; font-weight: 500; min-height: 34px;
+}
+.chip[aria-pressed="true"] { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+
+.interruptores { display: grid; gap: 10px; }
+.interruptor { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; cursor: pointer; }
+.interruptor input { width: 20px; height: 20px; accent-color: var(--acc); margin: 0; }
+
+.acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn {
+  border: 1px solid var(--line); background: var(--bg);
+  padding: 10px 12px; border-radius: var(--radius); cursor: pointer;
+  font-weight: 600; font-size: 15px; min-height: 44px;
+}
+.btn.prim { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); grid-column: 1 / -1; }
+.btn:hover { filter: brightness(1.04); }
+.estado { grid-column: 1 / -1; margin: 2px 0 0; font-size: 13.5px; color: var(--muted); min-height: 1.3em; }
+.pie { margin-top: 22px; font-size: 13px; color: var(--muted); }
+
+@media (max-width: 880px) {
+  #app { display: block; height: auto; }
+  #stage { position: sticky; top: 0; height: 56vh; height: 56svh; z-index: 2; border-bottom: 1px solid var(--line); }
+  #panel { border-left: 0; padding: 18px 16px 40px; overflow: visible; }
+  .ayuda { font-size: 12px; }
+  .vistas button { padding: 6px 10px; font-size: 13px; }
+  .panel-h h1 { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cargando { transition: none; }
+}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app">
+  <section id="stage" aria-label="Lámpara en 3D">
+    <canvas id="lienzo" tabindex="0" aria-label="Modelo 3D de la lámpara. Arrastra para girarla."></canvas>
+    <div id="etiquetas"></div>
+    <div class="stage-top">
+      <p class="ayuda" id="ayuda">Arrastra para girar · rueda o pellizco para acercar · clic derecho o dos dedos para mover</p>
+    </div>
+    <div class="stage-bottom">
+      <div class="vistas" role="group" aria-label="Vistas de cámara">
+        <button type="button" data-vista="tres" aria-pressed="true">3/4</button>
+        <button type="button" data-vista="frente" aria-pressed="false">Frente</button>
+        <button type="button" data-vista="arriba" aria-pressed="false">Arriba</button>
+        <button type="button" data-vista="abajo" aria-pressed="false">Abajo</button>
+        <button type="button" data-vista="detalle" aria-pressed="false">Doble aro</button>
+      </div>
+    </div>
+    <div id="cargando" class="cargando">Cargando visor 3D…</div>
+    <div id="error3d" class="error-3d" hidden></div>
+  </section>
+
+  <aside id="panel">
+    <header class="panel-h">
+      <h1>Lámpara de cuerda</h1>
+      <p>Doble cono forrado en cuerda torcida de algodón, con doble aro en el centro. Cambia las medidas y la lámpara se actualiza al instante.</p>
+    </header>
+
+    <section class="bloque">
+      <h2>Medidas principales</h2>
+      <div id="campos-principal"></div>
+    </section>
+
+    <section class="bloque resumen">
+      <h2>Resumen</h2>
+      <dl id="resumen" aria-live="polite"></dl>
+      <p id="aviso" class="aviso" hidden></p>
+    </section>
+
+    <details class="bloque" id="mas">
+      <summary><h2>Más ajustes</h2></summary>
+      <div id="campos-mas"></div>
+    </details>
+
+    <section class="bloque">
+      <h2>Acabados</h2>
+      <p class="sub">Color de la cuerda</p>
+      <div class="colores" id="colores"></div>
+      <p class="sub">Aros de arriba y abajo</p>
+      <div class="chips" id="metales"></div>
+    </section>
+
+    <section class="bloque">
+      <h2>Vista</h2>
+      <div class="interruptores">
+        <label class="interruptor"><span>Mostrar medidas</span><input type="checkbox" id="k-medidas"></label>
+        <label class="interruptor"><span>Luz encendida (de noche)</span><input type="checkbox" id="k-luz"></label>
+        <label class="interruptor"><span>Mostrar piso y sombra</span><input type="checkbox" id="k-piso"></label>
+        <label class="interruptor"><span>Girar sola</span><input type="checkbox" id="k-giro"></label>
+      </div>
+      <p class="sub">Calidad del modelo</p>
+      <div class="chips" id="calidades"></div>
+    </section>
+
+    <section class="bloque">
+      <h2>Compartir</h2>
+      <div class="acciones">
+        <button type="button" class="btn prim" id="b-enlace">Copiar enlace con estas medidas</button>
+        <button type="button" class="btn" id="b-imagen">Descargar imagen</button>
+        <button type="button" class="btn" id="b-reset">Volver al original</button>
+        <p class="estado" id="estado" role="status"></p>
+      </div>
+    </section>
+
+    <p class="pie">Medidas exteriores en centímetros. La cuerda calculada es aproximada y no incluye amarres ni desperdicio.</p>
+  </aside>
+</div>
+
+<noscript><p style="padding:16px">Este visor necesita JavaScript.</p></noscript>
+
+<script>
+  // Si el módulo 3D no arranca (sin WebGL o sin conexión a la librería), avisar.
+  setTimeout(function () {
+    if (!window.__visorListo) {
+      var e = document.getElementById("error3d");
+      e.textContent = "No se pudo cargar el visor 3D. Revisa la conexión o abre la página en otro navegador.";
+      e.hidden = false;
+      document.getElementById("cargando").hidden = true;
+    }
+  }, 15000);
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+
+// =============================================================================
+// Parámetros
+// =============================================================================
+
+const ALAMBRE_R = 0.0025;      // radio del alambre del armazón (m)
+const BANDA_ALTO = 0.015;      // alto de las bandas metálicas de las bocas (m)
+const BANDA_ESP = 0.0025;      // espesor de las bandas (m)
+const PASO_TORSION = 0.020;    // largo de una vuelta de los 3 cabos (m)
+const LARGO_CABLE = 0.8;
+const FASES = 4;               // variantes de torsión, para que las hebras no queden alineadas
+
+const CAMPOS = [
+  { id: "ds", grupo: "principal", nombre: "Diámetro de arriba", nota: "Boca superior, con aro de metal.", min: 10, max: 60, paso: 0.5, unidad: "cm", def: 25 },
+  { id: "de", grupo: "principal", nombre: "Diámetro del ecuador", nota: "Ancho total, en el doble aro del centro.", min: 40, max: 140, paso: 1, unidad: "cm", def: 80 },
+  { id: "h", grupo: "principal", nombre: "Altura", nota: "Alto total, de aro a aro.", min: 20, max: 100, paso: 1, unidad: "cm", def: 50 },
+  { id: "di", grupo: "mas", nombre: "Diámetro de abajo", min: 10, max: 60, paso: 0.5, unidad: "cm", def: 25, enlace: { id: "diIgual", texto: "Igual al de arriba", def: true } },
+  { id: "hc", grupo: "mas", nombre: "Altura del ecuador", nota: "Desde abajo hasta la mitad del doble aro.", min: 5, max: 95, paso: 0.5, unidad: "cm", def: 25, enlace: { id: "hcCentro", texto: "Justo en la mitad", def: true } },
+  { id: "sep", grupo: "mas", nombre: "Separación del doble aro", nota: "Distancia entre los dos aros del centro.", min: 0, max: 10, paso: 0.5, unidad: "cm", def: 2 },
+  { id: "dc", grupo: "mas", nombre: "Grosor de la cuerda", min: 3, max: 12, paso: 0.5, unidad: "mm", def: 6 },
+  { id: "n", grupo: "mas", nombre: "Hebras por cono", nota: "Múltiplo de 6. En automático cubren el ecuador como la foto.", min: 36, max: 600, paso: 6, unidad: "", def: 288, enlace: { id: "nAuto", texto: "Calcular automáticamente", def: true } },
+  { id: "ab", grupo: "mas", nombre: "Abombado", nota: "0 deja los conos rectos.", min: -2, max: 5, paso: 0.1, unidad: "cm", def: 0.8 },
+];
+
+const COLORES = [
+  { hex: "#7e5e3c", nombre: "Caramelo (cuerda de la foto)" },
+  { hex: "#a88b63", nombre: "Natural" },
+  { hex: "#d8ccb3", nombre: "Crudo" },
+  { hex: "#4b3527", nombre: "Café oscuro" },
+  { hex: "#8a877f", nombre: "Gris" },
+  { hex: "#2b2724", nombre: "Negro" },
+];
+
+const METALES = {
+  cobre: { nombre: "Cobre", color: "#a8714a", metalness: 1, roughness: 0.34 },
+  laton: { nombre: "Latón", color: "#bd9a5c", metalness: 1, roughness: 0.3 },
+  negro: { nombre: "Negro mate", color: "#24211e", metalness: 0.6, roughness: 0.55 },
+  blanco: { nombre: "Blanco", color: "#ebe6dc", metalness: 0.05, roughness: 0.45 },
+};
+
+const CALIDADES = {
+  alta: { nombre: "Alta", paso: 0.0018, perfil: 12, vuelta: 20, dpr: 2 },
+  media: { nombre: "Media", paso: 0.003, perfil: 12, vuelta: 14, dpr: 1.5 },
+  baja: { nombre: "Baja", paso: 0.0045, perfil: 9, vuelta: 10, dpr: 1 },
+};
+
+const esMovil = matchMedia("(pointer: coarse)").matches;
+
+function valoresIniciales() {
+  const p = {};
+  for (const c of CAMPOS) {
+    p[c.id] = c.def;
+    if (c.enlace) p[c.enlace.id] = c.enlace.def;
+  }
+  Object.assign(p, {
+    color: COLORES[0].hex, metal: "cobre",
+    medidas: true, luz: false, piso: true, giro: false,
+    calidad: esMovil ? "media" : "alta",
+  });
+  return p;
+}
+
+const P = valoresIniciales();
+
+// --- Enlace compartible --------------------------------------------------------
+function leerURL() {
+  const q = new URLSearchParams(location.search);
+  const num = (k) => (q.has(k) && isFinite(parseFloat(q.get(k))) ? parseFloat(q.get(k)) : null);
+  for (const k of ["ds", "de", "h", "sep", "dc", "ab"]) { const v = num(k); if (v !== null) P[k] = v; }
+  if (num("di") !== null) { P.di = num("di"); P.diIgual = false; }
+  if (num("hc") !== null) { P.hc = num("hc"); P.hcCentro = false; }
+  if (num("n") !== null) { P.n = num("n"); P.nAuto = false; }
+  if (/^[0-9a-f]{6}$/i.test(q.get("c") || "")) P.color = "#" + q.get("c").toLowerCase();
+  if (METALES[q.get("m")]) P.metal = q.get("m");
+  if (q.get("luz") === "1") P.luz = true;
+  if (q.get("med") === "0") P.medidas = false;
+  if (q.get("piso") === "0") P.piso = false;
+}
+
+function urlActual() {
+  const q = new URLSearchParams();
+  const r = (v) => String(Math.round(v * 100) / 100);
+  q.set("ds", r(P.ds)); q.set("de", r(P.de)); q.set("h", r(P.h));
+  if (!P.diIgual) q.set("di", r(P.di));
+  if (!P.hcCentro) q.set("hc", r(P.hc));
+  if (P.sep !== 2) q.set("sep", r(P.sep));
+  if (P.dc !== 6) q.set("dc", r(P.dc));
+  if (!P.nAuto) q.set("n", String(P.n));
+  if (P.ab !== 0.8) q.set("ab", r(P.ab));
+  if (P.color !== COLORES[0].hex) q.set("c", P.color.slice(1));
+  if (P.metal !== "cobre") q.set("m", P.metal);
+  if (P.luz) q.set("luz", "1");
+  if (!P.medidas) q.set("med", "0");
+  if (!P.piso) q.set("piso", "0");
+  return location.origin + location.pathname + "?" + q.toString();
+}
+
+let temporizadorURL = 0;
+function guardarURL() {
+  clearTimeout(temporizadorURL);
+  temporizadorURL = setTimeout(() => history.replaceState(null, "", urlActual()), 300);
+}
+
+// =============================================================================
+// Geometría
+// =============================================================================
+
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+function azar(i, s) {
+  const x = Math.sin(i * 12.9898 + s * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// Altura entre capas para que hebras vecinas no se crucen (llega a 0 sin escalón).
+function levanteCapa(separacion, d) {
+  const k = 1.4 * d;
+  if (separacion >= k) return 0;
+  const q = 1 - (separacion / k) ** 2;
+  return k * q * q;
+}
+
+// Sección de cuerda de 3 cabos: unión de tres círculos superpuestos.
+function perfilTrebol(K, R) {
+  const rp = R / 1.7, dc = 0.7 * rp, out = [];
+  for (let k = 0; k < K; k++) {
+    const th = (2 * Math.PI * k) / K;
+    let r = 0;
+    for (let i = 0; i < 3; i++) {
+      const dl = th - (2 * Math.PI * i) / 3;
+      const s = dc * Math.sin(dl), c = dc * Math.cos(dl);
+      const disc = rp * rp - s * s;
+      if (disc >= 0) r = Math.max(r, c + Math.sqrt(disc));
+    }
+    out.push([r, th]);
+  }
+  return out;
+}
+
+// Puntos (r, y) y normal hacia afuera de un tramo del perfil, de A a B.
+function muestrearTramo(A, B, abombado, paso) {
+  const dx = B[0] - A[0], dy = B[1] - A[1];
+  const L = Math.hypot(dx, dy);
+  const nr0 = -dy / L, ny0 = dx / L;
+  const n = Math.max(8, Math.ceil(L / paso));
+  const out = [];
+  for (let j = 0; j <= n; j++) {
+    const t = j / n;
+    const b = abombado * Math.sin(Math.PI * t);
+    const db = abombado * Math.PI * Math.cos(Math.PI * t);
+    const tr = dx + nr0 * db, ty = dy + ny0 * db;
+    const tl = Math.hypot(tr, ty);
+    out.push({ t, r: A[0] + dx * t + nr0 * b, y: A[1] + dy * t + ny0 * b, nr: -ty / tl, ny: tr / tl });
+  }
+  return out;
+}
+
+// Recorrido (r, y) de una hebra de cierta capa sobre el armazón.
+function caminoCapa(muestras, capa, n, d, a) {
+  return muestras.map((m) => {
+    const sep = (2 * Math.PI * (m.r + m.nr * a)) / n;
+    const off = a + capa * levanteCapa(sep, d);
+    return [m.r + m.nr * off, m.y + m.ny * off];
+  });
+}
+
+function indicesTubo(n, K) {
+  const idx = new (n * K > 65000 ? Uint32Array : Uint16Array)((n - 1) * K * 6);
+  let o = 0;
+  for (let j = 0; j < n - 1; j++) {
+    for (let k = 0; k < K; k++) {
+      const a = j * K + k, b = j * K + ((k + 1) % K), c = a + K, d = b + K;
+      idx[o++] = a; idx[o++] = b; idx[o++] = c;
+      idx[o++] = b; idx[o++] = d; idx[o++] = c;
+    }
+  }
+  return idx;
+}
+
+// Tubo sobre un recorrido plano (en el plano r-y, a ángulo 0), con la sección girando.
+function tuboPlano(pts, perfil, fase, pasoTorsion) {
+  const n = pts.length, K = perfil.length;
+  const pos = new Float32Array(n * K * 3);
+  let s = 0;
+  for (let j = 0; j < n; j++) {
+    const [x, y] = pts[j];
+    const p0 = pts[Math.max(0, j - 1)], p1 = pts[Math.min(n - 1, j + 1)];
+    let tx = p1[0] - p0[0], ty = p1[1] - p0[1];
+    const tl = Math.hypot(tx, ty) || 1;
+    tx /= tl; ty /= tl;
+    const Nx = -ty, Ny = tx;                  // normal dentro del plano; binormal = +z
+    if (j > 0) s += Math.hypot(x - pts[j - 1][0], y - pts[j - 1][1]);
+    const alfa = pasoTorsion ? fase + (2 * Math.PI * s) / pasoTorsion : 0;
+    for (let k = 0; k < K; k++) {
+      const [R, th] = perfil[k];
+      const f = th + alfa;
+      const c = Math.cos(f) * R, sn = Math.sin(f) * R;
+      const o = (j * K + k) * 3;
+      pos[o] = x + c * Nx;
+      pos[o + 1] = y + c * Ny;
+      pos[o + 2] = sn;
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setIndex(new THREE.BufferAttribute(indicesTubo(n, K), 1));
+  g.computeVertexNormals();
+  return { geo: g, largo: s };
+}
+
+// Una vuelta de la cuerda enrollada en un aro del centro. Se repite girándola.
+function vueltaEspiral(R, y0, a, vueltas, sentido, perfil, segs) {
+  const dphi = (2 * Math.PI) / vueltas;
+  const K = perfil.length;
+  const C = [], T = [], N1 = [];
+  for (let j = 0; j <= segs; j++) {
+    const t = j / segs, phi = dphi * t, psi = sentido * 2 * Math.PI * t;
+    const rho = R + a * Math.cos(psi);
+    const cph = Math.cos(phi), sph = Math.sin(phi);
+    C.push([rho * cph, y0 + a * Math.sin(psi), -rho * sph]);
+    const dpsi = sentido * 2 * Math.PI, drho = -a * Math.sin(psi) * dpsi;
+    T.push([drho * cph - rho * sph * dphi, a * Math.cos(psi) * dpsi, -drho * sph - rho * cph * dphi]);
+    N1.push([Math.cos(psi) * cph, Math.sin(psi), -Math.cos(psi) * sph]);
+  }
+  let largo = 0;
+  for (let j = 1; j <= segs; j++) largo += Math.hypot(C[j][0] - C[j - 1][0], C[j][1] - C[j - 1][1], C[j][2] - C[j - 1][2]);
+  const tercios = Math.max(1, Math.round((3 * largo) / PASO_TORSION));  // cierra sin salto entre vueltas
+  const pos = new Float32Array((segs + 1) * K * 3);
+  const t = new THREE.Vector3(), nn = new THREE.Vector3(), bb = new THREE.Vector3();
+  for (let j = 0; j <= segs; j++) {
+    t.fromArray(T[j]).normalize();
+    nn.fromArray(N1[j]);
+    bb.crossVectors(t, nn).normalize();
+    nn.crossVectors(bb, t).normalize();
+    const alfa = (tercios * (2 * Math.PI) / 3) * (j / segs);
+    for (let k = 0; k < K; k++) {
+      const [Rk, th] = perfil[k];
+      const f = th + alfa, c = Math.cos(f) * Rk, s = Math.sin(f) * Rk;
+      const o = (j * K + k) * 3;
+      pos[o] = C[j][0] + c * nn.x + s * bb.x;
+      pos[o + 1] = C[j][1] + c * nn.y + s * bb.y;
+      pos[o + 2] = C[j][2] + c * nn.z + s * bb.z;
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setIndex(new THREE.BufferAttribute(indicesTubo(segs + 1, K), 1));
+  g.computeVertexNormals();
+  return { geo: g, largo };
+}
+
+// Banda metálica de las bocas: anillo con bordes redondeados.
+function bandaGeo(radio, yc, alto, esp) {
+  const ht = esp / 2, hh = alto / 2, pts = [];
+  const arco = (cx, cy, a0, a1) => {
+    for (let i = 0; i <= 6; i++) {
+      const a = a0 + ((a1 - a0) * i) / 6;
+      pts.push(new THREE.Vector2(cx + ht * Math.cos(a), cy + ht * Math.sin(a)));
+    }
+  };
+  arco(radio, yc + hh - ht, 0, Math.PI);          // borde de arriba (de afuera hacia adentro)
+  arco(radio, yc - hh + ht, Math.PI, 2 * Math.PI); // borde de abajo (de adentro hacia afuera)
+  pts.push(pts[0].clone());
+  return new THREE.LatheGeometry(pts, 160);
+}
+
+// =============================================================================
+// Escena
+// =============================================================================
+
+const lienzo = document.getElementById("lienzo");
+const stage = document.getElementById("stage");
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas: lienzo, antialias: true });
+} catch (e) {
+  const err = document.getElementById("error3d");
+  err.textContent = "Este navegador no puede mostrar 3D (WebGL desactivado).";
+  err.hidden = false;
+  document.getElementById("cargando").hidden = true;
+  throw e;
+}
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false;
+
+const etiquetasRenderer = new CSS2DRenderer({ element: document.getElementById("etiquetas") });
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(32, 1, 0.01, 60);
+camera.position.set(1.2, 0.45, 1.75);
+
+const controls = new OrbitControls(camera, lienzo);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 0.12;
+controls.maxDistance = 7;
+controls.autoRotateSpeed = 1.2;
+controls.target.set(0, 0, 0);
+
+function fondo(arriba, abajo) {
+  const c = document.createElement("canvas");
+  c.width = 4; c.height = 256;
+  const g = c.getContext("2d");
+  const grd = g.createLinearGradient(0, 0, 0, 256);
+  grd.addColorStop(0, arriba);
+  grd.addColorStop(1, abajo);
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 4, 256);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const FONDO_DIA = fondo("#d9cab5", "#a8937a");
+const FONDO_NOCHE = fondo("#2a231d", "#0d0b09");
+
+// Luces
+const luzSol = new THREE.DirectionalLight(0xfff0dc, 2.4);
+luzSol.position.set(-1.0, 2.2, 1.3);
+luzSol.castShadow = true;
+luzSol.shadow.mapSize.set(2048, 2048);
+luzSol.shadow.bias = -0.0004;
+luzSol.shadow.normalBias = 0.0015;
+scene.add(luzSol, luzSol.target);
+
+const luzCielo = new THREE.HemisphereLight(0xfff4e6, 0x3a2e24, 0.5);
+scene.add(luzCielo);
+
+// Grupo de la lámpara (centrado en el origen) y piso
+const lampara = new THREE.Group();
+scene.add(lampara);
+const cotas = new THREE.Group();
+scene.add(cotas);
+
+function mascaraPiso() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const g = c.getContext("2d");
+  const grd = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  grd.addColorStop(0, "#fff");
+  grd.addColorStop(0.45, "#fff");
+  grd.addColorStop(1, "#000");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 256, 256);
+  return new THREE.CanvasTexture(c);
+}
+const piso = new THREE.Mesh(
+  new THREE.CircleGeometry(2.4, 96),
+  new THREE.MeshStandardMaterial({ color: 0xb9a68f, roughness: 0.95, metalness: 0, transparent: true, alphaMap: mascaraPiso(), depthWrite: false })
+);
+piso.rotation.x = -Math.PI / 2;
+piso.receiveShadow = true;
+scene.add(piso);
+
+// Materiales
+const matCuerda = new THREE.MeshPhysicalMaterial({ color: P.color, roughness: 0.8, metalness: 0, sheen: 0.35, sheenRoughness: 0.55 });
+const matMetal = new THREE.MeshStandardMaterial({ side: THREE.DoubleSide });
+const matAlambre = new THREE.MeshStandardMaterial({ color: 0x1e1b18, metalness: 0.75, roughness: 0.45 });
+const matCable = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.6 });
+const matBombillo = new THREE.MeshStandardMaterial({ color: 0xfff7ea, emissive: 0xffc98a, emissiveIntensity: 0.15, roughness: 0.2 });
+
+function aplicarColores() {
+  matCuerda.color.set(P.color);
+  matCuerda.sheenColor.set(P.color).offsetHSL(0, 0, 0.1);
+  const m = METALES[P.metal];
+  matMetal.color.set(m.color);
+  matMetal.metalness = m.metalness;
+  matMetal.roughness = m.roughness;
+}
+
+// Bombillo y luz interior
+const luzBombillo = new THREE.PointLight(0xffb36b, 0, 0, 2);
+luzBombillo.shadow.mapSize.set(1024, 1024);
+luzBombillo.shadow.camera.near = 0.03;
+luzBombillo.shadow.camera.far = 4;
+luzBombillo.shadow.bias = -0.002;
+lampara.add(luzBombillo);
+
+function texturaBrillo() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const g = c.getContext("2d");
+  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, "rgba(255,214,150,1)");
+  grd.addColorStop(0.25, "rgba(255,180,100,0.45)");
+  grd.addColorStop(1, "rgba(255,160,80,0)");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const brillo = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaBrillo(), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+brillo.scale.set(0.42, 0.42, 1);
+lampara.add(brillo);
+
+// =============================================================================
+// Construcción de la lámpara
+// =============================================================================
+
+let piezas = [];          // objetos que se reconstruyen
+let floron = null;        // florón del techo (se oculta al mirar desde arriba)
+let datos = null;         // medidas calculadas (para resumen y cotas)
+
+function limpiarPiezas() {
+  for (const o of piezas) {
+    lampara.remove(o);
+    o.traverse((x) => { if (x.geometry) x.geometry.dispose(); });
+    if (o.dispose) o.dispose();
+  }
+  piezas = [];
+}
+
+function agregar(o, sombra = true) {
+  o.traverse((x) => {
+    x.castShadow = sombra;
+    x.receiveShadow = true;
+  });
+  lampara.add(o);
+  piezas.push(o);
+  return o;
+}
+
+function aroInterno(rBanda, yBanda, yCentro, signo, k) {
+  let r = rBanda - 0.012, y = yBanda - signo * 0.008;
+  for (let it = 0; it < 4; it++) {
+    const dx = signo > 0 ? k.rc - r : r - k.rc;
+    const dy = signo > 0 ? yCentro - y : y - yCentro;
+    const L = Math.hypot(dx, dy);
+    const nr = -dy / L, ny = dx / L;
+    const sep = (2 * Math.PI * (r + nr * k.a)) / k.n;
+    const lev = 2 * levanteCapa(sep, k.d);
+    r = rBanda - BANDA_ESP / 2 - 0.0005 - k.rr - nr * (k.a + lev);
+    y = yBanda - ny * (k.a + lev);
+  }
+  return [r, y];
+}
+
+function hebrasAuto(rc, rBocaMin, d) {
+  const nEcuador = (2 * Math.PI * rc) / (d * 1.43);
+  const capacidad = (3 * 0.97 * 2 * Math.PI * Math.max(0.02, rBocaMin - 0.015)) / d;
+  return clamp(6 * Math.round(Math.min(nEcuador, capacidad) / 6), 36, 600);
+}
+
+function construir() {
+  const Q = CALIDADES[P.calidad];
+  const W = P.de / 100, H = P.h / 100;
+  const d = P.dc / 1000, rr = d / 2, a = ALAMBRE_R + rr;
+  const sepC = P.sep / 100;
+  const ZE = (P.hcCentro ? P.h / 2 : P.hc) / 100;
+  const rc = W / 2 - a - rr;
+  const yS = ZE + sepC / 2, yI = ZE - sepC / 2;
+  const rbS = P.ds / 200, rbI = (P.diIgual ? P.ds : P.di) / 200;
+  const ybS = H - BANDA_ALTO / 2, ybI = BANDA_ALTO / 2;
+
+  if (P.nAuto) P.n = hebrasAuto(rc, Math.min(rbS, rbI), d);
+  const n = Math.max(6, 6 * Math.round(P.n / 6));
+  const k = { rc, a, rr, d, n };
+
+  const A = aroInterno(rbS, ybS, yS, +1, k);
+  const F = aroInterno(rbI, ybI, yI, -1, k);
+  const tS = muestrearTramo(A, [rc, yS], P.ab / 100, Q.paso);
+  const tI = muestrearTramo([rc, yI], F, P.ab / 100, Q.paso);
+
+  limpiarPiezas();
+  lampara.position.y = -H / 2;
+
+  const perfil = perfilTrebol(Q.perfil, rr);
+  const m4 = new THREE.Matrix4();
+  const col = new THREE.Color();
+  let cuerda = 0;
+
+  // Hebras de los dos conos. Cada hebra es igual a sus vecinas de la misma capa,
+  // solo girada: se dibujan con instancias (rápido aunque sean cientos).
+  const conos = [{ muestras: tS, desfase: 0, semilla: 1 }, { muestras: tI, desfase: 0.5, semilla: 2 }];
+  for (const cono of conos) {
+    for (let capa = 0; capa < 3; capa++) {
+      const camino = caminoCapa(cono.muestras, capa, n, d, a);
+      for (let f = 0; f < FASES; f++) {
+        const ids = [];
+        for (let i = capa; i < n; i += 3) if (Math.floor(azar(i, cono.semilla) * FASES) === f) ids.push(i);
+        if (!ids.length) continue;
+        const fase = ((2 * Math.PI) / 3) * (f / FASES) + capa * 0.37;
+        const { geo, largo } = tuboPlano(camino, perfil, fase, PASO_TORSION);
+        const mesh = new THREE.InstancedMesh(geo, matCuerda, ids.length);
+        ids.forEach((i, j) => {
+          mesh.setMatrixAt(j, m4.makeRotationY((2 * Math.PI * (i + cono.desfase)) / n));
+          const v = 0.9 + 0.2 * azar(i, cono.semilla + 7);
+          mesh.setColorAt(j, col.setRGB(v, v, v));
+        });
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+        agregar(mesh);
+        cuerda += largo * ids.length;
+      }
+    }
+  }
+
+  // Doble aro del centro: cuerda enrollada en espiral, en sentidos opuestos.
+  const vueltas = Math.max(3, Math.round((2 * Math.PI * rc) / d));
+  for (const [y0, sentido] of [[yS, 1], [yI, -1]]) {
+    const { geo, largo } = vueltaEspiral(rc, y0, a, vueltas, sentido, perfil, Q.vuelta);
+    const mesh = new THREE.InstancedMesh(geo, matCuerda, vueltas);
+    for (let j = 0; j < vueltas; j++) mesh.setMatrixAt(j, m4.makeRotationY((2 * Math.PI * j) / vueltas));
+    mesh.instanceMatrix.needsUpdate = true;
+    agregar(mesh);
+    cuerda += largo * vueltas;
+  }
+
+  // Bandas metálicas de las bocas.
+  agregar(new THREE.Mesh(bandaGeo(rbS, ybS, BANDA_ALTO, BANDA_ESP), matMetal));
+  agregar(new THREE.Mesh(bandaGeo(rbI, ybI, BANDA_ALTO, BANDA_ESP), matMetal));
+
+  // Armazón: aros de alambre (quedan debajo de la cuerda).
+  for (const [r, y] of [A, F, [rc, yS], [rc, yI]]) {
+    const toro = new THREE.Mesh(new THREE.TorusGeometry(r, ALAMBRE_R, 8, 160), matAlambre);
+    toro.rotation.x = Math.PI / 2;
+    toro.position.y = y;
+    agregar(toro);
+  }
+
+  // Araña, portabombillo, bombillo, cable y florón.
+  const rCollar = 0.014;
+  agregar(cilindro(rCollar, 0.02, ybS, matAlambre));
+  for (let j = 0; j < 3; j++) {
+    const ang = (2 * Math.PI * j) / 3 + Math.PI / 2;
+    const largo = rbS - BANDA_ESP / 2 - rCollar;
+    const brazo = cilindro(0.002, largo, 0, matAlambre);
+    brazo.rotation.z = Math.PI / 2;
+    const pivote = new THREE.Group();
+    brazo.position.set(rCollar + largo / 2, ybS, 0);
+    pivote.add(brazo);
+    pivote.rotation.y = ang;
+    agregar(pivote);
+  }
+  const ySocket = H - 0.10;
+  agregar(cilindro(0.02, 0.055, ySocket - 0.0275, matAlambre));
+  const yBombillo = ySocket - 0.055 - 0.04;
+  const bombillo = agregar(new THREE.Mesh(new THREE.SphereGeometry(0.0475, 40, 24), matBombillo), false);
+  bombillo.position.y = yBombillo;
+  agregar(cilindro(0.0035, H + LARGO_CABLE - ySocket, (ySocket + H + LARGO_CABLE) / 2, matCable));
+  floron = agregar(cilindro(0.06, 0.025, H + LARGO_CABLE + 0.0125, matAlambre));
+  luzBombillo.position.set(0, yBombillo, 0);
+  brillo.position.set(0, yBombillo, 0);
+
+  // Piso y sombra del sol, ajustados al tamaño.
+  piso.position.y = -H / 2 - 0.85;
+  const ext = Math.max(W, H) / 2 + 0.75;
+  const cs = luzSol.shadow.camera;
+  cs.left = -ext; cs.right = ext; cs.top = ext; cs.bottom = -ext; cs.near = 0.1; cs.far = 8;
+  cs.updateProjectionMatrix();
+
+  const separacionEcuador = (2 * Math.PI * (rc + a)) / n - d;
+  const capasBoca = (n * d) / (2 * Math.PI * Math.max(0.01, Math.min(A[0], F[0]) + a));
+  datos = {
+    W, H, ZE, sepC, rbS, rbI, rc, d, n, yS, yI,
+    cuerda: cuerda,
+    separacionEcuador,
+    capasBoca,
+    aroCentro: 2 * rc,
+  };
+  construirCotas();
+  piso.visible = P.piso;
+}
+
+function cilindro(r, alto, y, mat) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, alto, 32), mat);
+  m.position.y = y;
+  return m;
+}
+
+// =============================================================================
+// Cotas
+// =============================================================================
+
+const matCota = new THREE.LineBasicMaterial({ color: 0xb3332b, depthTest: false, transparent: true, opacity: 0.95 });
+const matCotaSuave = new THREE.LineBasicMaterial({ color: 0x3a2f27, depthTest: false, transparent: true, opacity: 0.55 });
+let etiquetas = [];
+
+const cm = (m) => (Math.round(m * 1000) / 10).toLocaleString("es-CO", { maximumFractionDigits: 1 });
+
+function construirCotas() {
+  for (const o of [...cotas.children]) {
+    cotas.remove(o);
+    if (o.geometry) o.geometry.dispose();
+    if (o.element) o.element.remove();
+  }
+  etiquetas = [];
+  const { W, H, ZE, rbS, rbI } = datos;
+  const y0 = -H / 2, y1 = H / 2, yE = y0 + ZE;
+  const lineas = [], guias = [];
+  const tic = 0.012;
+  const cota = (x0, ya, x1, yb) => {
+    lineas.push(x0, ya, 0, x1, yb, 0);
+    const dx = x1 - x0, dy = yb - ya, L = Math.hypot(dx, dy) || 1;
+    const ux = dx / L, uy = dy / L;
+    for (const [px, py] of [[x0, ya], [x1, yb]]) {
+      lineas.push(px - (ux - uy) * tic * 0.7, py - (uy + ux) * tic * 0.7, 0, px + (ux - uy) * tic * 0.7, py + (uy + ux) * tic * 0.7, 0);
+    }
+  };
+  const guia = (x0, ya, x1, yb) => guias.push(x0, ya, 0, x1, yb, 0);
+  const etiqueta = (texto, x, y, clase = "") => {
+    const el = document.createElement("div");
+    el.className = "cota " + clase;
+    el.textContent = texto;
+    const o = new CSS2DObject(el);
+    o.position.set(x, y, 0);
+    o.center.set(0.5, 0.5);
+    cotas.add(o);
+    etiquetas.push(o);
+  };
+
+  // Ancho (ecuador)
+  const yAncho = y0 - 0.21;
+  guia(-W / 2, yE, -W / 2, yAncho - 0.015);
+  guia(W / 2, yE, W / 2, yAncho - 0.015);
+  cota(-W / 2, yAncho, W / 2, yAncho);
+  etiqueta(`Ø ${cm(W)} cm`, 0, yAncho);
+
+  // Alto total
+  const xAlto = W / 2 + 0.1;
+  guia(rbS + 0.01, y1, xAlto + 0.015, y1);
+  guia(rbI + 0.01, y0, xAlto + 0.015, y0);
+  cota(xAlto, y0, xAlto, y1);
+  etiqueta(`${cm(H)} cm`, xAlto, (y0 + y1) / 2);
+
+  // Altura del ecuador (abajo) y lo que queda arriba
+  const xE = -W / 2 - 0.1;
+  guia(-rbS - 0.01, y1, xE - 0.015, y1);
+  guia(-W / 2, yE, xE - 0.015, yE);
+  guia(-rbI - 0.01, y0, xE - 0.015, y0);
+  cota(xE, y0, xE, yE);
+  cota(xE, yE, xE, y1);
+  etiqueta(`${cm(ZE)} cm`, xE, (y0 + yE) / 2);
+  etiqueta(`${cm(H - ZE)} cm`, xE, (yE + y1) / 2);
+
+  // Bocas
+  const yBs = y1 + 0.07;
+  guia(-rbS, y1 + 0.01, -rbS, yBs + 0.015);
+  guia(rbS, y1 + 0.01, rbS, yBs + 0.015);
+  cota(-rbS, yBs, rbS, yBs);
+  etiqueta(`Ø ${cm(2 * rbS)} cm`, 0, yBs + 0.03);
+  const yBi = y0 - 0.06;
+  guia(-rbI, y0 - 0.01, -rbI, yBi - 0.015);
+  guia(rbI, y0 - 0.01, rbI, yBi - 0.015);
+  cota(-rbI, yBi, rbI, yBi);
+  etiqueta(`Ø ${cm(2 * rbI)} cm`, 0, yBi - 0.03);
+
+  const gl = new THREE.BufferGeometry();
+  gl.setAttribute("position", new THREE.Float32BufferAttribute(lineas, 3));
+  const l1 = new THREE.LineSegments(gl, matCota);
+  const gg = new THREE.BufferGeometry();
+  gg.setAttribute("position", new THREE.Float32BufferAttribute(guias, 3));
+  const l2 = new THREE.LineSegments(gg, matCotaSuave);
+  l1.renderOrder = l2.renderOrder = 10;
+  cotas.add(l1, l2);
+  cotas.visible = P.medidas;
+}
+
+function orientarCotas() {
+  const dx = camera.position.x - controls.target.x;
+  const dz = camera.position.z - controls.target.z;
+  cotas.rotation.y = Math.atan2(dx, dz);
+  // Vista desde arriba o desde abajo: las cotas quedarían de canto, se ocultan.
+  const dy = camera.position.y - controls.target.y;
+  const elevacion = Math.atan2(Math.abs(dy), Math.hypot(dx, dz));
+  cotas.visible = P.medidas && elevacion < THREE.MathUtils.degToRad(52);
+  if (floron) floron.visible = !(dy > 0 && elevacion > THREE.MathUtils.degToRad(60));
+}
+
+// =============================================================================
+// Luz de día / de noche
+// =============================================================================
+
+function aplicarLuz() {
+  const noche = P.luz;
+  scene.background = noche ? FONDO_NOCHE : FONDO_DIA;
+  scene.environmentIntensity = noche ? 0.06 : 0.6;
+  luzSol.intensity = noche ? 0.1 : 2.3;
+  luzCielo.intensity = noche ? 0.03 : 0.45;
+  luzBombillo.intensity = noche ? 9 : 0;
+  luzBombillo.castShadow = noche;
+  matBombillo.emissiveIntensity = noche ? 6 : 0.15;
+  brillo.visible = noche;
+  piso.material.color.set(noche ? 0x5a4e43 : 0xb9a68f);
+  piso.visible = P.piso;
+  renderer.toneMappingExposure = noche ? 1.1 : 1.0;
+  renderer.shadowMap.needsUpdate = true;
+  pedirRender();
+}
+
+// =============================================================================
+// Cámara
+// =============================================================================
+
+const VISTAS = {
+  tres: { az: 32, el: 14 },
+  frente: { az: 0, el: 0 },
+  arriba: { az: 0, el: 86 },
+  abajo: { az: 0, el: -86 },
+  detalle: { az: 28, el: 6, cerca: true },
+};
+
+let animacion = null;
+
+function distanciaAjuste() {
+  const { W, H } = datos;
+  const radio = Math.hypot(W / 2 + 0.16, H / 2 + 0.2);
+  const vfov = THREE.MathUtils.degToRad(camera.fov);
+  const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
+  return (radio / Math.sin(Math.min(vfov, hfov) / 2)) * 1.02;
+}
+
+function irAVista(nombre, inmediato = false) {
+  const v = VISTAS[nombre];
+  document.querySelectorAll(".vistas button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.vista === nombre)));
+  const az = THREE.MathUtils.degToRad(v.az), el = THREE.MathUtils.degToRad(v.el);
+  let objetivo = new THREE.Vector3(0, 0, 0);
+  let dist = distanciaAjuste();
+  if (v.cerca) {
+    const { W, ZE, H } = datos;
+    objetivo = new THREE.Vector3(Math.sin(az) * W * 0.47, -H / 2 + ZE, Math.cos(az) * W * 0.47);
+    dist = Math.max(0.28, W * 0.42);
+  }
+  const pos = new THREE.Vector3(
+    objetivo.x + dist * Math.cos(el) * Math.sin(az + (v.cerca ? 0.45 : 0)),
+    objetivo.y + dist * Math.sin(el),
+    objetivo.z + dist * Math.cos(el) * Math.cos(az + (v.cerca ? 0.45 : 0))
+  );
+  if (inmediato || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    camera.position.copy(pos);
+    controls.target.copy(objetivo);
+    controls.update();
+    pedirRender();
+    return;
+  }
+  animacion = {
+    t0: performance.now(), dur: 750,
+    p0: camera.position.clone(), p1: pos,
+    o0: controls.target.clone(), o1: objetivo,
+  };
+}
+
+function avanzarAnimacion(ahora) {
+  if (!animacion) return false;
+  const k = clamp((ahora - animacion.t0) / animacion.dur, 0, 1);
+  const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+  camera.position.lerpVectors(animacion.p0, animacion.p1, e);
+  controls.target.lerpVectors(animacion.o0, animacion.o1, e);
+  if (k >= 1) animacion = null;
+  return true;
+}
+
+controls.addEventListener("start", () => {
+  animacion = null;
+  document.querySelectorAll(".vistas button").forEach((b) => b.setAttribute("aria-pressed", "false"));
+});
+
+// =============================================================================
+// Render
+// =============================================================================
+
+let hayQueRender = true;
+function pedirRender() { hayQueRender = true; }
+
+function ajustarTamano() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, CALIDADES[P.calidad].dpr));
+  renderer.setSize(w, h, false);
+  etiquetasRenderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  pedirRender();
+}
+new ResizeObserver(ajustarTamano).observe(stage);
+
+function dibujar() {
+  orientarCotas();
+  renderer.render(scene, camera);
+  etiquetasRenderer.render(scene, camera);
+}
+
+let primerCuadro = true;
+function bucle(ahora) {
+  requestAnimationFrame(bucle);
+  let cambio = avanzarAnimacion(ahora);
+  controls.autoRotate = P.giro && !animacion;
+  if (controls.update()) cambio = true;
+  if (cambio || hayQueRender || P.giro) {
+    dibujar();
+    hayQueRender = false;
+    if (primerCuadro) {
+      primerCuadro = false;
+      window.__visorListo = true;
+      const c = document.getElementById("cargando");
+      c.style.opacity = "0";
+      setTimeout(() => (c.hidden = true), 450);
+    }
+  }
+}
+
+// =============================================================================
+// Panel
+// =============================================================================
+
+const $ = (s) => document.querySelector(s);
+
+function crearCampo(c) {
+  const div = document.createElement("div");
+  div.className = "campo";
+  div.innerHTML = `
+    <div class="campo-fila">
+      <label for="r-${c.id}">${c.nombre}</label>
+      <span class="campo-valor">
+        <input type="number" id="n-${c.id}" inputmode="decimal" min="${c.min}" max="${c.max}" step="${c.paso}" aria-label="${c.nombre}${c.unidad ? " en " + c.unidad : ""}">
+        <span class="u">${c.unidad}</span>
+      </span>
+    </div>
+    <input type="range" id="r-${c.id}" min="${c.min}" max="${c.max}" step="${c.paso}">
+    ${c.nota ? `<p class="nota">${c.nota}</p>` : ""}
+    ${c.enlace ? `<label class="enlace"><input type="checkbox" id="k-${c.enlace.id}"> ${c.enlace.texto}</label>` : ""}`;
+  (c.grupo === "principal" ? $("#campos-principal") : $("#campos-mas")).appendChild(div);
+
+  const rango = div.querySelector(`#r-${c.id}`);
+  const numero = div.querySelector(`#n-${c.id}`);
+  rango.addEventListener("input", () => {
+    P[c.id] = parseFloat(rango.value);
+    if (c.enlace && c.id === "n") P.nAuto = false;
+    cambiar(true);
+  });
+  rango.addEventListener("change", () => cambiar(false));
+  numero.addEventListener("change", () => {
+    const v = parseFloat(numero.value.replace(",", "."));
+    if (isFinite(v)) {
+      P[c.id] = v;
+      if (c.id === "n") P.nAuto = false;
+    }
+    cambiar(false);
+  });
+  if (c.enlace) {
+    div.querySelector(`#k-${c.enlace.id}`).addEventListener("change", (e) => {
+      P[c.enlace.id] = e.target.checked;
+      cambiar(false);
+    });
+  }
+}
+
+function limites() {
+  const maxBoca = Math.min(60, P.de - 10);
+  const minEcuador = Math.max(P.ds, P.diIgual ? P.ds : P.di) + 10;
+  const minHc = BANDA_ALTO * 100 + P.sep / 2 + 4;
+  const maxHc = P.h - BANDA_ALTO * 100 - P.sep / 2 - 4;
+  return {
+    ds: [10, maxBoca], di: [10, maxBoca], de: [Math.max(40, minEcuador), 140], h: [20, 100],
+    hc: [minHc, Math.max(minHc, maxHc)], sep: [0, Math.min(10, P.h - 2 * (BANDA_ALTO * 100 + 4))],
+    dc: [3, 12], n: [36, 600], ab: [-2, 5],
+  };
+}
+
+function normalizar() {
+  const L = limites();
+  for (const id of ["de", "h", "ds", "di", "sep", "dc", "ab"]) P[id] = clamp(P[id], L[id][0], L[id][1]);
+  if (P.diIgual) P.di = P.ds;
+  if (P.hcCentro) P.hc = P.h / 2;
+  P.hc = clamp(P.hc, ...limites().hc);
+  P.n = clamp(6 * Math.round(P.n / 6), 36, 600);
+}
+
+function sincronizarPanel() {
+  const L = limites();
+  for (const c of CAMPOS) {
+    const rango = $(`#r-${c.id}`), numero = $(`#n-${c.id}`);
+    if (L[c.id]) { rango.min = L[c.id][0]; rango.max = L[c.id][1]; }
+    rango.value = P[c.id];
+    if (document.activeElement !== numero) numero.value = String(Math.round(P[c.id] * 10) / 10);
+    let bloqueado = false;
+    if (c.enlace) {
+      const k = $(`#k-${c.enlace.id}`);
+      k.checked = !!P[c.enlace.id];
+      bloqueado = c.id !== "n" && k.checked;
+    }
+    rango.disabled = numero.disabled = bloqueado;
+  }
+  $("#k-medidas").checked = P.medidas;
+  $("#k-luz").checked = P.luz;
+  $("#k-piso").checked = P.piso;
+  $("#k-giro").checked = P.giro;
+  document.querySelectorAll(".chip-color").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hex === P.color)));
+  $("#color-libre").value = P.color;
+  document.querySelectorAll("#metales .chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.metal === P.metal)));
+  document.querySelectorAll("#calidades .chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.calidad === P.calidad)));
+}
+
+function actualizarResumen() {
+  const D = datos;
+  const filas = [
+    ["Ancho × alto", `${cm(D.W)} × ${cm(D.H)} cm`],
+    ["Boca arriba / abajo", `Ø ${cm(2 * D.rbS)} / Ø ${cm(2 * D.rbI)} cm`],
+    ["Doble aro", `a ${cm(D.yI)} y ${cm(D.yS)} cm desde abajo`],
+    ["Aros del centro", `2 × Ø ${cm(D.aroCentro)} cm (alambre)`],
+    ["Hebras", `${D.n} por cono · ${2 * D.n} en total`],
+    ["Entre hebras (ecuador)", `${(Math.round(D.separacionEcuador * 10000) / 10).toLocaleString("es-CO")} mm`],
+    ["Cuerda aprox.", `${Math.round(D.cuerda).toLocaleString("es-CO")} m de ${String(P.dc).replace(".", ",")} mm`],
+  ];
+  $("#resumen").innerHTML = filas.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("");
+  const avisos = [];
+  if (D.capasBoca > 3.05) {
+    avisos.push(`Con ${D.n} hebras no caben en la boca de ${cm(2 * Math.min(D.rbS, D.rbI))} cm: usa menos hebras, cuerda más delgada o una boca más grande.`);
+  }
+  if (D.separacionEcuador < 0) {
+    avisos.push("En el ecuador las hebras quedan montadas unas sobre otras: usa menos hebras o cuerda más delgada.");
+  }
+  const aviso = $("#aviso");
+  aviso.hidden = !avisos.length;
+  aviso.textContent = avisos.join(" ");
+}
+
+let pendienteConstruir = false, temporizadorSombras = 0;
+function cambiar(arrastrando) {
+  normalizar();
+  if (!pendienteConstruir) {
+    pendienteConstruir = true;
+    requestAnimationFrame(() => {
+      pendienteConstruir = false;
+      construir();
+      sincronizarPanel();
+      actualizarResumen();
+      pedirRender();
+    });
+  }
+  // Las sombras se recalculan al soltar el control (o tras una pausa al arrastrar).
+  clearTimeout(temporizadorSombras);
+  temporizadorSombras = setTimeout(() => { renderer.shadowMap.needsUpdate = true; pedirRender(); }, arrastrando ? 160 : 0);
+  guardarURL();
+}
+
+function montarPanel() {
+  CAMPOS.forEach(crearCampo);
+
+  const colores = $("#colores");
+  for (const c of COLORES) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip-color";
+    b.dataset.hex = c.hex;
+    b.title = c.nombre;
+    b.setAttribute("aria-label", c.nombre);
+    b.style.background = c.hex;
+    b.addEventListener("click", () => { P.color = c.hex; aplicarColores(); sincronizarPanel(); guardarURL(); pedirRender(); });
+    colores.appendChild(b);
+  }
+  const libre = document.createElement("label");
+  libre.className = "color-libre";
+  libre.innerHTML = `<input type="color" id="color-libre" aria-label="Otro color"> Otro`;
+  colores.appendChild(libre);
+  libre.querySelector("input").addEventListener("input", (e) => {
+    P.color = e.target.value.toLowerCase();
+    aplicarColores(); sincronizarPanel(); guardarURL(); pedirRender();
+  });
+
+  const metales = $("#metales");
+  for (const [id, m] of Object.entries(METALES)) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.dataset.metal = id; b.textContent = m.nombre;
+    b.addEventListener("click", () => { P.metal = id; aplicarColores(); sincronizarPanel(); guardarURL(); pedirRender(); });
+    metales.appendChild(b);
+  }
+
+  const calidades = $("#calidades");
+  for (const [id, q] of Object.entries(CALIDADES)) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.dataset.calidad = id; b.textContent = q.nombre;
+    b.addEventListener("click", () => { P.calidad = id; ajustarTamano(); cambiar(false); });
+    calidades.appendChild(b);
+  }
+
+  $("#k-medidas").addEventListener("change", (e) => { P.medidas = e.target.checked; cotas.visible = P.medidas; guardarURL(); pedirRender(); });
+  $("#k-luz").addEventListener("change", (e) => { P.luz = e.target.checked; aplicarLuz(); guardarURL(); });
+  $("#k-piso").addEventListener("change", (e) => { P.piso = e.target.checked; aplicarLuz(); guardarURL(); });
+  $("#k-giro").addEventListener("change", (e) => { P.giro = e.target.checked; pedirRender(); });
+
+  document.querySelectorAll(".vistas button").forEach((b) => b.addEventListener("click", () => irAVista(b.dataset.vista)));
+
+  $("#b-enlace").addEventListener("click", async () => {
+    const url = urlActual();
+    try {
+      await navigator.clipboard.writeText(url);
+      avisar("Enlace copiado. Quien lo abra verá la lámpara con estas medidas.");
+    } catch {
+      window.prompt("Copia este enlace:", url);
+    }
+  });
+  $("#b-imagen").addEventListener("click", descargarImagen);
+  $("#b-reset").addEventListener("click", () => {
+    const calidad = P.calidad;
+    Object.assign(P, valoresIniciales(), { calidad });
+    aplicarColores();
+    aplicarLuz();
+    cotas.visible = P.medidas;
+    cambiar(false);
+    requestAnimationFrame(() => irAVista("tres"));
+    avisar("Medidas originales: Ø 25 cm arriba, Ø 80 cm en el ecuador y 50 cm de alto.");
+  });
+}
+
+let temporizadorAviso = 0;
+function avisar(t) {
+  const e = $("#estado");
+  e.textContent = t;
+  clearTimeout(temporizadorAviso);
+  temporizadorAviso = setTimeout(() => (e.textContent = ""), 5000);
+}
+
+// Imagen para mandar al arquitecto: el 3D, las cotas y una franja con las medidas.
+function descargarImagen() {
+  dibujar();
+  const src = renderer.domElement;
+  const w = src.width, h = src.height;
+  const franja = Math.round(Math.max(56, h * 0.085));
+  const cv = document.createElement("canvas");
+  cv.width = w; cv.height = h + franja;
+  const g = cv.getContext("2d");
+  g.drawImage(src, 0, 0);
+  const escala = w / stage.clientWidth;
+  if (P.medidas) {
+    const v = new THREE.Vector3();
+    g.font = `600 ${Math.round(12.5 * escala)}px "IBM Plex Mono", monospace`;
+    g.textAlign = "center"; g.textBaseline = "middle";
+    for (const et of etiquetas) {
+      et.getWorldPosition(v).project(camera);
+      if (v.z > 1 || v.z < -1) continue;
+      const x = ((v.x + 1) / 2) * w, y = ((1 - v.y) / 2) * h;
+      const t = et.element.textContent;
+      const tw = g.measureText(t).width + 14 * escala, th = 22 * escala;
+      g.fillStyle = "rgba(179,51,43,0.92)";
+      g.beginPath();
+      g.roundRect(x - tw / 2, y - th / 2, tw, th, 6 * escala);
+      g.fill();
+      g.fillStyle = "#fff";
+      g.fillText(t, x, y + escala);
+    }
+  }
+  g.fillStyle = "#2b241e";
+  g.fillRect(0, h, w, franja);
+  g.fillStyle = "#fffaf0";
+  g.textAlign = "left"; g.textBaseline = "middle";
+  g.font = `600 ${Math.round(franja * 0.3)}px "Barlow", sans-serif`;
+  const D = datos;
+  g.fillText(`Lámpara de cuerda · Ø arriba ${cm(2 * D.rbS)} cm · Ø ecuador ${cm(D.W)} cm · alto ${cm(D.H)} cm`, franja * 0.4, h + franja * 0.36);
+  g.font = `500 ${Math.round(franja * 0.22)}px "Barlow", sans-serif`;
+  g.fillStyle = "#d9cab5";
+  g.fillText(`Doble aro en el centro (separados ${cm(D.sepC)} cm) · cuerda ${String(P.dc).replace(".", ",")} mm · ${D.n} hebras por cono · ≈ ${Math.round(D.cuerda)} m de cuerda`, franja * 0.4, h + franja * 0.72);
+  cv.toBlob((blob) => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `lampara-cuerda-${Math.round(D.W * 100)}x${Math.round(D.H * 100)}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    avisar("Imagen descargada.");
+  }, "image/png");
+}
+
+// =============================================================================
+// Inicio
+// =============================================================================
+
+leerURL();
+montarPanel();
+normalizar();
+aplicarColores();
+ajustarTamano();
+construir();
+aplicarLuz();
+sincronizarPanel();
+actualizarResumen();
+irAVista("tres", true);
+requestAnimationFrame(bucle);
+if (esMovil) $("#ayuda").textContent = "Un dedo para girar · pellizca para acercar · dos dedos para mover";
+
+// Para pruebas: window.visor permite revisar el estado desde la consola.
+window.visor = { P, datos: () => datos, renderer, scene, camera, controls, irAVista, cambiar };
+</script>
+</body>
+</html>
