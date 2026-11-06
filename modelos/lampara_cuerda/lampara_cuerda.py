@@ -47,21 +47,25 @@ SEPARACION_AROS_CENTRO_CM = 2.0  # Distancia entre los dos aros del centro (de e
                                  # quedan casi pegados, con una línea fina entre ellos.
 DIAM_BOCA_SUP_CM = 25.0    # Diámetro del aro metálico superior.
 DIAM_BOCA_INF_CM = 25.0    # Diámetro del aro metálico inferior.
-ABOMBADO_CM = 0.8          # Curvatura hacia afuera de cada cono (0 = cono recto).
+ABOMBADO_CM = 0.0          # Curvatura hacia afuera de cada cono (0 = cono recto, como
+                           # queda la cuerda tensada entre los aros).
 ALTO_ARO_CM = 1.5          # Alto de las bandas metálicas de arriba y abajo.
 
 # --- Cuerda --------------------------------------------------------------------
 DIAM_CUERDA_MM = 6.0       # Grosor de la cuerda.
 PASO_TORSION_MM = 20.0     # Largo de una vuelta completa de los 3 cabos.
-NUM_HEBRAS = 288           # Hebras por cono, arriba y abajo (se redondea a múltiplo de 6).
+NUM_HEBRAS = 288           # Hebras por cono, arriba y abajo (se redondea a múltiplo de 12,
+                           # así una hebra cae justo sobre cada varilla).
 COLOR_CUERDA = "#7E5E3C"   # Café/caramelo tomado de la foto del rollo.
 VARIACION_HEBRAS = 0.35    # Irregularidad natural de las hebras (0 = perfectas).
 GIRO_HEBRAS_GRADOS = 0.0   # > 0 hace que las hebras bajen en espiral.
 
 # --- Estructura metálica --------------------------------------------------------
-DIAM_ALAMBRE_MM = 5.0      # Alambre de los aros y costillas.
+DIAM_ALAMBRE_MM = 5.0      # Varilla de los aros y de las varillas de soporte.
 ESPESOR_ARO_MM = 2.5       # Espesor de las bandas metálicas visibles.
-NUM_COSTILLAS = 8          # Costillas verticales del armazón (debajo de la cuerda).
+NUM_VARILLAS = 4           # Varillas de soporte entre el aro de arriba (boca) y el aro de
+                           # arriba del centro, repartidas desde 0°: 0°, 90°, 180° y 270°.
+UNIR_AROS_CENTRO = True    # Uniones cortas entre los dos aros del centro, en los mismos ángulos.
 LARGO_CABLE_CM = 80.0      # Cable desde la lámpara hasta el techo.
 POTENCIA_BOMBILLO_W = 25.0
 
@@ -528,7 +532,8 @@ def construir_lampara():
     paso = mm(PASO_MUESTREO_MM)
     paso_torsion = mm(PASO_TORSION_MM)
     giro = math.radians(GIRO_HEBRAS_GRADOS)
-    n = max(6, 6 * round(NUM_HEBRAS / 6))      # múltiplo de 6, para rotar las capas
+    n = max(12, 12 * round(NUM_HEBRAS / 12))   # múltiplo de 12: capas en rotación y una
+                                               # hebra encima de cada varilla
 
     a = wr + rr                                # centro del alambre -> centro de la cuerda
     rc = W / 2.0 - a - rr                      # aros del centro (la cuerda llega a ANCHO_CM)
@@ -597,16 +602,20 @@ def construir_lampara():
           material=m_negro, radio=wr)
     curva("Alambre_Aro_Inf", col, raiz, [circulo(F[0], F[1])], ciclica=True,
           material=m_negro, radio=wr)
-    perfil_rz = []
-    for tramo in (tramo_sup, tramo_inf):
-        puntos = [(r, z) for (_, r, z, _, _) in tramo]
-        perfil_rz += puntos[::4] + ([puntos[-1]] if (len(puntos) - 1) % 4 else [])
-    costillas = []
-    for k in range(NUM_COSTILLAS):
-        ang = 2.0 * math.pi * (k + 0.25) / max(1, NUM_COSTILLAS)
-        costillas.append([(r * math.cos(ang), r * math.sin(ang), z) for (r, z) in perfil_rz])
-    if costillas:
-        curva("Costillas", col, raiz, costillas, material=m_negro, radio=wr)
+    # Varillas de soporte: del aro de arriba al aro de arriba del centro, justo
+    # debajo de una hebra (las hebras de arriba arrancan en 0°).
+    puntos = [(r, z) for (_, r, z, _, _) in tramo_sup]
+    camino = puntos[::4] + ([puntos[-1]] if (len(puntos) - 1) % 4 else [])
+    varillas, uniones = [], []
+    for k in range(NUM_VARILLAS):
+        ang = 2.0 * math.pi * k / max(1, NUM_VARILLAS)
+        ca, sa = math.cos(ang), math.sin(ang)
+        varillas.append([(r * ca, r * sa, z) for (r, z) in camino])
+        uniones.append([(rc * ca, rc * sa, z_centro_inf), (rc * ca, rc * sa, z_centro_sup)])
+    if varillas:
+        curva("Varillas_Soporte", col, raiz, varillas, material=m_negro, radio=wr)
+    if UNIR_AROS_CENTRO and uniones and sep_centro > 0.004:
+        curva("Uniones_Aros_Centro", col, raiz, uniones, material=m_negro, radio=wr)
 
     # Araña de 3 brazos que sostiene el portabombillo.
     r_collar = 0.014

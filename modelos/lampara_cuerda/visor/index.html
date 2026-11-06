@@ -226,6 +226,8 @@ details.bloque[open] > summary { margin-bottom: 10px; }
   font-weight: 600; font-size: 15px; min-height: 44px;
 }
 .btn.prim { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); grid-column: 1 / -1; }
+.btn.ancho { grid-column: 1 / -1; }
+.btn:disabled { opacity: 0.6; cursor: progress; }
 .btn:hover { filter: brightness(1.04); }
 .estado { grid-column: 1 / -1; margin: 2px 0 0; font-size: 13.5px; color: var(--muted); min-height: 1.3em; }
 .pie { margin-top: 22px; font-size: 13px; color: var(--muted); }
@@ -306,6 +308,7 @@ details.bloque[open] > summary { margin-bottom: 10px; }
       <h2>Vista</h2>
       <div class="interruptores">
         <label class="interruptor"><span>Mostrar medidas</span><input type="checkbox" id="k-medidas"></label>
+        <label class="interruptor"><span>Ver solo la estructura metálica</span><input type="checkbox" id="k-estructura"></label>
         <label class="interruptor"><span>Luz encendida (de noche)</span><input type="checkbox" id="k-luz"></label>
         <label class="interruptor"><span>Mostrar piso y sombra</span><input type="checkbox" id="k-piso"></label>
         <label class="interruptor"><span>Girar sola</span><input type="checkbox" id="k-giro"></label>
@@ -317,9 +320,10 @@ details.bloque[open] > summary { margin-bottom: 10px; }
     <section class="bloque">
       <h2>Compartir</h2>
       <div class="acciones">
-        <button type="button" class="btn prim" id="b-enlace">Copiar enlace con estas medidas</button>
+        <button type="button" class="btn prim" id="b-pdf">Descargar PDF para arquitecto y taller</button>
+        <button type="button" class="btn" id="b-enlace">Copiar enlace</button>
         <button type="button" class="btn" id="b-imagen">Descargar imagen</button>
-        <button type="button" class="btn" id="b-reset">Volver al original</button>
+        <button type="button" class="btn ancho" id="b-reset">Volver al original</button>
         <p class="estado" id="estado" role="status"></p>
       </div>
     </section>
@@ -358,6 +362,7 @@ const BANDA_ESP = 0.0025;      // espesor de las bandas (m)
 const PASO_TORSION = 0.020;    // largo de una vuelta de los 3 cabos (m)
 const LARGO_CABLE = 0.8;
 const FASES = 4;               // variantes de torsión, para que las hebras no queden alineadas
+const NUM_VARILLAS = 4;        // varillas de soporte arriba: a 0°, 90°, 180° y 270°
 
 const CAMPOS = [
   { id: "ds", grupo: "principal", nombre: "Diámetro de arriba", nota: "Boca superior, con aro de metal.", min: 10, max: 60, paso: 0.5, unidad: "cm", def: 25 },
@@ -367,8 +372,8 @@ const CAMPOS = [
   { id: "hc", grupo: "mas", nombre: "Altura del ecuador", nota: "Desde abajo hasta la mitad del doble aro.", min: 5, max: 95, paso: 0.5, unidad: "cm", def: 25, enlace: { id: "hcCentro", texto: "Justo en la mitad", def: true } },
   { id: "sep", grupo: "mas", nombre: "Separación del doble aro", nota: "Distancia entre los dos aros del centro.", min: 0, max: 10, paso: 0.5, unidad: "cm", def: 2 },
   { id: "dc", grupo: "mas", nombre: "Grosor de la cuerda", min: 3, max: 12, paso: 0.5, unidad: "mm", def: 6 },
-  { id: "n", grupo: "mas", nombre: "Hebras por cono", nota: "Múltiplo de 6. En automático cubren el ecuador como la foto.", min: 36, max: 600, paso: 6, unidad: "", def: 288, enlace: { id: "nAuto", texto: "Calcular automáticamente", def: true } },
-  { id: "ab", grupo: "mas", nombre: "Abombado", nota: "0 deja los conos rectos.", min: -2, max: 5, paso: 0.1, unidad: "cm", def: 0.8 },
+  { id: "n", grupo: "mas", nombre: "Hebras por cono", nota: "Múltiplo de 12, así una hebra cae justo sobre cada varilla. En automático cubren el ecuador como la foto.", min: 36, max: 600, paso: 12, unidad: "", def: 288, enlace: { id: "nAuto", texto: "Calcular automáticamente", def: true } },
+  { id: "ab", grupo: "mas", nombre: "Abombado", nota: "0 deja los conos rectos, como queda la cuerda tensada entre los aros.", min: -2, max: 5, paso: 0.1, unidad: "cm", def: 0 },
 ];
 
 const COLORES = [
@@ -403,7 +408,7 @@ function valoresIniciales() {
   }
   Object.assign(p, {
     color: COLORES[0].hex, metal: "cobre",
-    medidas: true, luz: false, piso: true, giro: false,
+    medidas: true, luz: false, piso: true, giro: false, estructura: false,
     calidad: esMovil ? "media" : "alta",
   });
   return p;
@@ -435,7 +440,7 @@ function urlActual() {
   if (P.sep !== 2) q.set("sep", r(P.sep));
   if (P.dc !== 6) q.set("dc", r(P.dc));
   if (!P.nAuto) q.set("n", String(P.n));
-  if (P.ab !== 0.8) q.set("ab", r(P.ab));
+  if (P.ab !== 0) q.set("ab", r(P.ab));
   if (P.color !== COLORES[0].hex) q.set("c", P.color.slice(1));
   if (P.metal !== "cobre") q.set("m", P.metal);
   if (P.luz) q.set("luz", "1");
@@ -483,6 +488,12 @@ function perfilTrebol(K, R) {
     }
     out.push([r, th]);
   }
+  return out;
+}
+
+function perfilCirculo(K, R) {
+  const out = [];
+  for (let k = 0; k < K; k++) out.push([R, (2 * Math.PI * k) / K]);
   return out;
 }
 
@@ -757,23 +768,46 @@ let piezas = [];          // objetos que se reconstruyen
 let floron = null;        // florón del techo (se oculta al mirar desde arriba)
 let datos = null;         // medidas calculadas (para resumen y cotas)
 
+const grupos = { cuerda: null, oculto: null, estructura: null };
+
 function limpiarPiezas() {
   for (const o of piezas) {
     lampara.remove(o);
-    o.traverse((x) => { if (x.geometry) x.geometry.dispose(); });
-    if (o.dispose) o.dispose();
+    o.traverse((x) => {
+      if (x.geometry) x.geometry.dispose();
+      if (x.isInstancedMesh) x.dispose();
+    });
   }
   piezas = [];
 }
 
-function agregar(o, sombra = true) {
+function agregar(o, sombra = true, grupo = null) {
   o.traverse((x) => {
     x.castShadow = sombra;
     x.receiveShadow = true;
   });
-  lampara.add(o);
-  piezas.push(o);
+  if (grupo) {
+    grupo.add(o);
+  } else {
+    lampara.add(o);
+    piezas.push(o);
+  }
   return o;
+}
+
+// Vista normal: cuerda y el armazón que va debajo de ella.
+// Vista de estructura: sin cuerda, con las varillas de aro a aro.
+function visibilidadModo() {
+  if (!grupos.cuerda) return;
+  grupos.cuerda.visible = !P.estructura;
+  grupos.oculto.visible = !P.estructura;
+  grupos.estructura.visible = P.estructura;
+}
+
+function aplicarModo() {
+  visibilidadModo();
+  renderer.shadowMap.needsUpdate = true;
+  pedirRender();
 }
 
 function aroInterno(rBanda, yBanda, yCentro, signo, k) {
@@ -794,7 +828,7 @@ function aroInterno(rBanda, yBanda, yCentro, signo, k) {
 function hebrasAuto(rc, rBocaMin, d) {
   const nEcuador = (2 * Math.PI * rc) / (d * 1.43);
   const capacidad = (3 * 0.97 * 2 * Math.PI * Math.max(0.02, rBocaMin - 0.015)) / d;
-  return clamp(6 * Math.round(Math.min(nEcuador, capacidad) / 6), 36, 600);
+  return clamp(12 * Math.round(Math.min(nEcuador, capacidad) / 12), 36, 600);
 }
 
 function construir() {
@@ -809,7 +843,7 @@ function construir() {
   const ybS = H - BANDA_ALTO / 2, ybI = BANDA_ALTO / 2;
 
   if (P.nAuto) P.n = hebrasAuto(rc, Math.min(rbS, rbI), d);
-  const n = Math.max(6, 6 * Math.round(P.n / 6));
+  const n = Math.max(12, 12 * Math.round(P.n / 12));
   const k = { rc, a, rr, d, n };
 
   const A = aroInterno(rbS, ybS, yS, +1, k);
@@ -819,16 +853,20 @@ function construir() {
 
   limpiarPiezas();
   lampara.position.y = -H / 2;
+  grupos.cuerda = agregar(new THREE.Group());
+  grupos.oculto = agregar(new THREE.Group());
+  grupos.estructura = agregar(new THREE.Group());
 
   const perfil = perfilTrebol(Q.perfil, rr);
   const m4 = new THREE.Matrix4();
   const col = new THREE.Color();
   let cuerda = 0;
+  const cuerdaCono = [0, 0];
 
   // Hebras de los dos conos. Cada hebra es igual a sus vecinas de la misma capa,
   // solo girada: se dibujan con instancias (rápido aunque sean cientos).
   const conos = [{ muestras: tS, desfase: 0, semilla: 1 }, { muestras: tI, desfase: 0.5, semilla: 2 }];
-  for (const cono of conos) {
+  for (const [ic, cono] of conos.entries()) {
     for (let capa = 0; capa < 3; capa++) {
       const camino = caminoCapa(cono.muestras, capa, n, d, a);
       for (let f = 0; f < FASES; f++) {
@@ -845,34 +883,54 @@ function construir() {
         });
         mesh.instanceMatrix.needsUpdate = true;
         if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-        agregar(mesh);
+        agregar(mesh, true, grupos.cuerda);
         cuerda += largo * ids.length;
+        cuerdaCono[ic] += largo * ids.length;
       }
     }
   }
 
   // Doble aro del centro: cuerda enrollada en espiral, en sentidos opuestos.
   const vueltas = Math.max(3, Math.round((2 * Math.PI * rc) / d));
+  let forro = 0;
   for (const [y0, sentido] of [[yS, 1], [yI, -1]]) {
     const { geo, largo } = vueltaEspiral(rc, y0, a, vueltas, sentido, perfil, Q.vuelta);
     const mesh = new THREE.InstancedMesh(geo, matCuerda, vueltas);
     for (let j = 0; j < vueltas; j++) mesh.setMatrixAt(j, m4.makeRotationY((2 * Math.PI * j) / vueltas));
     mesh.instanceMatrix.needsUpdate = true;
-    agregar(mesh);
+    agregar(mesh, true, grupos.cuerda);
     cuerda += largo * vueltas;
+    forro = largo * vueltas;
   }
 
   // Bandas metálicas de las bocas.
   agregar(new THREE.Mesh(bandaGeo(rbS, ybS, BANDA_ALTO, BANDA_ESP), matMetal));
   agregar(new THREE.Mesh(bandaGeo(rbI, ybI, BANDA_ALTO, BANDA_ESP), matMetal));
 
-  // Armazón: aros de alambre (quedan debajo de la cuerda).
-  for (const [r, y] of [A, F, [rc, yS], [rc, yI]]) {
+  // Armazón. Los aros del centro se ven en las dos vistas; los aros internos de
+  // las bocas solo existen debajo de la cuerda (en la vista de estructura las
+  // bocas son las bandas de metal).
+  for (const [r, y, grupo] of [[A[0], A[1], grupos.oculto], [F[0], F[1], grupos.oculto], [rc, yS, null], [rc, yI, null]]) {
     const toro = new THREE.Mesh(new THREE.TorusGeometry(r, ALAMBRE_R, 8, 160), matAlambre);
     toro.rotation.x = Math.PI / 2;
     toro.position.y = y;
-    agregar(toro);
+    agregar(toro, true, grupo);
   }
+
+  // 4 varillas de soporte entre el aro superior y el aro de arriba del centro,
+  // a 0°, 90°, 180° y 270°. Con la cuerda puesta van justo debajo de una hebra.
+  const perfilVarilla = perfilCirculo(8, ALAMBRE_R);
+  const varillas = (geo, grupo) => {
+    const mesh = new THREE.InstancedMesh(geo, matAlambre, NUM_VARILLAS);
+    for (let j = 0; j < NUM_VARILLAS; j++) mesh.setMatrixAt(j, m4.makeRotationY((2 * Math.PI * j) / NUM_VARILLAS));
+    mesh.instanceMatrix.needsUpdate = true;
+    agregar(mesh, true, grupo);
+  };
+  const caminoVarilla = tS.map((m) => [m.r, m.y]).filter((_, i, arr) => i % 4 === 0 || i === arr.length - 1);
+  varillas(tuboPlano(caminoVarilla, perfilVarilla, 0, 0).geo, grupos.oculto);
+  varillas(tuboPlano([[rbS, ybS], [rc, yS]], perfilVarilla, 0, 0).geo, grupos.estructura);
+  // Uniones cortas entre los dos aros del centro, en los mismos ángulos.
+  if (sepC > 0.004) varillas(tuboPlano([[rc, yI], [rc, yS]], perfilVarilla, 0, 0).geo, null);
 
   // Araña, portabombillo, bombillo, cable y florón.
   const rCollar = 0.014;
@@ -908,13 +966,18 @@ function construir() {
   const separacionEcuador = (2 * Math.PI * (rc + a)) / n - d;
   const capasBoca = (n * d) / (2 * Math.PI * Math.max(0.01, Math.min(A[0], F[0]) + a));
   datos = {
-    W, H, ZE, sepC, rbS, rbI, rc, d, n, yS, yI,
+    W, H, ZE, sepC, rbS, rbI, rc, d, n, yS, yI, ybS, ybI,
     cuerda: cuerda,
+    hebraSup: cuerdaCono[0] / n,
+    hebraInf: cuerdaCono[1] / n,
+    vueltas, forro,
     separacionEcuador,
     capasBoca,
     aroCentro: 2 * rc,
+    yBombillo,
   };
   construirCotas();
+  visibilidadModo();
   piso.visible = P.piso;
 }
 
@@ -1054,6 +1117,7 @@ const VISTAS = {
   arriba: { az: 0, el: 86 },
   abajo: { az: 0, el: -86 },
   detalle: { az: 28, el: 6, cerca: true },
+  estructura: { az: 32, el: 24 },
 };
 
 let animacion = null;
@@ -1066,9 +1130,8 @@ function distanciaAjuste() {
   return (radio / Math.sin(Math.min(vfov, hfov) / 2)) * 1.02;
 }
 
-function irAVista(nombre, inmediato = false) {
+function poseVista(nombre) {
   const v = VISTAS[nombre];
-  document.querySelectorAll(".vistas button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.vista === nombre)));
   const az = THREE.MathUtils.degToRad(v.az), el = THREE.MathUtils.degToRad(v.el);
   let objetivo = new THREE.Vector3(0, 0, 0);
   let dist = distanciaAjuste();
@@ -1082,6 +1145,12 @@ function irAVista(nombre, inmediato = false) {
     objetivo.y + dist * Math.sin(el),
     objetivo.z + dist * Math.cos(el) * Math.cos(az + (v.cerca ? 0.45 : 0))
   );
+  return { pos, objetivo };
+}
+
+function irAVista(nombre, inmediato = false) {
+  document.querySelectorAll(".vistas button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.vista === nombre)));
+  const { pos, objetivo } = poseVista(nombre);
   if (inmediato || matchMedia("(prefers-reduced-motion: reduce)").matches) {
     camera.position.copy(pos);
     controls.target.copy(objetivo);
@@ -1219,7 +1288,7 @@ function normalizar() {
   if (P.diIgual) P.di = P.ds;
   if (P.hcCentro) P.hc = P.h / 2;
   P.hc = clamp(P.hc, ...limites().hc);
-  P.n = clamp(6 * Math.round(P.n / 6), 36, 600);
+  P.n = clamp(12 * Math.round(P.n / 12), 36, 600);
 }
 
 function sincronizarPanel() {
@@ -1241,6 +1310,7 @@ function sincronizarPanel() {
   $("#k-luz").checked = P.luz;
   $("#k-piso").checked = P.piso;
   $("#k-giro").checked = P.giro;
+  $("#k-estructura").checked = P.estructura;
   document.querySelectorAll(".chip-color").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hex === P.color)));
   $("#color-libre").value = P.color;
   document.querySelectorAll("#metales .chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.metal === P.metal)));
@@ -1334,6 +1404,7 @@ function montarPanel() {
   $("#k-luz").addEventListener("change", (e) => { P.luz = e.target.checked; aplicarLuz(); guardarURL(); });
   $("#k-piso").addEventListener("change", (e) => { P.piso = e.target.checked; aplicarLuz(); guardarURL(); });
   $("#k-giro").addEventListener("change", (e) => { P.giro = e.target.checked; pedirRender(); });
+  $("#k-estructura").addEventListener("change", (e) => { P.estructura = e.target.checked; aplicarModo(); });
 
   document.querySelectorAll(".vistas button").forEach((b) => b.addEventListener("click", () => irAVista(b.dataset.vista)));
 
@@ -1347,11 +1418,13 @@ function montarPanel() {
     }
   });
   $("#b-imagen").addEventListener("click", descargarImagen);
+  $("#b-pdf").addEventListener("click", generarPDF);
   $("#b-reset").addEventListener("click", () => {
     const calidad = P.calidad;
     Object.assign(P, valoresIniciales(), { calidad });
     aplicarColores();
     aplicarLuz();
+    aplicarModo();
     cotas.visible = P.medidas;
     cambiar(false);
     requestAnimationFrame(() => irAVista("tres"));
@@ -1377,25 +1450,7 @@ function descargarImagen() {
   cv.width = w; cv.height = h + franja;
   const g = cv.getContext("2d");
   g.drawImage(src, 0, 0);
-  const escala = w / stage.clientWidth;
-  if (P.medidas) {
-    const v = new THREE.Vector3();
-    g.font = `600 ${Math.round(12.5 * escala)}px "IBM Plex Mono", monospace`;
-    g.textAlign = "center"; g.textBaseline = "middle";
-    for (const et of etiquetas) {
-      et.getWorldPosition(v).project(camera);
-      if (v.z > 1 || v.z < -1) continue;
-      const x = ((v.x + 1) / 2) * w, y = ((1 - v.y) / 2) * h;
-      const t = et.element.textContent;
-      const tw = g.measureText(t).width + 14 * escala, th = 22 * escala;
-      g.fillStyle = "rgba(179,51,43,0.92)";
-      g.beginPath();
-      g.roundRect(x - tw / 2, y - th / 2, tw, th, 6 * escala);
-      g.fill();
-      g.fillStyle = "#fff";
-      g.fillText(t, x, y + escala);
-    }
-  }
+  dibujarEtiquetas(g, w, h, w / stage.clientWidth);
   g.fillStyle = "#2b241e";
   g.fillRect(0, h, w, franja);
   g.fillStyle = "#fffaf0";
@@ -1418,6 +1473,589 @@ function descargarImagen() {
   }, "image/png");
 }
 
+// Las etiquetas de las cotas son HTML: para una imagen se dibujan encima del render.
+function dibujarEtiquetas(g, w, h, escala) {
+  if (!cotas.visible) return;
+  const v = new THREE.Vector3();
+  g.font = `600 ${Math.round(12.5 * escala)}px "IBM Plex Mono", monospace`;
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  for (const et of etiquetas) {
+    et.getWorldPosition(v).project(camera);
+    if (v.z > 1 || v.z < -1) continue;
+    const x = ((v.x + 1) / 2) * w, y = ((1 - v.y) / 2) * h;
+    const t = et.element.textContent;
+    const tw = g.measureText(t).width + 14 * escala, th = 22 * escala;
+    g.fillStyle = "rgba(179,51,43,0.92)";
+    g.beginPath();
+    g.roundRect(x - tw / 2, y - th / 2, tw, th, 6 * escala);
+    g.fill();
+    g.fillStyle = "#fff";
+    g.fillText(t, x, y + escala);
+  }
+}
+
+// Render fuera de pantalla con una vista y una luz fijas (para el PDF).
+function capturar({ vista = "tres", noche = false, estructura = false, medidas = false, piso = true, ancho = 1600, alto = 1200, acercar = 1 }) {
+  const antes = {
+    luz: P.luz, estructura: P.estructura, piso: P.piso, medidas: P.medidas,
+    pos: camera.position.clone(), objetivo: controls.target.clone(),
+  };
+  animacion = null;
+  Object.assign(P, { luz: noche, estructura, piso, medidas });
+  aplicarLuz();
+  visibilidadModo();
+  renderer.setPixelRatio(1);
+  renderer.setSize(ancho, alto, false);
+  camera.aspect = ancho / alto;
+  camera.updateProjectionMatrix();
+  const { pos, objetivo } = poseVista(vista);
+  camera.position.copy(objetivo).addScaledVector(pos.sub(objetivo), acercar);
+  controls.target.copy(objetivo);
+  camera.lookAt(objetivo);
+  orientarCotas();
+  cotas.updateMatrixWorld(true);
+  renderer.shadowMap.needsUpdate = true;
+  renderer.render(scene, camera);
+  const c = document.createElement("canvas");
+  c.width = ancho;
+  c.height = alto;
+  const g = c.getContext("2d");
+  g.drawImage(renderer.domElement, 0, 0);
+  dibujarEtiquetas(g, ancho, alto, ancho / 820);
+  const url = c.toDataURL("image/jpeg", 0.9);
+
+  Object.assign(P, { luz: antes.luz, estructura: antes.estructura, piso: antes.piso, medidas: antes.medidas });
+  camera.position.copy(antes.pos);
+  controls.target.copy(antes.objetivo);
+  camera.lookAt(antes.objetivo);
+  aplicarLuz();
+  aplicarModo();
+  ajustarTamano();
+  return url;
+}
+
+// =============================================================================
+// PDF: presentación para el arquitecto y planos para el taller
+// =============================================================================
+
+let promesaJsPDF = null;
+function cargarJsPDF() {
+  if (window.jspdf) return Promise.resolve(window.jspdf);
+  if (!promesaJsPDF) {
+    promesaJsPDF = new Promise((ok, mal) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      s.onload = () => (window.jspdf ? ok(window.jspdf) : mal(new Error("la librería del PDF no cargó")));
+      s.onerror = () => { promesaJsPDF = null; mal(new Error("no hay conexión con la librería del PDF")); };
+      document.head.appendChild(s);
+    });
+  }
+  return promesaJsPDF;
+}
+
+const HOJA = { W: 297, H: 210, M: 14 };
+const TINTA = [35, 31, 28], GRIS = [112, 103, 94], LINEA = [212, 203, 191], COTA = [179, 51, 43], OSCURO = [40, 36, 33], BLANCO = [255, 255, 255];
+const fx = (v, dec = 1) => (Math.round(v * 10 ** dec) / 10 ** dec).toLocaleString("es-CO", { maximumFractionDigits: dec });
+const rgbHex = (hex) => { const n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const aclarar = (c, k) => c.map((v) => Math.round(v + (255 - v) * k));
+const oscurecer = (c, k) => c.map((v) => Math.round(v * (1 - k)));
+
+// Escala de dibujo más grande que cabe (s = mm de papel por cm real = 10 / k).
+function escalaBonita(sMax) {
+  for (const k of [1, 2, 2.5, 4, 5, 10, 20, 25, 50]) if (10 / k <= sMax) return k;
+  return 100;
+}
+
+function datosTaller() {
+  const D = datos, c = (m) => m * 100;
+  const ds = c(2 * D.rbS), di = c(2 * D.rbI), Dc = c(2 * D.rc);
+  const alto = c(D.H), yS = c(D.yS), yI = c(D.yI);
+  const bh = BANDA_ALTO * 100, yBS = alto - bh / 2;
+  const dr = Dc / 2 - ds / 2, dy = yBS - yS;
+  const col = COLORES.find((x) => x.hex === P.color);
+  return {
+    W: c(D.W), H: alto, ds, di, Dc, yS, yI, sep: c(D.sepC), bh, yBS,
+    alambre: ALAMBRE_R * 2000,
+    cuerdaMm: P.dc, n: D.n, cuerdaTotal: D.cuerda,
+    hebraSup: c(D.hebraSup), hebraInf: c(D.hebraInf),
+    vueltas: D.vueltas, forro: D.forro, sepEcuadorMm: D.separacionEcuador * 1000,
+    varilla: { dr, dy, L: Math.hypot(dr, dy), ang: THREE.MathUtils.radToDeg(Math.atan2(dy, dr)) },
+    colorHex: P.color,
+    colorNombre: col ? col.nombre.replace(/\s*\(.*\)$/, "").toLowerCase() : `personalizado (${P.color})`,
+    metal: METALES[P.metal],
+    url: urlActual(),
+  };
+}
+
+function herramientas(doc) {
+  const g = {
+    color: (c) => doc.setDrawColor(c[0], c[1], c[2]),
+    relleno: (c) => doc.setFillColor(c[0], c[1], c[2]),
+    tinta: (c) => doc.setTextColor(c[0], c[1], c[2]),
+    fuente: (estilo, tam) => { doc.setFont("helvetica", estilo); doc.setFontSize(tam); },
+    trazo: (w, raya) => { doc.setLineWidth(w); doc.setLineDashPattern(raya || [], 0); },
+    poligono: (pts, estilo) => {
+      const segs = [];
+      for (let i = 1; i < pts.length; i++) segs.push([pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]]);
+      doc.lines(segs, pts[0][0], pts[0][1], [1, 1], estilo, true);
+    },
+    polilinea: (pts) => { for (let i = 1; i < pts.length; i++) doc.line(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]); },
+    extension: (x1, y1, x2, y2) => { g.color(GRIS); g.trazo(0.12); doc.line(x1, y1, x2, y2); },
+    tic: (x, y) => doc.line(x - 1, y + 1, x + 1, y - 1),
+    cotaH: (x1, x2, y, t) => {
+      g.color(COTA); g.trazo(0.25);
+      doc.line(x1, y, x2, y); g.tic(x1, y); g.tic(x2, y);
+      g.fuente("bold", 8.5); g.tinta(COTA);
+      const tw = doc.getTextWidth(t);
+      g.relleno(BLANCO); doc.rect((x1 + x2) / 2 - tw / 2 - 1, y - 4.3, tw + 2, 3.6, "F");
+      doc.text(t, (x1 + x2) / 2, y - 1.4, { align: "center" });
+    },
+    // lado -1: texto a la izquierda de la línea; 1: a la derecha.
+    cotaV: (x, y1, y2, t, lado = -1) => {
+      g.color(COTA); g.trazo(0.25);
+      doc.line(x, y1, x, y2); g.tic(x, y1); g.tic(x, y2);
+      g.fuente("bold", 8.5); g.tinta(COTA);
+      const tw = doc.getTextWidth(t), ym = (y1 + y2) / 2;
+      if (Math.abs(y2 - y1) > tw + 4) {
+        const xt = lado < 0 ? x - 1.3 : x + 3.9;
+        g.relleno(BLANCO); doc.rect(xt - 3.1, ym - tw / 2 - 0.9, 3.7, tw + 1.8, "F");
+        doc.text(t, xt, ym + tw / 2, { angle: 90 });
+      } else {
+        doc.text(t, lado < 0 ? x - 2.2 : x + 2.2, ym + 1.2, { align: lado < 0 ? "right" : "left" });
+      }
+    },
+  };
+  return g;
+}
+
+function encabezadoPDF(doc, g, titulo, sub) {
+  g.fuente("bold", 17); g.tinta(TINTA);
+  doc.text(titulo, HOJA.M, 17);
+  g.fuente("normal", 9.5); g.tinta(GRIS);
+  doc.text(sub, HOJA.M, 23);
+  g.color(LINEA); g.trazo(0.3);
+  doc.line(HOJA.M, 26.5, HOJA.W - HOJA.M, 26.5);
+}
+
+function piesPDF(doc, g, url) {
+  const n = doc.getNumberOfPages();
+  const fecha = new Date().toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+  for (let i = 1; i <= n; i++) {
+    doc.setPage(i);
+    g.color(LINEA); g.trazo(0.3);
+    doc.line(HOJA.M, 199.5, HOJA.W - HOJA.M, 199.5);
+    g.fuente("normal", 7.5); g.tinta(GRIS);
+    doc.text("Lámpara de cuerda ·", HOJA.M, 204.5);
+    const x = HOJA.M + doc.getTextWidth("Lámpara de cuerda · ");
+    doc.textWithLink("lampara.cocinandosonrisas.co", x, 204.5, { url });
+    doc.text(`${fecha} · página ${i} de ${n}`, HOJA.W - HOJA.M, 204.5, { align: "right" });
+  }
+}
+
+// Página 1: presentación para el arquitecto.
+function paginaPresentacion(doc, g, T, imgs) {
+  encabezadoPDF(doc, g, "Lámpara colgante de cuerda", `Ø ${fx(T.W)} × ${fx(T.H)} cm · doble aro en el centro · cuerda de algodón torcida de ${fx(T.cuerdaMm)} mm`);
+  const x0 = HOJA.M, y0 = 31, w0 = 178, h0 = w0 * 0.75;
+  doc.addImage(imgs.principal, "JPEG", x0, y0, w0, h0);
+  g.color(LINEA); g.trazo(0.2); doc.rect(x0, y0, w0, h0, "S");
+  g.fuente("normal", 9); g.tinta(GRIS);
+  const desc = `Dos conos de cuerda de algodón torcida, tendida en hebras desde las bocas hasta un doble aro forrado en el centro. Bocas con banda de metal de ${fx(T.bh)} cm. Cotas del render en centímetros.`;
+  doc.text(doc.splitTextToSize(desc, w0), x0, y0 + h0 + 6);
+
+  const cx = 200, cw = HOJA.W - HOJA.M - cx, hn = cw * 0.75;
+  doc.addImage(imgs.noche, "JPEG", cx, y0, cw, hn);
+  g.fuente("normal", 8); g.tinta(GRIS);
+  doc.text("Con la luz encendida", cx, y0 + hn + 4.5);
+
+  let y = y0 + hn + 13;
+  g.fuente("bold", 10.5); g.tinta(TINTA);
+  doc.text("Ficha", cx, y);
+  y += 5.5;
+  const filas = [
+    ["Ancho", `Ø ${fx(T.W)} cm en el centro`],
+    ["Alto", `${fx(T.H)} cm de aro a aro`],
+    ["Boca de arriba", `Ø ${fx(T.ds)} cm`],
+    ["Boca de abajo", `Ø ${fx(T.di)} cm`],
+    ["Doble aro", `a ${fx(T.yI)} y ${fx(T.yS)} cm desde abajo`],
+    ["Cuerda", `algodón torcido de ${fx(T.cuerdaMm)} mm, ${T.colorNombre}`],
+    ["Bandas", T.metal.nombre.toLowerCase()],
+    ["Luz", "bombillo globo G95, rosca E27"],
+    ["Cable", `${fx(LARGO_CABLE * 100)} cm hasta el florón`],
+  ];
+  for (const [k, v] of filas) {
+    g.fuente("normal", 8.3); g.tinta(GRIS);
+    doc.text(k, cx, y);
+    g.fuente("bold", 8.3); g.tinta(TINTA);
+    const lineas = doc.splitTextToSize(v, cw - 27);
+    doc.text(lineas, cx + 27, y);
+    if (k === "Cuerda") { g.relleno(rgbHex(T.colorHex)); doc.circle(cx + 23.5, y - 1.1, 1.4, "F"); }
+    y += 4.1 * lineas.length + 1.3;
+  }
+  y += 3;
+  g.fuente("normal", 8); g.tinta(GRIS);
+  doc.text("Para verla en 3D con estas medidas:", cx, y);
+  y += 4.2;
+  g.fuente("bold", 8.5); g.tinta(COTA);
+  doc.textWithLink("lampara.cocinandosonrisas.co", cx, y, { url: T.url });
+}
+
+// Página 2: plano de frente con cotas, para el taller.
+function paginaFrente(doc, g, T) {
+  const area = { x0: HOJA.M, x1: HOJA.W - HOJA.M, y0: 32, y1: 194 };
+  const sMax = Math.min((area.x1 - area.x0 - 70) / T.W, (area.y1 - area.y0 - 50) / T.H);
+  const k = escalaBonita(sMax), s = 10 / k;
+  encabezadoPDF(doc, g, "Plano de frente", `Escala 1:${fx(k)} en hoja A4. Medidas en centímetros. Aros y varillas al eje de la varilla de ${fx(T.alambre)} mm.`);
+  const cx = (area.x0 + area.x1) / 2 + 2;
+  const altoDib = T.H * s;
+  const yTop = area.y0 + (area.y1 - area.y0 - (altoDib + 50)) / 2 + 19;
+  const yBase = yTop + altoDib;
+  const X = (x) => cx + x * s, Y = (y) => yBase - y * s;
+  const c = rgbHex(T.colorHex), cClaro = aclarar(c, 0.62), cMedio = aclarar(c, 0.25), cOscuro = oscurecer(c, 0.2);
+  const metal = rgbHex(T.metal.color);
+  const rForro = 0.25 + T.cuerdaMm / 10;  // radio exterior del forro de los aros del centro (cm)
+
+  // Cuerda (silueta) y algunas hebras
+  g.relleno(cClaro); g.color(cOscuro); g.trazo(0.25);
+  g.poligono([
+    [X(-T.ds / 2), Y(T.H - T.bh)], [X(-T.W / 2), Y(T.yS)], [X(-T.W / 2), Y(T.yI)], [X(-T.di / 2), Y(T.bh)],
+    [X(T.di / 2), Y(T.bh)], [X(T.W / 2), Y(T.yI)], [X(T.W / 2), Y(T.yS)], [X(T.ds / 2), Y(T.H - T.bh)],
+  ], "FD");
+  g.color(cMedio); g.trazo(0.12);
+  for (let i = 1; i < 24; i++) {
+    const co = Math.cos((Math.PI * i) / 24);
+    doc.line(X((co * T.ds) / 2), Y(T.H - T.bh), X((co * T.Dc) / 2), Y(T.yS));
+    doc.line(X((co * T.Dc) / 2), Y(T.yI), X((co * T.di) / 2), Y(T.bh));
+  }
+  // Planos de los aros del centro
+  g.color(GRIS); g.trazo(0.15, [1.2, 0.9]);
+  doc.line(X(-T.Dc / 2), Y(T.yS), X(T.Dc / 2), Y(T.yS));
+  doc.line(X(-T.Dc / 2), Y(T.yI), X(T.Dc / 2), Y(T.yI));
+  // Aros del centro forrados (cortados a los lados)
+  for (const lado of [-1, 1]) {
+    for (const y of [T.yS, T.yI]) {
+      g.relleno(cMedio); g.color(cOscuro); g.trazo(0.2);
+      doc.circle(X((lado * T.Dc) / 2), Y(y), rForro * s, "FD");
+      g.relleno(OSCURO);
+      doc.circle(X((lado * T.Dc) / 2), Y(y), Math.max(0.4, 0.25 * s), "F");
+    }
+  }
+  // Bandas de las bocas
+  g.relleno(metal); g.color(oscurecer(metal, 0.3)); g.trazo(0.2);
+  doc.rect(X(-T.ds / 2), Y(T.H), T.ds * s, T.bh * s, "FD");
+  doc.rect(X(-T.di / 2), Y(T.bh), T.di * s, T.bh * s, "FD");
+  // Varillas: 0° y 180° se ven a los lados; 90° y 270° quedan de frente y atrás
+  g.color(OSCURO); g.trazo(0.7);
+  for (const lado of [-1, 1]) doc.line(X((lado * T.ds) / 2), Y(T.yBS), X((lado * T.Dc) / 2), Y(T.yS));
+  g.trazo(0.45, [1.4, 1]);
+  doc.line(X(0), Y(T.yBS), X(0), Y(T.yS));
+  g.trazo(0.7);
+  if (T.sep >= 0.5) for (const lado of [-1, 1]) doc.line(X((lado * T.Dc) / 2), Y(T.yI), X((lado * T.Dc) / 2), Y(T.yS));
+  // Cable
+  g.color(OSCURO); g.trazo(0.35);
+  doc.line(X(0), Y(T.H), X(0), area.y0 + 1);
+  g.fuente("normal", 7.5); g.tinta(GRIS);
+  doc.text(`cable al florón (${fx(LARGO_CABLE * 100)} cm)`, X(0) + 2, area.y0 + 4);
+
+  // Cotas
+  const yDs = Y(T.H) - 8;
+  g.extension(X(-T.ds / 2), Y(T.H) - 1, X(-T.ds / 2), yDs - 1.5);
+  g.extension(X(T.ds / 2), Y(T.H) - 1, X(T.ds / 2), yDs - 1.5);
+  g.cotaH(X(-T.ds / 2), X(T.ds / 2), yDs, `Ø ${fx(T.ds)}`);
+  const yDi = Y(0) + 9, yW = Y(0) + 19, yDc = Y(0) + 29;
+  g.extension(X(-T.di / 2), Y(0) + 1, X(-T.di / 2), yDi + 1.5);
+  g.extension(X(T.di / 2), Y(0) + 1, X(T.di / 2), yDi + 1.5);
+  g.cotaH(X(-T.di / 2), X(T.di / 2), yDi, `Ø ${fx(T.di)}`);
+  g.extension(X(-T.W / 2), Y(T.yI) + 1, X(-T.W / 2), yW + 1.5);
+  g.extension(X(T.W / 2), Y(T.yI) + 1, X(T.W / 2), yW + 1.5);
+  g.cotaH(X(-T.W / 2), X(T.W / 2), yW, `Ø ${fx(T.W)} exterior, con la cuerda`);
+  g.extension(X(-T.Dc / 2), Y(T.yI) + rForro * s + 0.4, X(-T.Dc / 2), yDc + 1.5);
+  g.extension(X(T.Dc / 2), Y(T.yI) + rForro * s + 0.4, X(T.Dc / 2), yDc + 1.5);
+  g.cotaH(X(-T.Dc / 2), X(T.Dc / 2), yDc, `Ø ${fx(T.Dc)} al eje de los aros del centro`);
+  const xH = X(T.W / 2) + 12;
+  g.extension(X(T.ds / 2) + 1, Y(T.H), xH + 1.5, Y(T.H));
+  g.extension(X(T.di / 2) + 1, Y(0), xH + 1.5, Y(0));
+  g.cotaV(xH, Y(0), Y(T.H), fx(T.H), 1);
+  const xA = X(-T.W / 2) - 10;
+  g.extension(X(-T.ds / 2) - 1, Y(T.H), xA - 1.5, Y(T.H));
+  g.extension(X(-T.Dc / 2) - rForro * s - 0.4, Y(T.yS), xA - 1.5, Y(T.yS));
+  g.extension(X(-T.Dc / 2) - rForro * s - 0.4, Y(T.yI), xA - 1.5, Y(T.yI));
+  g.extension(X(-T.di / 2) - 1, Y(0), xA - 1.5, Y(0));
+  g.cotaV(xA, Y(0), Y(T.yI), fx(T.yI), -1);
+  g.cotaV(xA, Y(T.yI), Y(T.yS), fx(T.sep), -1);
+  g.cotaV(xA, Y(T.yS), Y(T.H), fx(T.H - T.yS), -1);
+
+  // Varilla de la derecha: largo y ángulo
+  const p0 = [X(T.ds / 2), Y(T.yBS)], p1 = [X(T.Dc / 2), Y(T.yS)];
+  const dxp = p1[0] - p0[0], dyp = p1[1] - p0[1], lp = Math.hypot(dxp, dyp);
+  const ux = dxp / lp, uy = dyp / lp;
+  const textoVarilla = `varilla ${fx(T.varilla.L)} cm`;
+  g.fuente("bold", 8); g.tinta(OSCURO);
+  const twv = doc.getTextWidth(textoVarilla);
+  doc.text(textoVarilla, (p0[0] + p1[0]) / 2 + uy * 2.2 - (ux * twv) / 2, (p0[1] + p1[1]) / 2 - ux * 2.2 - (uy * twv) / 2, { angle: -THREE.MathUtils.radToDeg(Math.atan2(dyp, dxp)) });
+  const inc = Math.atan2(dyp, dxp);
+  const arco = [];
+  for (let i = 0; i <= 14; i++) {
+    const t = Math.PI - inc + (inc * i) / 14;
+    arco.push([p1[0] + 9 * Math.cos(t), p1[1] - 9 * Math.sin(t)]);
+  }
+  g.color(COTA); g.trazo(0.25);
+  g.polilinea(arco);
+  g.trazo(0.2, [1, 0.8]);
+  doc.line(p1[0] - 11, p1[1], p1[0], p1[1]);
+  g.trazo(0.2);
+  g.fuente("bold", 8); g.tinta(COTA);
+  const tm = Math.PI - inc / 2;
+  doc.text(`${fx(T.varilla.ang, 0)}°`, p1[0] + 13 * Math.cos(tm), p1[1] - 13 * Math.sin(tm) + 1.2, { align: "center" });
+
+  g.fuente("normal", 7.5); g.tinta(GRIS);
+  doc.text("4 varillas a 0°, 90°, 180° y 270° (ver planta)", area.x1, area.y0 + 4, { align: "right" });
+
+  // Convenciones
+  let ly = area.y1 - 29;
+  const lx = HOJA.M;
+  g.fuente("bold", 8); g.tinta(TINTA);
+  doc.text("Convenciones", lx, ly);
+  ly += 4.6;
+  const item = (dibujo, texto) => {
+    dibujo(lx, ly - 1);
+    g.trazo(0.2);
+    g.fuente("normal", 7.5); g.tinta(GRIS);
+    doc.text(texto, lx + 9, ly);
+    ly += 4.4;
+  };
+  item((x, y) => { g.color(OSCURO); g.trazo(0.7); doc.line(x, y, x + 7, y); }, "Varillas de 0° y 180°");
+  item((x, y) => { g.color(OSCURO); g.trazo(0.45, [1.4, 1]); doc.line(x, y, x + 7, y); }, "Varillas de 90° y 270°");
+  item((x, y) => { g.relleno(metal); doc.rect(x, y - 1.2, 7, 2.4, "F"); }, `Bandas de las bocas (${fx(T.bh)} cm)`);
+  item((x, y) => { g.relleno(cClaro); g.color(cOscuro); g.trazo(0.2); doc.rect(x, y - 1.2, 7, 2.4, "FD"); }, "Cuerda");
+  item((x, y) => { g.relleno(cMedio); doc.circle(x + 3.5, y, 1.6, "F"); g.relleno(OSCURO); doc.circle(x + 3.5, y, 0.5, "F"); }, "Aro del centro forrado");
+}
+
+// Página 3: planta con las varillas, render de la estructura y detalle de una varilla.
+function paginaPlanta(doc, g, T, imgs) {
+  const area = { x0: HOJA.M, x1: HOJA.M + 150, y0: 32, y1: 194 };
+  const sMax = Math.min((area.x1 - area.x0 - 30) / T.W, (area.y1 - area.y0 - 50) / T.W);
+  const k = escalaBonita(sMax), s = 10 / k;
+  encabezadoPDF(doc, g, "Planta y estructura", `Vista desde arriba a escala 1:${fx(k)} y detalle de las varillas. Medidas en centímetros.`);
+  const cx = (area.x0 + area.x1) / 2, cy = area.y0 + 6 + (T.W / 2) * s + 4;
+  const c = rgbHex(T.colorHex), cClaro = aclarar(c, 0.62), cMedio = aclarar(c, 0.25), cOscuro = oscurecer(c, 0.2);
+  const metal = rgbHex(T.metal.color);
+  const R = (v) => v * s;
+  const punto = (r, t) => [cx + R(r) * Math.cos(t), cy - R(r) * Math.sin(t)];
+
+  g.relleno(cClaro); g.color(cOscuro); g.trazo(0.25);
+  doc.circle(cx, cy, R(T.W / 2), "FD");
+  g.color(cMedio); g.trazo(0.12);
+  for (let i = 0; i < 96; i++) {
+    const t = (2 * Math.PI * i) / 96;
+    const a = punto(T.ds / 2, t), b = punto(T.W / 2, t);
+    doc.line(a[0], a[1], b[0], b[1]);
+  }
+  g.relleno(BLANCO);
+  doc.circle(cx, cy, R(T.ds / 2), "F");
+  g.color(OSCURO); g.trazo(0.3, [1.4, 1]);
+  doc.circle(cx, cy, R(T.Dc / 2), "S");
+  g.trazo(0.8);
+  for (let j = 0; j < NUM_VARILLAS; j++) {
+    const t = (2 * Math.PI * j) / NUM_VARILLAS;
+    const a = punto(T.ds / 2, t), b = punto(T.Dc / 2, t);
+    doc.line(a[0], a[1], b[0], b[1]);
+  }
+  g.color(metal); g.trazo(1.1);
+  doc.circle(cx, cy, R(T.ds / 2), "S");
+  g.color(OSCURO); g.trazo(0.3);
+  for (let j = 0; j < 3; j++) {
+    const t = Math.PI / 2 + (2 * Math.PI * j) / 3;
+    const a = punto(1.4, t), b = punto(T.ds / 2, t);
+    doc.line(a[0], a[1], b[0], b[1]);
+  }
+  g.relleno(OSCURO);
+  doc.circle(cx, cy, Math.max(0.9, R(1.4)), "F");
+
+  g.fuente("bold", 9); g.tinta(COTA);
+  const rt = R(T.W / 2) + 6;
+  doc.text("0°", cx + rt, cy + 1.2, { align: "center" });
+  doc.text("90°", cx, cy - rt + 1.5, { align: "center" });
+  doc.text("180°", cx - rt - 1, cy + 1.2, { align: "center" });
+  doc.text("270°", cx, cy + rt + 1.5, { align: "center" });
+
+  let y = cy + rt + 9;
+  const lista = [
+    [metal, "solido", `Aro superior: Ø ${fx(T.ds)} (banda de ${T.metal.nombre.toLowerCase()})`],
+    [OSCURO, "punteado", `Aros del centro: Ø ${fx(T.Dc)} al eje (Ø ${fx(T.W)} con la cuerda)`],
+    [OSCURO, "grueso", `${NUM_VARILLAS} varillas de soporte a 0°, 90°, 180° y 270°`],
+    [OSCURO, "fino", "Araña del portabombillo: 3 brazos a 120°"],
+  ];
+  for (const [col, estilo, texto] of lista) {
+    g.color(col);
+    g.trazo(estilo === "grueso" ? 0.8 : estilo === "solido" ? 1.1 : 0.3, estilo === "punteado" ? [1.4, 1] : []);
+    doc.line(area.x0 + 8, y - 1, area.x0 + 16, y - 1);
+    g.trazo(0.2);
+    g.fuente("normal", 8); g.tinta(GRIS);
+    doc.text(texto, area.x0 + 19, y);
+    y += 4.8;
+  }
+
+  // Render de la estructura
+  const ix = 172, iw = HOJA.W - HOJA.M - ix, ih = iw * 0.75;
+  doc.addImage(imgs.estructura, "JPEG", ix, area.y0, iw, ih);
+  g.color(LINEA); g.trazo(0.2);
+  doc.rect(ix, area.y0, iw, ih, "S");
+  g.fuente("normal", 8); g.tinta(GRIS);
+  doc.text("Estructura metálica sin la cuerda (render)", ix, area.y0 + ih + 4.5);
+
+  // Detalle de una varilla
+  let yd = area.y0 + ih + 13;
+  g.fuente("bold", 10); g.tinta(TINTA);
+  doc.text("Detalle de una varilla", ix, yd);
+  const V = T.varilla;
+  const sd = Math.min((iw - 36) / V.dr, (area.y1 - yd - 20) / V.dy);
+  const q0 = [ix + 8, yd + 9], q1 = [q0[0] + V.dr * sd, q0[1] + V.dy * sd];
+  g.color(GRIS); g.trazo(0.2, [1.2, 0.9]);
+  doc.line(q0[0], q0[1], q1[0], q0[1]);
+  doc.line(q1[0], q0[1], q1[0], q1[1]);
+  g.color(OSCURO); g.trazo(0.9);
+  doc.line(q0[0], q0[1], q1[0], q1[1]);
+  g.trazo(0.2);
+  g.relleno(metal); doc.circle(q0[0], q0[1], 1.4, "F");
+  g.relleno(OSCURO); doc.circle(q1[0], q1[1], 1.2, "F");
+  g.fuente("bold", 8); g.tinta(COTA);
+  doc.text(`${fx(V.dr)} cm`, (q0[0] + q1[0]) / 2, q0[1] - 1.8, { align: "center" });
+  doc.text(`${fx(V.dy)} cm`, q1[0] + 2.2, (q0[1] + q1[1]) / 2 + 1);
+  const ang = Math.atan2(q1[1] - q0[1], q1[0] - q0[0]);
+  const vx = Math.cos(ang), vy = Math.sin(ang);
+  const tL = `L = ${fx(V.L)} cm`, twL = doc.getTextWidth(tL);
+  doc.text(tL, (q0[0] + q1[0]) / 2 - (vx * twL) / 2 - vy * 4.4, (q0[1] + q1[1]) / 2 - (vy * twL) / 2 + vx * 4.4, { angle: -THREE.MathUtils.radToDeg(ang) });
+  const arco = [];
+  for (let i = 0; i <= 12; i++) {
+    const t = Math.PI - ang + (ang * i) / 12;
+    arco.push([q1[0] + 7 * Math.cos(t), q1[1] - 7 * Math.sin(t)]);
+  }
+  g.color(COTA); g.trazo(0.25);
+  g.polilinea(arco);
+  g.trazo(0.2, [1, 0.8]);
+  doc.line(q1[0] - 9, q1[1], q1[0], q1[1]);
+  g.trazo(0.2);
+  const tm = Math.PI - ang / 2;
+  doc.text(`${fx(V.ang, 0)}°`, q1[0] + 10.5 * Math.cos(tm), q1[1] - 10.5 * Math.sin(tm) + 1.2, { align: "center" });
+  g.fuente("normal", 7.5); g.tinta(GRIS);
+  doc.text("aro superior", q0[0] - 2, q0[1] - 3);
+  doc.text("aro de arriba del centro", q1[0] + 1, q1[1] + 4.8, { align: "right" });
+  doc.text("Medidas entre ejes. Dejar margen para soldar.", ix, area.y1);
+}
+
+function tablaPDF(doc, g, x, y, anchos, cabecera, filas) {
+  const total = anchos.reduce((a, b) => a + b, 0);
+  const pad = 1.8;
+  const fila = (celdas, { negrita = false, fondo = null, colores = [] } = {}) => {
+    const tam = 8.4;
+    g.fuente(negrita ? "bold" : "normal", tam);
+    const lineas = celdas.map((t, i) => doc.splitTextToSize(String(t), anchos[i] - 2 * pad));
+    const lh = tam * 0.3528 * 1.2;
+    const alto = Math.max(...lineas.map((l) => l.length)) * lh + 2 * pad;
+    if (fondo) { g.relleno(fondo); doc.rect(x, y, total, alto, "F"); }
+    let xx = x;
+    lineas.forEach((l, i) => {
+      g.tinta(colores[i] || TINTA);
+      doc.text(l, xx + pad, y + pad + lh * 0.75, { lineHeightFactor: 1.2 });
+      xx += anchos[i];
+    });
+    g.color(LINEA); g.trazo(0.2);
+    doc.line(x, y + alto, x + total, y + alto);
+    y += alto;
+  };
+  fila(cabecera, { negrita: true, fondo: [241, 234, 224] });
+  for (const f of filas) fila(f.celdas, f.estilo);
+  return y;
+}
+
+// Página 4: lista de piezas y materiales.
+function paginaPiezas(doc, g, T) {
+  encabezadoPDF(doc, g, "Lista de piezas y materiales", "Para el taller. Medidas en centímetros, salvo donde dice mm o m.");
+  const pi = Math.PI;
+  const metal = T.metal.nombre.toLowerCase();
+  const comprar = Math.ceil((T.cuerdaTotal * 1.1) / 10) * 10;
+  const sub = { colores: [GRIS] };
+  const filas = [
+    { celdas: ["Aro superior (boca)", "1", `Ø ${fx(T.ds)} · perímetro ${fx(pi * T.ds)}`, `Banda de ${fx(T.bh)} cm de alto, acabado ${metal}. Ahí van soldadas las ${NUM_VARILLAS} varillas y la araña del portabombillo.`] },
+    { celdas: ["Aros del centro (doble aro)", "2", `Ø ${fx(T.Dc)} al eje · perímetro ${fx(pi * T.Dc)}`, `Varilla de ${fx(T.alambre)} mm, separados ${fx(T.sep)} cm entre ejes (a ${fx(T.yI)} y ${fx(T.yS)} cm desde abajo). Forrados con la cuerda quedan en Ø ${fx(T.W)}.`] },
+    { celdas: ["Aro inferior (boca)", "1", `Ø ${fx(T.di)} · perímetro ${fx(pi * T.di)}`, `Banda de ${fx(T.bh)} cm de alto, acabado ${metal}.`] },
+    { celdas: ["Varillas de soporte", String(NUM_VARILLAS), `${fx(T.varilla.L)} entre ejes`, `Del aro superior al aro de arriba del centro, a 0°, 90°, 180° y 270°. Inclinación de ${fx(T.varilla.ang, 0)}° (${fx(T.varilla.dr)} en horizontal y ${fx(T.varilla.dy)} en vertical).`] },
+  ];
+  if (T.sep >= 0.5) {
+    filas.push({ celdas: ["Uniones del doble aro", String(NUM_VARILLAS), `${fx(T.sep)} entre ejes`, "Unen los dos aros del centro, en los mismos ángulos de las varillas."] });
+  }
+  filas.push(
+    { celdas: ["Araña del portabombillo", "1", `3 brazos de ${fx(T.ds / 2 - 1.4)}`, "Dentro del aro superior, repartidos a 120°."] },
+    { celdas: ["Cuerda de algodón torcida", "", `${fx(T.cuerdaMm)} mm · ${fx(T.cuerdaTotal, 0)} m aprox.`, `Color ${T.colorNombre}. Comprar unos ${comprar} m (10 % más para amarres y desperdicio).`] },
+    { celdas: ["   Hebras del cono de arriba", String(T.n), `${fx(T.hebraSup)} cada una`, "Del aro superior al aro de arriba del centro. Cerca de la boca quedan en 3 capas."], estilo: sub },
+    { celdas: ["   Hebras del cono de abajo", String(T.n), `${fx(T.hebraInf)} cada una`, "Del aro de abajo del centro al aro inferior."], estilo: sub },
+    { celdas: ["   Forro de los aros del centro", "2", `${T.vueltas} vueltas · ${fx(T.forro, 1)} m cada uno`, "Cuerda enrollada en espiral; cada aro en sentido contrario."], estilo: sub },
+    { celdas: ["Parte eléctrica", "1", "Portabombillo E27 y bombillo G95", `Cable de tela negro de ${fx(LARGO_CABLE * 100)} cm y florón de Ø 12 cm.`] },
+  );
+  let y = tablaPDF(doc, g, HOJA.M, 32, [60, 15, 74, 120], ["Pieza", "Cant.", "Medida", "Detalle"], filas);
+
+  y += 8;
+  g.fuente("bold", 10); g.tinta(TINTA);
+  doc.text("Notas", HOJA.M, y);
+  y += 5.2;
+  const notas = [
+    "Las medidas de aros y varillas son al eje de la varilla; dejar margen para soldar.",
+    `Hay una hebra cada ${fx(360 / T.n, 2)}°: una cae justo sobre cada varilla y la tapa.`,
+    `En el ecuador quedan unos ${fx(T.sepEcuadorMm)} mm entre hebras; cerca de las bocas se montan en 3 capas.`,
+    "El aro inferior queda sostenido por las hebras del cono de abajo.",
+    "La cuerda calculada sale del modelo 3D y no incluye amarres ni desperdicio.",
+  ];
+  g.fuente("normal", 8.6); g.tinta(GRIS);
+  for (const nota of notas) {
+    const l = doc.splitTextToSize("·  " + nota, HOJA.W - 2 * HOJA.M);
+    doc.text(l, HOJA.M, y);
+    y += l.length * 4 + 1.4;
+  }
+  y += 2;
+  g.fuente("normal", 8.6); g.tinta(GRIS);
+  doc.text("Modelo 3D con estas medidas:", HOJA.M, y);
+  g.fuente("bold", 8.6); g.tinta(COTA);
+  doc.textWithLink("lampara.cocinandosonrisas.co", HOJA.M + doc.getTextWidth("Modelo 3D con estas medidas: ") + 1, y, { url: T.url });
+}
+
+async function generarPDF() {
+  const boton = $("#b-pdf");
+  if (boton.disabled) return;
+  const texto = boton.textContent;
+  boton.disabled = true;
+  boton.textContent = "Preparando el PDF…";
+  try {
+    const { jsPDF } = await cargarJsPDF();
+    await new Promise((r) => setTimeout(r, 40));
+    const imgs = {
+      principal: capturar({ vista: "tres", medidas: true, ancho: 1800, alto: 1350 }),
+      noche: capturar({ vista: "tres", noche: true, ancho: 1200, alto: 900, acercar: 0.72 }),
+      estructura: capturar({ vista: "estructura", estructura: true, piso: false, ancho: 1200, alto: 900, acercar: 0.78 }),
+    };
+    const T = datosTaller();
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
+    doc.setProperties({ title: `Lámpara de cuerda Ø ${fx(T.W)} × ${fx(T.H)} cm`, subject: "Presentación y planos para el taller", creator: "lampara.cocinandosonrisas.co" });
+    const g = herramientas(doc);
+    paginaPresentacion(doc, g, T, imgs);
+    doc.addPage();
+    paginaFrente(doc, g, T);
+    doc.addPage();
+    paginaPlanta(doc, g, T, imgs);
+    doc.addPage();
+    paginaPiezas(doc, g, T);
+    piesPDF(doc, g, T.url);
+    doc.save(`lampara-cuerda-${Math.round(T.W)}x${Math.round(T.H)}.pdf`);
+    avisar("PDF descargado: presentación, plano de frente, planta y lista de piezas.");
+  } catch (e) {
+    console.error(e);
+    avisar(`No se pudo generar el PDF (${e.message}).`);
+  } finally {
+    boton.disabled = false;
+    boton.textContent = texto;
+  }
+}
+
 // =============================================================================
 // Inicio
 // =============================================================================
@@ -1436,7 +2074,7 @@ requestAnimationFrame(bucle);
 if (esMovil) $("#ayuda").textContent = "Un dedo para girar · pellizca para acercar · dos dedos para mover";
 
 // Para pruebas: window.visor permite revisar el estado desde la consola.
-window.visor = { P, datos: () => datos, renderer, scene, camera, controls, irAVista, cambiar };
+window.visor = { P, datos: () => datos, renderer, scene, camera, controls, irAVista, cambiar, generarPDF };
 </script>
 </body>
 </html>
