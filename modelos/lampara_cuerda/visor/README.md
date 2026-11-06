@@ -19,7 +19,8 @@ o con los dedos, y se actualiza al cambiar las medidas.
 - Ver las cotas sobre el modelo, encender la luz de noche y cambiar el metal
   de los aros.
 - **Ver solo la estructura metálica**: quita la cuerda y muestra los aros, las
-  4 varillas de soporte (0°, 90°, 180° y 270°) y las uniones del doble aro.
+  8 varillas de soporte (4 arriba y 4 abajo, a 0°, 90°, 180° y 270°) y las
+  uniones del doble aro.
 - Vistas rápidas: 3/4, frente, arriba, abajo y un acercamiento al doble aro.
 - **Copiar enlace**: la dirección guarda las medidas (por ejemplo
   `?ds=30&de=90&h=45`), así el arquitecto abre exactamente la misma lámpara.
@@ -32,8 +33,8 @@ o con los dedos, y se actualiza al cambiar las medidas.
   2. Las dos opciones de cuerda lado a lado: render, textura en el modelo y
      foto real de cada una.
   3. Plano de frente acotado a escala (1:5 con las medidas originales).
-  4. Planta con las varillas a 0°, 90°, 180° y 270°, render de la estructura y
-     detalle de una varilla (largo y ángulo).
+  4. Planta con las varillas a 0°, 90°, 180° y 270° (arriba y abajo), render de
+     la estructura y detalle de las varillas (largo y ángulo).
   5. Lista de piezas y materiales: aros, varillas, uniones, cuerda y parte
      eléctrica, con notas para el taller.
 

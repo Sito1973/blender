@@ -75,6 +75,8 @@ DIAM_ALAMBRE_MM = 5.0      # Varilla de los aros y de las varillas de soporte.
 ESPESOR_ARO_MM = 2.5       # Espesor de las bandas metálicas visibles.
 NUM_VARILLAS = 4           # Varillas de soporte entre el aro de arriba (boca) y el aro de
                            # arriba del centro, repartidas desde 0°: 0°, 90°, 180° y 270°.
+VARILLAS_ABAJO = True      # Las mismas varillas en el cono de abajo: del aro de abajo del
+                           # centro al aro inferior, en los mismos ángulos.
 UNIR_AROS_CENTRO = True    # Uniones cortas entre los dos aros del centro, en los mismos ángulos.
 LARGO_CABLE_CM = 80.0      # Cable desde la lámpara hasta el techo.
 POTENCIA_BOMBILLO_W = 25.0
@@ -590,7 +592,8 @@ def construir_lampara():
     perfil = perfil_cuerda(col, raiz, rr, max(6, PUNTOS_PERFIL - PUNTOS_PERFIL % 6))
 
     s_sup, t_sup, l_sup = hebras(tramo_sup, n, 0.0, giro, rng, d, a, paso_torsion)
-    s_inf, t_inf, l_inf = hebras(tramo_inf, n, 0.5, giro, rng, d, a, paso_torsion)
+    # Los dos conos arrancan en 0°: una hebra queda encima de cada varilla.
+    s_inf, t_inf, l_inf = hebras(tramo_inf, n, 0.0, giro, rng, d, a, paso_torsion)
     cuerda_sup = curva("Cuerda_Cono_Superior", col, raiz, s_sup, t_sup,
                        material=m_cuerda, bevel_obj=perfil)
     cuerda_inf = curva("Cuerda_Cono_Inferior", col, raiz, s_inf, t_inf,
@@ -613,15 +616,19 @@ def construir_lampara():
           material=m_negro, radio=wr)
     curva("Alambre_Aro_Inf", col, raiz, [circulo(F[0], F[1])], ciclica=True,
           material=m_negro, radio=wr)
-    # Varillas de soporte: del aro de arriba al aro de arriba del centro, justo
-    # debajo de una hebra (las hebras de arriba arrancan en 0°).
-    puntos = [(r, z) for (_, r, z, _, _) in tramo_sup]
-    camino = puntos[::4] + ([puntos[-1]] if (len(puntos) - 1) % 4 else [])
+    # Varillas de soporte: del aro de arriba al aro de arriba del centro y, si
+    # VARILLAS_ABAJO, del aro de abajo del centro al aro inferior. Cada una va
+    # justo debajo de una hebra (las hebras arrancan en 0°).
+    def recorrido(tramo):
+        puntos = [(r, z) for (_, r, z, _, _) in tramo]
+        return puntos[::4] + ([puntos[-1]] if (len(puntos) - 1) % 4 else [])
+    caminos = [recorrido(tramo_sup)] + ([recorrido(tramo_inf)] if VARILLAS_ABAJO else [])
     varillas, uniones = [], []
     for k in range(NUM_VARILLAS):
         ang = 2.0 * math.pi * k / max(1, NUM_VARILLAS)
         ca, sa = math.cos(ang), math.sin(ang)
-        varillas.append([(r * ca, r * sa, z) for (r, z) in camino])
+        for camino in caminos:
+            varillas.append([(r * ca, r * sa, z) for (r, z) in camino])
         uniones.append([(rc * ca, rc * sa, z_centro_inf), (rc * ca, rc * sa, z_centro_sup)])
     if varillas:
         curva("Varillas_Soporte", col, raiz, varillas, material=m_negro, radio=wr)

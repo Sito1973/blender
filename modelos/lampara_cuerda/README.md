@@ -13,7 +13,7 @@ Trae las dos cuerdas de las fotos: **opción 1 caramelo** (algodón mate) y
 | Alto total (de aro a aro) | 50 cm |
 | Altura del centro | 25 cm (justo en la mitad: 25 cm arriba y 25 cm abajo) |
 | Doble aro en el centro | 2 aros forrados de cuerda, separados 2 cm (a 24 y 26 cm de altura) |
-| Varillas de soporte | 4, a 0°, 90°, 180° y 270°, del aro de arriba (Ø 25) al aro de arriba del centro |
+| Varillas de soporte | 8, a 0°, 90°, 180° y 270°: 4 del aro de arriba (Ø 25) al aro de arriba del centro y 4 del aro de abajo del centro al aro de abajo (Ø 25) |
 | Bocas superior e inferior | Ø 25 cm, con banda metálica cobre de 1,5 cm |
 | Cuerda | 6 mm, torcida de 3 cabos: caramelo `#7E5E3C` (mate) o beige `#D0B596` (con brillo) |
 | Hebras | 288 por cono (arriba y abajo) |
@@ -70,7 +70,7 @@ vez borra la lámpara anterior y la vuelve a crear.
 | `ABOMBADO_CM` | 0 (por defecto) deja los conos rectos, como queda la cuerda tensada; un valor mayor los abomba hacia afuera |
 | `DIAM_CUERDA_MM`, `PASO_TORSION_MM` | Grosor de la cuerda y qué tan apretada es su torsión |
 | `NUM_HEBRAS` | Densidad del tejido: más hebras tapan más la luz. Se redondea a múltiplo de 12 para que una hebra quede encima de cada varilla |
-| `NUM_VARILLAS`, `UNIR_AROS_CENTRO` | Varillas de soporte del cono de arriba (4 por defecto) y uniones entre los dos aros del centro |
+| `NUM_VARILLAS`, `VARILLAS_ABAJO`, `UNIR_AROS_CENTRO` | Varillas de soporte por cono (4 por defecto), si también van en el cono de abajo, y uniones entre los dos aros del centro |
 | `CUERDA`, `CUERDAS` | Cuerda que se usa (`"caramelo"` o `"beige"`) y el color, la rugosidad y el brillo de cada una, tomados de las fotos de los rollos |
 | `GIRO_HEBRAS_GRADOS` | Un valor mayor que 0 hace que las hebras bajen en espiral |
 | `POTENCIA_BOMBILLO_W` | Intensidad de la luz interior |
@@ -91,9 +91,10 @@ vez borra la lámpara anterior y la vuelve a crear.
   uno va forrado con cuerda enrollada en espiral, en sentidos opuestos. Así se
   forman los dos cordones horizontales de la parte más ancha, con una línea
   fina entre ellos.
-- **Armazón**: cuatro aros de alambre (arriba, los dos del centro y abajo) y 4
-  varillas de soporte entre el aro de arriba y el aro de arriba del centro, a
-  0°, 90°, 180° y 270°. Cada varilla queda debajo de una hebra. Los dos aros del
+- **Armazón**: cuatro aros de alambre (arriba, los dos del centro y abajo) y 8
+  varillas de soporte a 0°, 90°, 180° y 270°: 4 entre el aro de arriba y el aro
+  de arriba del centro, y 4 entre el aro de abajo del centro y el aro de abajo.
+  Cada varilla queda debajo de una hebra. Los dos aros del
   centro van unidos con 4 piezas cortas en los mismos ángulos. Lleva además dos
   bandas de cobre visibles, una araña de 3 brazos, el portabombillo, un
   bombillo G95, el cable y el florón del techo.

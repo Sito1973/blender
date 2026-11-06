@@ -1054,7 +1054,8 @@ function construir() {
 
   // Hebras de los dos conos. Cada hebra es igual a sus vecinas de la misma capa,
   // solo girada: se dibujan con instancias (rápido aunque sean cientos).
-  const conos = [{ muestras: tS, desfase: 0, semilla: 1 }, { muestras: tI, desfase: 0.5, semilla: 2 }];
+  // Los dos conos arrancan en 0°: una hebra queda encima de cada varilla, arriba y abajo.
+  const conos = [{ muestras: tS, desfase: 0, semilla: 1 }, { muestras: tI, desfase: 0, semilla: 2 }];
   for (const [ic, cono] of conos.entries()) {
     for (let capa = 0; capa < 3; capa++) {
       const camino = caminoCapa(cono.muestras, capa, n, d, a);
@@ -1106,8 +1107,9 @@ function construir() {
     agregar(toro, true, grupo);
   }
 
-  // 4 varillas de soporte entre el aro superior y el aro de arriba del centro,
-  // a 0°, 90°, 180° y 270°. Con la cuerda puesta van justo debajo de una hebra.
+  // 4 varillas de soporte arriba (del aro superior al aro de arriba del centro) y
+  // 4 abajo (del aro de abajo del centro al aro inferior), a 0°, 90°, 180° y 270°.
+  // Con la cuerda puesta cada una va justo debajo de una hebra.
   const perfilVarilla = perfilCirculo(8, ALAMBRE_R);
   const varillas = (geo, grupo) => {
     const mesh = new THREE.InstancedMesh(geo, matAlambre, NUM_VARILLAS);
@@ -1115,9 +1117,11 @@ function construir() {
     mesh.instanceMatrix.needsUpdate = true;
     agregar(mesh, true, grupo);
   };
-  const caminoVarilla = tS.map((m) => [m.r, m.y]).filter((_, i, arr) => i % 4 === 0 || i === arr.length - 1);
-  varillas(tuboPlano(caminoVarilla, perfilVarilla, 0, 0).geo, grupos.oculto);
+  const recorrido = (tramo) => tramo.map((m) => [m.r, m.y]).filter((_, i, arr) => i % 4 === 0 || i === arr.length - 1);
+  varillas(tuboPlano(recorrido(tS), perfilVarilla, 0, 0).geo, grupos.oculto);
+  varillas(tuboPlano(recorrido(tI), perfilVarilla, 0, 0).geo, grupos.oculto);
   varillas(tuboPlano([[rbS, ybS], [rc, yS]], perfilVarilla, 0, 0).geo, grupos.estructura);
+  varillas(tuboPlano([[rc, yI], [rbI, ybI]], perfilVarilla, 0, 0).geo, grupos.estructura);
   // Uniones cortas entre los dos aros del centro, en los mismos ángulos.
   if (sepC > 0.004) varillas(tuboPlano([[rc, yI], [rc, yS]], perfilVarilla, 0, 0).geo, null);
 
@@ -1513,6 +1517,7 @@ function actualizarResumen() {
     ["Doble aro", `a ${cm(D.yI)} y ${cm(D.yS)} cm desde abajo`],
     ["Aros del centro", `2 × Ø ${cm(D.aroCentro)} cm (alambre)`],
     ["Hebras", `${D.n} por cono · ${2 * D.n} en total`],
+    ["Varillas de soporte", `4 arriba y 4 abajo · ${cm(Math.hypot(D.rc - D.rbS, D.ybS - D.yS))} y ${cm(Math.hypot(D.rc - D.rbI, D.yI - D.ybI))} cm`],
     ["Entre hebras (ecuador)", `${(Math.round(D.separacionEcuador * 10000) / 10).toLocaleString("es-CO")} mm`],
     ["Cuerda aprox.", `${Math.round(D.cuerda).toLocaleString("es-CO")} m de ${String(P.dc).replace(".", ",")} mm`],
     ["Cuerda elegida", `${opcionCuerda().corto}, ${opcionCuerda().acabado}`],
@@ -1757,16 +1762,18 @@ function datosTaller() {
   const D = datos, c = (m) => m * 100;
   const ds = c(2 * D.rbS), di = c(2 * D.rbI), Dc = c(2 * D.rc);
   const alto = c(D.H), yS = c(D.yS), yI = c(D.yI);
-  const bh = BANDA_ALTO * 100, yBS = alto - bh / 2;
+  const bh = BANDA_ALTO * 100, yBS = alto - bh / 2, yBI = bh / 2;
   const dr = Dc / 2 - ds / 2, dy = yBS - yS;
+  const drI = Dc / 2 - di / 2, dyI = yI - yBI;
   const op = opcionCuerda();
   return {
-    W: c(D.W), H: alto, ds, di, Dc, yS, yI, sep: c(D.sepC), bh, yBS,
+    W: c(D.W), H: alto, ds, di, Dc, yS, yI, sep: c(D.sepC), bh, yBS, yBI,
     alambre: ALAMBRE_R * 2000,
     cuerdaMm: P.dc, n: D.n, cuerdaTotal: D.cuerda,
     hebraSup: c(D.hebraSup), hebraInf: c(D.hebraInf),
     vueltas: D.vueltas, forro: D.forro, sepEcuadorMm: D.separacionEcuador * 1000,
     varilla: { dr, dy, L: Math.hypot(dr, dy), ang: THREE.MathUtils.radToDeg(Math.atan2(dy, dr)) },
+    varillaInf: { dr: drI, dy: dyI, L: Math.hypot(drI, dyI), ang: THREE.MathUtils.radToDeg(Math.atan2(dyI, drI)) },
     colorHex: P.color,
     colorNombre: `${op.corto} (${op.acabado})`,
     metal: METALES[P.metal],
@@ -1968,8 +1975,10 @@ function paginaFrente(doc, g, T) {
   // Varillas: 0° y 180° se ven a los lados; 90° y 270° quedan de frente y atrás
   g.color(OSCURO); g.trazo(0.7);
   for (const lado of [-1, 1]) doc.line(X((lado * T.ds) / 2), Y(T.yBS), X((lado * T.Dc) / 2), Y(T.yS));
+  for (const lado of [-1, 1]) doc.line(X((lado * T.Dc) / 2), Y(T.yI), X((lado * T.di) / 2), Y(T.yBI));
   g.trazo(0.45, [1.4, 1]);
   doc.line(X(0), Y(T.yBS), X(0), Y(T.yS));
+  doc.line(X(0), Y(T.yI), X(0), Y(T.yBI));
   g.trazo(0.7);
   if (T.sep >= 0.5) for (const lado of [-1, 1]) doc.line(X((lado * T.Dc) / 2), Y(T.yI), X((lado * T.Dc) / 2), Y(T.yS));
   // Cable
@@ -2029,8 +2038,31 @@ function paginaFrente(doc, g, T) {
   const tm = Math.PI - inc / 2;
   doc.text(`${fx(T.varilla.ang, 0)}°`, p1[0] + 13 * Math.cos(tm), p1[1] - 13 * Math.sin(tm) + 1.2, { align: "center" });
 
+  // Varilla de abajo a la derecha: largo y ángulo
+  const q1 = [X(T.Dc / 2), Y(T.yI)], q2 = [X(T.di / 2), Y(T.yBI)];
+  const dxq = q1[0] - q2[0], dyq = q1[1] - q2[1], lq = Math.hypot(dxq, dyq);
+  const vx = dxq / lq, vy = dyq / lq;            // de la boca hacia el centro (sube a la derecha)
+  const textoInf = `varilla ${fx(T.varillaInf.L)} cm`;
+  g.fuente("bold", 8); g.tinta(OSCURO);
+  const twi = doc.getTextWidth(textoInf);
+  doc.text(textoInf, (q1[0] + q2[0]) / 2 - (vx * twi) / 2 - vy * 4.6, (q1[1] + q2[1]) / 2 - (vy * twi) / 2 + vx * 4.6, { angle: -THREE.MathUtils.radToDeg(Math.atan2(dyq, dxq)) });
+  const incI = Math.atan2(-dyq, dxq);           // inclinación hacia abajo
+  const arcoI = [];
+  for (let i = 0; i <= 14; i++) {
+    const t = Math.PI + (incI * i) / 14;
+    arcoI.push([q1[0] + 9 * Math.cos(t), q1[1] - 9 * Math.sin(t)]);
+  }
+  g.color(COTA); g.trazo(0.25);
+  g.polilinea(arcoI);
+  g.trazo(0.2, [1, 0.8]);
+  doc.line(q1[0] - 11, q1[1], q1[0], q1[1]);
+  g.trazo(0.2);
+  g.fuente("bold", 8); g.tinta(COTA);
+  const tmI = Math.PI + incI / 2;
+  doc.text(`${fx(T.varillaInf.ang, 0)}°`, q1[0] + 13 * Math.cos(tmI), q1[1] - 13 * Math.sin(tmI) + 1.2, { align: "center" });
+
   g.fuente("normal", 7.5); g.tinta(GRIS);
-  doc.text("4 varillas a 0°, 90°, 180° y 270° (ver planta)", area.x1, area.y0 + 4, { align: "right" });
+  doc.text("8 varillas: 4 arriba y 4 abajo, a 0°, 90°, 180° y 270° (ver planta)", area.x1, area.y0 + 4, { align: "right" });
 
   // Convenciones
   let ly = area.y1 - 29;
@@ -2076,6 +2108,13 @@ function paginaPlanta(doc, g, T, imgs) {
   doc.circle(cx, cy, R(T.ds / 2), "F");
   g.color(OSCURO); g.trazo(0.3, [1.4, 1]);
   doc.circle(cx, cy, R(T.Dc / 2), "S");
+  // Las varillas de abajo van en los mismos ángulos (debajo de las de arriba).
+  g.trazo(0.5, [1.2, 0.8]);
+  for (let j = 0; j < NUM_VARILLAS; j++) {
+    const t = (2 * Math.PI * j) / NUM_VARILLAS;
+    const a = punto(T.di / 2, t), b = punto(T.Dc / 2, t);
+    doc.line(a[0], a[1], b[0], b[1]);
+  }
   g.trazo(0.8);
   for (let j = 0; j < NUM_VARILLAS; j++) {
     const t = (2 * Math.PI * j) / NUM_VARILLAS;
@@ -2104,7 +2143,7 @@ function paginaPlanta(doc, g, T, imgs) {
   const lista = [
     [metal, "solido", `Aro superior: Ø ${fx(T.ds)} (banda de ${T.metal.nombre.toLowerCase()})`],
     [OSCURO, "punteado", `Aros del centro: Ø ${fx(T.Dc)} al eje (Ø ${fx(T.W)} con la cuerda)`],
-    [OSCURO, "grueso", `${NUM_VARILLAS} varillas de soporte a 0°, 90°, 180° y 270°`],
+    [OSCURO, "grueso", `${NUM_VARILLAS} varillas arriba y ${NUM_VARILLAS} abajo (debajo), a 0°, 90°, 180° y 270°`],
     [OSCURO, "fino", "Araña del portabombillo: 3 brazos a 120°"],
   ];
   for (const [col, estilo, texto] of lista) {
@@ -2128,9 +2167,9 @@ function paginaPlanta(doc, g, T, imgs) {
   // Detalle de una varilla
   let yd = area.y0 + ih + 13;
   g.fuente("bold", 10); g.tinta(TINTA);
-  doc.text("Detalle de una varilla", ix, yd);
+  doc.text("Detalle de las varillas", ix, yd);
   const V = T.varilla;
-  const sd = Math.min((iw - 36) / V.dr, (area.y1 - yd - 20) / V.dy);
+  const sd = Math.min((iw - 36) / V.dr, (area.y1 - yd - 27) / V.dy);
   const q0 = [ix + 8, yd + 9], q1 = [q0[0] + V.dr * sd, q0[1] + V.dy * sd];
   g.color(GRIS); g.trazo(0.2, [1.2, 0.9]);
   doc.line(q0[0], q0[1], q1[0], q0[1]);
@@ -2162,6 +2201,13 @@ function paginaPlanta(doc, g, T, imgs) {
   g.fuente("normal", 7.5); g.tinta(GRIS);
   doc.text("aro superior", q0[0] - 2, q0[1] - 3);
   doc.text("aro de arriba del centro", q1[0] + 1, q1[1] + 4.8, { align: "right" });
+  const VI = T.varillaInf;
+  const iguales = Math.abs(VI.L - V.L) < 0.05 && Math.abs(VI.ang - V.ang) < 0.5;
+  g.fuente("normal", 8); g.tinta(TINTA);
+  doc.text(iguales
+    ? `Arriba y abajo son iguales: 8 varillas de ${fx(V.L)} cm.`
+    : `Abajo: L = ${fx(VI.L)} cm (${fx(VI.dr)} horizontal y ${fx(VI.dy)} vertical, ${fx(VI.ang, 0)}°).`, ix, area.y1 - 5);
+  g.fuente("normal", 7.5); g.tinta(GRIS);
   doc.text("Medidas entre ejes. Dejar margen para soldar.", ix, area.y1);
 }
 
@@ -2198,10 +2244,11 @@ function paginaPiezas(doc, g, T) {
   const comprar = Math.ceil((T.cuerdaTotal * 1.1) / 10) * 10;
   const sub = { colores: [GRIS] };
   const filas = [
-    { celdas: ["Aro superior (boca)", "1", `Ø ${fx(T.ds)} · perímetro ${fx(pi * T.ds)}`, `Banda de ${fx(T.bh)} cm de alto, acabado ${metal}. Ahí van soldadas las ${NUM_VARILLAS} varillas y la araña del portabombillo.`] },
+    { celdas: ["Aro superior (boca)", "1", `Ø ${fx(T.ds)} · perímetro ${fx(pi * T.ds)}`, `Banda de ${fx(T.bh)} cm de alto, acabado ${metal}. Ahí van soldadas las ${NUM_VARILLAS} varillas de arriba y la araña del portabombillo.`] },
     { celdas: ["Aros del centro (doble aro)", "2", `Ø ${fx(T.Dc)} al eje · perímetro ${fx(pi * T.Dc)}`, `Varilla de ${fx(T.alambre)} mm, separados ${fx(T.sep)} cm entre ejes (a ${fx(T.yI)} y ${fx(T.yS)} cm desde abajo). Forrados con la cuerda quedan en Ø ${fx(T.W)}.`] },
-    { celdas: ["Aro inferior (boca)", "1", `Ø ${fx(T.di)} · perímetro ${fx(pi * T.di)}`, `Banda de ${fx(T.bh)} cm de alto, acabado ${metal}.`] },
-    { celdas: ["Varillas de soporte", String(NUM_VARILLAS), `${fx(T.varilla.L)} entre ejes`, `Del aro superior al aro de arriba del centro, a 0°, 90°, 180° y 270°. Inclinación de ${fx(T.varilla.ang, 0)}° (${fx(T.varilla.dr)} en horizontal y ${fx(T.varilla.dy)} en vertical).`] },
+    { celdas: ["Aro inferior (boca)", "1", `Ø ${fx(T.di)} · perímetro ${fx(pi * T.di)}`, `Banda de ${fx(T.bh)} cm de alto, acabado ${metal}. Ahí van soldadas las ${NUM_VARILLAS} varillas de abajo.`] },
+    { celdas: ["Varillas de soporte de arriba", String(NUM_VARILLAS), `${fx(T.varilla.L)} entre ejes`, `Del aro superior al aro de arriba del centro, a 0°, 90°, 180° y 270°. Inclinación de ${fx(T.varilla.ang, 0)}° (${fx(T.varilla.dr)} en horizontal y ${fx(T.varilla.dy)} en vertical).`] },
+    { celdas: ["Varillas de soporte de abajo", String(NUM_VARILLAS), `${fx(T.varillaInf.L)} entre ejes`, `Del aro de abajo del centro al aro inferior, en los mismos ángulos. Inclinación de ${fx(T.varillaInf.ang, 0)}° (${fx(T.varillaInf.dr)} en horizontal y ${fx(T.varillaInf.dy)} en vertical).`] },
   ];
   if (T.sep >= 0.5) {
     filas.push({ celdas: ["Uniones del doble aro", String(NUM_VARILLAS), `${fx(T.sep)} entre ejes`, "Unen los dos aros del centro, en los mismos ángulos de las varillas."] });
@@ -2222,9 +2269,8 @@ function paginaPiezas(doc, g, T) {
   y += 5.2;
   const notas = [
     "Las medidas de aros y varillas son al eje de la varilla; dejar margen para soldar.",
-    `Hay una hebra cada ${fx(360 / T.n, 2)}°: una cae justo sobre cada varilla y la tapa.`,
+    `Hay una hebra cada ${fx(360 / T.n, 2)}°: una cae justo sobre cada varilla, arriba y abajo, y la tapa.`,
     `En el ecuador quedan unos ${fx(T.sepEcuadorMm)} mm entre hebras; cerca de las bocas se montan en 3 capas.`,
-    "El aro inferior queda sostenido por las hebras del cono de abajo.",
     "La cuerda calculada sale del modelo 3D y no incluye amarres ni desperdicio.",
   ];
   g.fuente("normal", 8.6); g.tinta(GRIS);
