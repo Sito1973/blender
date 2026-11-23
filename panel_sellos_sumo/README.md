@@ -42,7 +42,8 @@ Para cambiar un sello por otro candidato, copiar su `d` de `candidatos_sellos.js
 
 | Archivo | Para qué sirve |
 |---------|----------------|
-| `corte/sello_NN_relieve.dxf` / `.svg` | **Lo que corta el láser.** Escala 1:1, en mm |
+| `corte/sellos_sumo_todos.dxf` / `.pdf` / `.svg` | **Todo en un solo dibujo**, escala 1:1 en mm: arriba los relieves y abajo las bases, cada pieza rotulada |
+| `corte/sello_NN_relieve.dxf` / `.svg` | La línea de un sello, por separado |
 | `corte/sello_NN_base.dxf` / `.svg` | Cuadrado de la base + marca guía |
 | `planos/plano_sellos.pdf` / `.png` / `.svg` | Todos los sellos, medidas, sección y lista de piezas |
 | `panel_sellos_sumo.blend` | Modelo de Blender: curvas editables + vista 3D. Lleva dentro el script y el arte, así que funciona solo |
@@ -51,7 +52,8 @@ Para cambiar un sello por otro candidato, copiar su `d` de `candidatos_sellos.js
 | `renders/` | Vistas previas |
 
 Colores: **rojo = cortar**. **Azul** (solo en los archivos de base) **= marcar suave, sin
-cortar**: dibuja sobre la base dónde va cada pieza, para pegarlas en su sitio.
+cortar**: dibuja sobre la base dónde va cada pieza, para pegarlas en su sitio. **Verde** (solo en
+`sellos_sumo_todos`) **= rótulos**, no se cortan.
 
 ## Notas
 
@@ -77,4 +79,4 @@ También se puede ejecutar dentro de Blender (pestaña *Scripting* → *Run Scri
 retocan las curvas a mano, poner `MODO = "EXPORTAR"` y ejecutar de nuevo: reescribe los
 archivos de corte a partir de las curvas de la escena, en la carpeta del `.blend`.
 
-`plano_sellos.pdf` y `.png` son conversiones del `.svg` que escribe el script.
+`plano_sellos.pdf`/`.png` y `sellos_sumo_todos.pdf` son conversiones de los `.svg` que escribe el script.

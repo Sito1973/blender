@@ -15,9 +15,10 @@ guarda una copia, así que el script también funciona con el .blend solo.
 
 Qué genera
 ----------
+  corte/sellos_sumo_todos.dxf|svg -> todas las piezas de todos los sellos en un solo dibujo
   corte/sello_NN_relieve.svg|dxf  -> lo que corta el láser (la línea del sello)
   corte/sello_NN_base.svg|dxf     -> cuadrado de la base + marca guía para pegar
-  planos/plano_sellos.svg         -> los 12 sellos, medidas y lista de piezas
+  planos/plano_sellos.svg         -> todos los sellos, medidas y lista de piezas
   panel_sellos_sumo.blend         -> modelo 3D (solo por consola)
   renders/*.png                   -> vistas previas (solo por consola)
 
@@ -28,6 +29,7 @@ import json
 import math
 import os
 import re
+import unicodedata
 
 try:
     import bpy
@@ -124,50 +126,82 @@ def _d_svg(tr, alto, escala=1.0, dx=0.0, dy=0.0):
     return " ".join(d) + (" Z" if tr["cerrado"] else "")
 
 
-def escribir_svg(ruta, trazados, titulo):
-    """SVG a escala 1:1 en mm. Rojo = cortar, azul = grabar línea."""
-    grab, corte = _ordenar(trazados)
+def _ascii(texto):
+    """El DXF R12 solo admite ASCII: quita tildes y símbolos."""
+    texto = texto.replace("Ø", "D").replace("·", "-").replace("×", "x").replace("—", "-")
+    return unicodedata.normalize("NFD", texto).encode("ascii", "ignore").decode("ascii")
+
+
+def escribir_svg(ruta, piezas, titulo, ancho=None, alto=None, rotulos=()):
+    """SVG a escala 1:1 en mm. Rojo = cortar, azul = marcar, verde = rótulos (no se cortan).
+
+    `piezas` es una lista de piezas; cada pieza es una lista de trazados.
+    `rotulos` = [(x, y, altura_mm, texto)], con el origen abajo a la izquierda.
+    """
+    ancho, alto = ancho or LADO, alto or LADO
+    capas = {"GRABADO": [], "CORTE": []}
+    for pieza in piezas:                       # dentro de cada pieza: marcas, cortes interiores y contorno
+        grab, corte = _ordenar(pieza)
+        capas["GRABADO"] += grab
+        capas["CORTE"] += corte
     s = [f'<?xml version="1.0" encoding="UTF-8"?>',
          f'<svg xmlns="http://www.w3.org/2000/svg" '
          f'xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" '
-         f'width="{LADO:g}mm" height="{LADO:g}mm" viewBox="0 0 {LADO:g} {LADO:g}">',
+         f'width="{ancho:g}mm" height="{alto:g}mm" viewBox="0 0 {ancho:g} {alto:g}">',
          f'<title>{titulo}</title>']
-    for nombre, color, grupo in (("GRABADO", "#0000ff", grab), ("CORTE", "#ff0000", corte)):
-        if grupo:
+    for nombre, color in (("GRABADO", "#0000ff"), ("CORTE", "#ff0000")):
+        if capas[nombre]:
             s.append(f'<g id="{nombre}" inkscape:groupmode="layer" inkscape:label="{nombre}" '
                      f'fill="none" stroke="{color}" stroke-width="0.1">')
-            s += [f'<path d="{_d_svg(t, LADO)}"/>' for t in grupo]
+            s += [f'<path d="{_d_svg(t, alto)}"/>' for t in capas[nombre]]
             s.append('</g>')
+    if rotulos:
+        s.append('<g id="ROTULOS" inkscape:groupmode="layer" inkscape:label="ROTULOS" fill="#008000" '
+                 'font-family="Helvetica, Arial, sans-serif">')
+        s += [f'<text x="{x:.2f}" y="{alto - y:.2f}" font-size="{h * 1.4:.1f}">{txt}</text>'
+              for x, y, h, txt in rotulos]
+        s.append('</g>')
     s.append('</svg>')
     with open(ruta, "w", encoding="utf-8") as f:
         f.write("\n".join(s) + "\n")
 
 
-def escribir_dxf(ruta, trazados):
-    """DXF R12 (el más compatible) en mm. Capas CORTE (rojo) y GRABADO (azul)."""
-    grab, corte = _ordenar(trazados)
+def escribir_dxf(ruta, piezas, ancho=None, alto=None, rotulos=()):
+    """DXF R12 (el más compatible) en mm. Capas CORTE (rojo), GRABADO (azul) y ROTULOS (verde)."""
+    ancho, alto = ancho or LADO, alto or LADO
     o = ["0", "SECTION", "2", "HEADER",
          "9", "$ACADVER", "1", "AC1009",
          "9", "$INSUNITS", "70", "4",
          "9", "$EXTMIN", "10", "0.0", "20", "0.0", "30", "0.0",
-         "9", "$EXTMAX", "10", f"{LADO:.4f}", "20", f"{LADO:.4f}", "30", "0.0",
+         "9", "$EXTMAX", "10", f"{ancho:.4f}", "20", f"{alto:.4f}", "30", "0.0",
          "0", "ENDSEC",
          "0", "SECTION", "2", "TABLES",
          "0", "TABLE", "2", "LTYPE", "70", "1",
          "0", "LTYPE", "2", "CONTINUOUS", "70", "0", "3", "Solid line", "72", "65", "73", "0", "40", "0.0",
          "0", "ENDTAB",
-         "0", "TABLE", "2", "LAYER", "70", "2",
+         "0", "TABLE", "2", "LAYER", "70", "3" if rotulos else "2",
          "0", "LAYER", "2", "CORTE", "70", "0", "62", "1", "6", "CONTINUOUS",
-         "0", "LAYER", "2", "GRABADO", "70", "0", "62", "5", "6", "CONTINUOUS",
-         "0", "ENDTAB", "0", "ENDSEC",
-         "0", "SECTION", "2", "ENTITIES"]
-    for capa, grupo in (("GRABADO", grab), ("CORTE", corte)):
-        for t in grupo:
-            o += ["0", "POLYLINE", "8", capa, "66", "1", "70", "1" if t["cerrado"] else "0",
-                  "10", "0.0", "20", "0.0", "30", "0.0"]
-            for x, y in _polilinea(t):
-                o += ["0", "VERTEX", "8", capa, "10", f"{x:.4f}", "20", f"{y:.4f}", "30", "0.0"]
-            o += ["0", "SEQEND", "8", capa]
+         "0", "LAYER", "2", "GRABADO", "70", "0", "62", "5", "6", "CONTINUOUS"]
+    if rotulos:
+        o += ["0", "LAYER", "2", "ROTULOS", "70", "0", "62", "3", "6", "CONTINUOUS",
+              "0", "ENDTAB",
+              "0", "TABLE", "2", "STYLE", "70", "1",
+              "0", "STYLE", "2", "STANDARD", "70", "0", "40", "0.0", "41", "1.0", "50", "0.0", "71", "0",
+              "42", "2.5", "3", "txt", "4", ""]
+    o += ["0", "ENDTAB", "0", "ENDSEC",
+          "0", "SECTION", "2", "ENTITIES"]
+    for pieza in piezas:
+        grab, corte = _ordenar(pieza)
+        for capa, grupo in (("GRABADO", grab), ("CORTE", corte)):
+            for t in grupo:
+                o += ["0", "POLYLINE", "8", capa, "66", "1", "70", "1" if t["cerrado"] else "0",
+                      "10", "0.0", "20", "0.0", "30", "0.0"]
+                for x, y in _polilinea(t):
+                    o += ["0", "VERTEX", "8", capa, "10", f"{x:.4f}", "20", f"{y:.4f}", "30", "0.0"]
+                o += ["0", "SEQEND", "8", capa]
+    for x, y, h, txt in rotulos:
+        o += ["0", "TEXT", "8", "ROTULOS", "10", f"{x:.4f}", "20", f"{y:.4f}", "30", "0.0",
+              "40", f"{h:.4f}", "1", _ascii(txt), "7", "STANDARD"]
     o += ["0", "ENDSEC", "0", "EOF"]
     with open(ruta, "w", encoding="ascii") as f:
         f.write("\n".join(o) + "\n")
@@ -280,12 +314,43 @@ def exportar(paneles, carpeta):
         for capa, nombre in ((1, "base"), (2, "relieve")):
             tr = [t for t in trazados if t["capa"] == capa]
             base = os.path.join(corte, f"sello_{n:02d}_{nombre}")
-            escribir_svg(base + ".svg", tr, f"Sello SUMO {n:02d} - {nombre}")
-            escribir_dxf(base + ".dxf", tr)
+            escribir_svg(base + ".svg", [tr], f"Sello SUMO {n:02d} - {nombre}")
+            escribir_dxf(base + ".dxf", [tr])
+    escribir_conjunto(paneles, corte)
     planos = os.path.join(carpeta, "planos")
     os.makedirs(planos, exist_ok=True)
     escribir_plano(os.path.join(planos, "plano_sellos.svg"), paneles)
     print(f"[sellos] {len(paneles)} paneles: archivos de corte y plano escritos en {carpeta}")
+
+
+def escribir_conjunto(paneles, corte, columnas=7, separacion=20.0):
+    """Todos los sellos en un solo dibujo (DXF y SVG): abajo las bases y arriba las piezas de relieve."""
+    numeros = sorted(paneles)
+    filas = math.ceil(len(numeros) / columnas)
+    paso_x, paso_y = LADO + separacion, LADO + 45.0
+    alto_bloque = filas * paso_y
+    bloques = ((1, "BASE", f"CAPA 1 · BASE ({len(numeros)} cuadros de {LADO:g} × {LADO:g} mm, {MATERIAL} {ESPESOR_BASE:g} mm): "
+                           "ROJO = cortar · AZUL = marcar suave, sin cortar (guía para pegar)"),
+               (2, "RELIEVE", f"CAPA 2 · RELIEVE ({len(numeros)} sellos de Ø {DIAMETRO:g} mm, {MATERIAL} "
+                              f"{ESPESOR_RELIEVE:g} mm): ROJO = cortar todo"))
+    piezas, rotulos = [], []
+    for b, (capa, etiqueta, titulo) in enumerate(bloques):
+        y_bloque = b * (alto_bloque + 90.0)
+        rotulos.append((0.0, y_bloque + alto_bloque + 8.0, 20.0, titulo))
+        for i, n in enumerate(numeros):
+            trazados, info = paneles[n]
+            x = (i % columnas) * paso_x
+            y = y_bloque + (filas - 1 - i // columnas) * paso_y
+            piezas.append([dict(t, nudos=[tuple((p[0] + x, p[1] + y) for p in nudo) for nudo in t["nudos"]])
+                           for t in trazados if t["capa"] == capa])
+            rotulos.append((x, y + LADO + 10.0, 9.0, f"SELLO {n:02d} · {info.get('nombre', '').upper()} · {etiqueta}"))
+    ancho = columnas * paso_x - separacion
+    alto = 2 * alto_bloque + 90.0 + 105.0
+    rotulos.append((0.0, alto - 30.0, 20.0, f"SELLOS SUMO · PANELES DE {LADO:g} × {LADO:g} mm · MEDIDAS EN mm, ESCALA 1:1"))
+    rotulos.append((0.0, alto - 62.0, 14.0, "VERDE = rótulos, no se cortan · Cada sello lleva dos piezas: su BASE (abajo) y su RELIEVE (arriba)"))
+    base = os.path.join(corte, "sellos_sumo_todos")
+    escribir_svg(base + ".svg", piezas, "Sellos SUMO - todas las piezas", ancho, alto, rotulos)
+    escribir_dxf(base + ".dxf", piezas, ancho, alto, rotulos)
 
 
 def escribir_plano(ruta, paneles):
