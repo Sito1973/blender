@@ -1,8 +1,7 @@
 # Paneles con los sellos de Sumo en relieve — corte láser
 
-Los 12 sellos de los fuelles de la bolsa de Sumo, cada uno convertido en un panel de
-600 × 600 × 18 mm: la línea del sello (Ø 520 mm) se corta en una capa y se encola sobre
-una base cuadrada lisa.
+14 sellos, cada uno convertido en un panel de 600 × 600 × 18 mm: la línea del sello
+(Ø 520 mm) se corta en una capa y se encola sobre una base cuadrada lisa.
 
 | Capa | Qué es | Medida (mm) | Por panel |
 |------|--------|-------------|-----------|
@@ -13,14 +12,32 @@ una base cuadrada lisa.
 
 | N.º | Sello | Piezas | N.º | Sello | Piezas |
 |-----|-------|--------|-----|-------|--------|
-| 01 | Vetas del salmón | 1 + 1 | 07 | Palillos y arroz | 1 + 15 |
-| 02 | Espiral que se vuelve ola | 1 | 08 | Rollo de sushi | 1 + 7 |
-| 03 | Pliegues de la gyoza | 1 + 4 | 09 | Costillas | 1 + 1 |
-| 04 | Rodaja de limón | 1 + 7 | 10 | Vapor sobre el cuenco | 1 + 2 |
-| 05 | Ojo de pez con grecas | 1 + 5 | 11 | Espiral y ojo | 1 + 1 |
-| 06 | Greca andina y ola | 1 | 12 | Ola | 1 + 2 |
+| 01 | Vetas del salmón | 1 + 1 | 09 | Costillas | 1 + 1 |
+| 02 | Espiral que se vuelve ola | 1 | 10 | Vapor sobre el cuenco | 1 + 2 |
+| 03 | Pliegues de la gyoza | 1 + 4 | 11 | Espiral y ojo | 1 + 1 |
+| 05 | Ojo de pez con grecas | 1 + 5 | 12 | Ola | 1 + 2 |
+| 06 | Greca andina y ola | 1 | 13 | Grecas y escamas *(nuevo)* | 1 + 4 |
+| 07 | Palillos y arroz | 1 + 15 | 14 | Terrazas y luna *(nuevo)* | 1 + 1 |
+| 08 | Rollo de sushi | 1 + 7 | 15 | Tejido andino y olas *(nuevo)* | 1 + 2 |
 
 «1 + n» = la pieza principal (aro con sus líneas) más *n* piezas pequeñas que se pegan aparte.
+
+- **01 a 12** son los de los fuelles de la bolsa de Sumo. El 04 (Rodaja de limón) se retiró.
+- **13 a 15** son nuevos, en la línea de «Greca andina y ola» (motivo andino de escalones +
+  motivo japonés de curvas). No están en la bolsa.
+
+## Propuestas (carpeta `propuestas/`)
+
+| Archivo | Qué es |
+|---------|--------|
+| `candidatos_sellos.png` | Los 12 sellos nuevos que se generaron (A a L); E, F y J son los 13, 14 y 15 |
+| `candidatos_sellos.json` | Esos 12 en vector, para cambiar uno por otro sin volver a generarlos |
+| `distribucion_A.png` | Ubicación en pared: mural en cuadrícula 4 × 3 |
+| `distribucion_B.png` | Ubicación en pared: friso de 7 en una fila |
+| `distribucion_C.png` | Ubicación en pared: ajedrez de sellos y paneles de ondas |
+
+Para cambiar un sello por otro candidato, copiar su `d` de `candidatos_sellos.json` a
+`sellos_sumo.json` con el número que se quiera y volver a ejecutar el script.
 
 ## Archivos
 
@@ -28,10 +45,10 @@ una base cuadrada lisa.
 |---------|----------------|
 | `corte/sello_NN_relieve.dxf` / `.svg` | **Lo que corta el láser.** Escala 1:1, en mm |
 | `corte/sello_NN_base.dxf` / `.svg` | Cuadrado de la base + marca guía |
-| `planos/plano_sellos.pdf` / `.png` / `.svg` | Los 12 sellos, medidas, sección y lista de piezas |
+| `planos/plano_sellos.pdf` / `.png` / `.svg` | Todos los sellos, medidas, sección y lista de piezas |
 | `panel_sellos_sumo.blend` | Modelo de Blender: curvas editables + vista 3D |
 | `panel_sellos_sumo.py` | Script que genera todo lo anterior |
-| `sellos_sumo.json` | Arte de los 12 sellos en vector |
+| `sellos_sumo.json` | Arte de los sellos en vector |
 | `renders/` | Vistas previas |
 
 Colores: **rojo = cortar**. **Azul** (solo en los archivos de base) **= marcar suave, sin
@@ -39,9 +56,11 @@ cortar**: dibuja sobre la base dónde va cada pieza, para pegarlas en su sitio.
 
 ## Notas
 
-- El arte sale de los fuelles publicados en `bolsas.cocinandosonrisas.co`
-  (`descargas/Sumo_fuelle_cara2.svg` y `Sumo_fuelle_cara4.svg`); los sellos 01–06 son los
-  de la cara 2 y 07–12 los de la cara 4, de arriba abajo.
+- El arte de los sellos 01–12 sale de los fuelles publicados en `bolsas.cocinandosonrisas.co`
+  (`descargas/Sumo_fuelle_cara2.svg` y `Sumo_fuelle_cara4.svg`); 01–06 son los de la cara 2
+  y 07–12 los de la cara 4, de arriba abajo.
+- Los sellos nuevos tienen la línea algo más gruesa y zonas macizas más grandes que los de
+  la bolsa.
 - Se descartan 4 motas de menos de 120 mm² que no se podrían pegar (1 en el sello 03 y 3
   en el 08). El umbral es `PIEZA_MIN_MM2`.
 - A este tamaño la línea mide entre 9 y 24 mm de ancho.

@@ -45,12 +45,12 @@ DIAMETRO = 520.0          # diámetro del sello sobre el panel
 ESPESOR_BASE = 9.0        # capa 1 (cuadrado liso)
 ESPESOR_RELIEVE = 9.0     # capa 2 (línea del sello)
 MATERIAL = "MDF"          # solo para rotular el plano
-SELLOS = list(range(1, 13))   # cuáles sellos generar (1 a 12)
+SELLOS = None             # cuáles generar, p. ej. [2, 6, 12] · None = todos los del archivo
 MARCA_EN_BASE = True      # dibuja en la base el contorno del sello (azul) como guía de pegado
 PIEZA_MIN_MM2 = 120.0     # motas más pequeñas que esto se descartan (no se pueden pegar bien)
 HUECO_MIN_MM2 = 30.0      # agujeros más pequeños que esto se descartan
 
-COLUMNAS = 4              # disposición de los paneles en la escena de Blender
+COLUMNAS = 5              # disposición de los paneles en la escena de Blender
 SEPARACION = 40.0
 RENDERIZAR = True         # solo se aplica al ejecutar por consola (--background)
 MUESTRAS_RENDER = 48
@@ -161,7 +161,7 @@ def generar_todo(comun, carpeta):
     with open(os.path.join(carpeta, "sellos_sumo.json"), encoding="utf-8") as f:
         arte = {s["n"]: s for s in json.load(f)["sellos"]}
     paneles = {}
-    for n in SELLOS:
+    for n in SELLOS or sorted(arte):
         trazados, info = trazados_sello(comun, arte[n]["d"])
         info["nombre"] = arte[n].get("nombre", "")
         paneles[n] = (trazados, info)
@@ -173,6 +173,10 @@ def exportar(comun, paneles, carpeta):
     """`paneles` = {número: (trazados, resumen)}."""
     corte = os.path.join(carpeta, "corte")
     os.makedirs(corte, exist_ok=True)
+    for viejo in os.listdir(corte):            # quita los archivos de sellos que ya no están
+        m = re.fullmatch(r"sello_(\d+)_(base|relieve)\.(svg|dxf)", viejo)
+        if m and int(m.group(1)) not in paneles:
+            os.remove(os.path.join(corte, viejo))
     for n, (trazados, _) in sorted(paneles.items()):
         for capa, nombre in ((1, "base"), (2, "relieve")):
             tr = [t for t in trazados if t["capa"] == capa]
@@ -239,7 +243,7 @@ def escribir_plano(comun, ruta, paneles):
     cols = 4 if len(numeros) > 6 else 3
     filas = max(1, math.ceil(len(numeros) / cols))
     paso_x = 248.0 / cols
-    paso_y = min(80.0, 238.0 / filas)
+    paso_y = min(80.0, 240.0 / filas)
     lado_dib = min(paso_x - 8.0, paso_y - 19.0)
     for i, n in enumerate(numeros):
         trazados, info = paneles[n]
