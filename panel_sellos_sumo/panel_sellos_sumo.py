@@ -10,9 +10,8 @@ Cómo usarlo
   * Por consola:        blender --background --python panel_sellos_sumo.py
   * Dentro de Blender:  pestaña "Scripting" > Abrir este archivo > Ejecutar (Alt+P).
 
-Necesita, en esta misma carpeta, `sellos_sumo.json` (el arte de los 12 sellos) y,
-en la carpeta vecina, `../panel_ondas_laser/panel_ondas_laser.py` (de ahí toma las
-funciones que escriben los SVG/DXF).
+El arte de los sellos está en `sellos_sumo.json` (en esta misma carpeta). El .blend
+guarda una copia, así que el script también funciona con el .blend solo.
 
 Qué genera
 ----------
@@ -25,7 +24,6 @@ Qué genera
 Todas las medidas de los PARÁMETROS están en milímetros.
 """
 
-import importlib.util
 import json
 import math
 import os
@@ -57,29 +55,122 @@ MUESTRAS_RENDER = 48
 
 E = 0.001                 # mm -> unidades de Blender (metros)
 PREFIJO = "Sello_"
+ARCHIVO_ARTE = "sellos_sumo.json"
 
 
-# ───────────────────────────── ARCHIVOS Y FUNCIONES COMUNES ─────────────────────────────
+# ───────────────────────────── CARPETA DE TRABAJO ─────────────────────────────
 def _carpeta():
     if bpy and bpy.data.filepath:
         return os.path.dirname(bpy.data.filepath)
     aqui = globals().get("__file__", "")
     if aqui and os.path.isfile(aqui):
         return os.path.dirname(os.path.abspath(aqui))
-    raise RuntimeError("Guarda el .blend (o abre el script desde el disco) dentro de la carpeta "
-                       "panel_sellos_sumo para que encuentre sellos_sumo.json.")
+    raise RuntimeError("Guarda primero el .blend: los archivos se escriben en su misma carpeta.")
 
 
-def _cargar_comun(carpeta):
-    """Funciones compartidas con el panel de ondas (escritura de SVG/DXF, materiales…)."""
-    ruta = os.path.join(carpeta, os.pardir, "panel_ondas_laser", "panel_ondas_laser.py")
-    if not os.path.isfile(ruta):
-        raise RuntimeError(f"Falta {os.path.normpath(ruta)}")
-    spec = importlib.util.spec_from_file_location("panel_ondas_laser", ruta)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    mod.ANCHO = mod.ALTO = LADO               # tamaño de página de los archivos de corte
-    return mod
+# ───────────────────────────── TRAZADOS Y ARCHIVOS DE CORTE ─────────────────────────────
+# Un trazado es dict(capa, tipo "CORTE"/"GRABADO", cerrado, nudos=[(asa_izq, punto, asa_der)]), en mm.
+def _segmentos(tr):
+    """Segmentos cúbicos (p0, c1, c2, p1) de un trazado."""
+    n = tr["nudos"]
+    pares = list(zip(n, n[1:])) + ([(n[-1], n[0])] if tr["cerrado"] else [])
+    return [(a[1], a[2], b[0], b[1]) for a, b in pares]
+
+
+def _es_recto(seg):
+    p0, c1, c2, p1 = seg
+    dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+    largo = math.hypot(dx, dy) or 1.0
+    return all(abs((c[0] - p0[0]) * dy - (c[1] - p0[1]) * dx) / largo < 1e-4 for c in (c1, c2))
+
+
+def _polilinea(tr, pasos=8):
+    """Convierte el trazado a puntos (para DXF y para medir)."""
+    pts = [tr["nudos"][0][1]]
+    for seg in _segmentos(tr):
+        p0, c1, c2, p1 = seg
+        if _es_recto(seg):
+            pts.append(p1)
+            continue
+        for i in range(1, pasos + 1):
+            t = i / pasos
+            a, b, c, d = (1 - t) ** 3, 3 * t * (1 - t) ** 2, 3 * t * t * (1 - t), t ** 3
+            pts.append((a * p0[0] + b * c1[0] + c * c2[0] + d * p1[0],
+                        a * p0[1] + b * c1[1] + c * c2[1] + d * p1[1]))
+    if tr["cerrado"]:
+        pts.pop()                             # el último repite al primero
+    return pts
+
+
+def _area_caja(tr):
+    xs = [n[1][0] for n in tr["nudos"]]
+    ys = [n[1][1] for n in tr["nudos"]]
+    return (max(xs) - min(xs)) * (max(ys) - min(ys))
+
+
+def _ordenar(trazados):
+    """Orden de trabajo del láser: grabado, cortes interiores y contorno al final."""
+    grab = [t for t in trazados if t["tipo"] == "GRABADO"]
+    corte = sorted((t for t in trazados if t["tipo"] == "CORTE"), key=_area_caja)
+    return grab, corte
+
+
+def _d_svg(tr, alto, escala=1.0, dx=0.0, dy=0.0):
+    def c(p):
+        return f"{dx + p[0] * escala:.3f},{dy + (alto - p[1]) * escala:.3f}"
+    d = ["M" + c(tr["nudos"][0][1])]
+    for seg in _segmentos(tr):
+        d.append("L" + c(seg[3]) if _es_recto(seg) else f"C{c(seg[1])} {c(seg[2])} {c(seg[3])}")
+    return " ".join(d) + (" Z" if tr["cerrado"] else "")
+
+
+def escribir_svg(ruta, trazados, titulo):
+    """SVG a escala 1:1 en mm. Rojo = cortar, azul = grabar línea."""
+    grab, corte = _ordenar(trazados)
+    s = [f'<?xml version="1.0" encoding="UTF-8"?>',
+         f'<svg xmlns="http://www.w3.org/2000/svg" '
+         f'xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" '
+         f'width="{LADO:g}mm" height="{LADO:g}mm" viewBox="0 0 {LADO:g} {LADO:g}">',
+         f'<title>{titulo}</title>']
+    for nombre, color, grupo in (("GRABADO", "#0000ff", grab), ("CORTE", "#ff0000", corte)):
+        if grupo:
+            s.append(f'<g id="{nombre}" inkscape:groupmode="layer" inkscape:label="{nombre}" '
+                     f'fill="none" stroke="{color}" stroke-width="0.1">')
+            s += [f'<path d="{_d_svg(t, LADO)}"/>' for t in grupo]
+            s.append('</g>')
+    s.append('</svg>')
+    with open(ruta, "w", encoding="utf-8") as f:
+        f.write("\n".join(s) + "\n")
+
+
+def escribir_dxf(ruta, trazados):
+    """DXF R12 (el más compatible) en mm. Capas CORTE (rojo) y GRABADO (azul)."""
+    grab, corte = _ordenar(trazados)
+    o = ["0", "SECTION", "2", "HEADER",
+         "9", "$ACADVER", "1", "AC1009",
+         "9", "$INSUNITS", "70", "4",
+         "9", "$EXTMIN", "10", "0.0", "20", "0.0", "30", "0.0",
+         "9", "$EXTMAX", "10", f"{LADO:.4f}", "20", f"{LADO:.4f}", "30", "0.0",
+         "0", "ENDSEC",
+         "0", "SECTION", "2", "TABLES",
+         "0", "TABLE", "2", "LTYPE", "70", "1",
+         "0", "LTYPE", "2", "CONTINUOUS", "70", "0", "3", "Solid line", "72", "65", "73", "0", "40", "0.0",
+         "0", "ENDTAB",
+         "0", "TABLE", "2", "LAYER", "70", "2",
+         "0", "LAYER", "2", "CORTE", "70", "0", "62", "1", "6", "CONTINUOUS",
+         "0", "LAYER", "2", "GRABADO", "70", "0", "62", "5", "6", "CONTINUOUS",
+         "0", "ENDTAB", "0", "ENDSEC",
+         "0", "SECTION", "2", "ENTITIES"]
+    for capa, grupo in (("GRABADO", grab), ("CORTE", corte)):
+        for t in grupo:
+            o += ["0", "POLYLINE", "8", capa, "66", "1", "70", "1" if t["cerrado"] else "0",
+                  "10", "0.0", "20", "0.0", "30", "0.0"]
+            for x, y in _polilinea(t):
+                o += ["0", "VERTEX", "8", capa, "10", f"{x:.4f}", "20", f"{y:.4f}", "30", "0.0"]
+            o += ["0", "SEQEND", "8", capa]
+    o += ["0", "ENDSEC", "0", "EOF"]
+    with open(ruta, "w", encoding="ascii") as f:
+        f.write("\n".join(o) + "\n")
 
 
 # ───────────────────────────── GEOMETRÍA DE LOS SELLOS ─────────────────────────────
@@ -130,7 +221,7 @@ def _dentro(p, pts):
     return dentro
 
 
-def trazados_sello(comun, d):
+def trazados_sello(d):
     """Trazados de un panel (mm, origen en la esquina inferior izquierda) y su resumen."""
     k = DIAMETRO / 100.0
 
@@ -140,7 +231,7 @@ def trazados_sello(comun, d):
     contornos = []
     for c in _subtrazos(d):
         nudos = [(mm(hi), mm(p), mm(hd)) for hi, p, hd in c]
-        pts = comun._polilinea(dict(cerrado=True, nudos=nudos))
+        pts = _polilinea(dict(cerrado=True, nudos=nudos))
         contornos.append(dict(nudos=nudos, pts=pts, area=_area(pts)))
     for c in contornos:                        # profundidad par = pieza · impar = hueco
         c["prof"] = sum(_dentro(c["pts"][0], o["pts"]) for o in contornos if o is not c)
@@ -158,19 +249,26 @@ def trazados_sello(comun, d):
                           descartados=len(contornos) - len(buenos))
 
 
-def generar_todo(comun, carpeta):
-    with open(os.path.join(carpeta, "sellos_sumo.json"), encoding="utf-8") as f:
-        arte = {s["n"]: s for s in json.load(f)["sellos"]}
+def generar_todo(carpeta):
+    ruta = os.path.join(carpeta, ARCHIVO_ARTE)
+    if os.path.isfile(ruta):
+        with open(ruta, encoding="utf-8") as f:
+            datos = json.load(f)
+    elif bpy and ARCHIVO_ARTE in bpy.data.texts:      # copia guardada dentro del .blend
+        datos = json.loads(bpy.data.texts[ARCHIVO_ARTE].as_string())
+    else:
+        raise RuntimeError(f"No encuentro {ARCHIVO_ARTE} junto al .blend ni dentro de él.")
+    arte = {s["n"]: s for s in datos["sellos"]}
     paneles = {}
     for n in SELLOS or sorted(arte):
-        trazados, info = trazados_sello(comun, arte[n]["d"])
+        trazados, info = trazados_sello(arte[n]["d"])
         info["nombre"] = arte[n].get("nombre", "")
         paneles[n] = (trazados, info)
     return paneles
 
 
 # ───────────────────────────── ARCHIVOS DE CORTE Y PLANO ─────────────────────────────
-def exportar(comun, paneles, carpeta):
+def exportar(paneles, carpeta):
     """`paneles` = {número: (trazados, resumen)}."""
     corte = os.path.join(carpeta, "corte")
     os.makedirs(corte, exist_ok=True)
@@ -182,15 +280,15 @@ def exportar(comun, paneles, carpeta):
         for capa, nombre in ((1, "base"), (2, "relieve")):
             tr = [t for t in trazados if t["capa"] == capa]
             base = os.path.join(corte, f"sello_{n:02d}_{nombre}")
-            comun.escribir_svg(base + ".svg", tr, f"Sello SUMO {n:02d} - {nombre}")
-            comun.escribir_dxf(base + ".dxf", tr)
+            escribir_svg(base + ".svg", tr, f"Sello SUMO {n:02d} - {nombre}")
+            escribir_dxf(base + ".dxf", tr)
     planos = os.path.join(carpeta, "planos")
     os.makedirs(planos, exist_ok=True)
-    escribir_plano(comun, os.path.join(planos, "plano_sellos.svg"), paneles)
+    escribir_plano(os.path.join(planos, "plano_sellos.svg"), paneles)
     print(f"[sellos] {len(paneles)} paneles: archivos de corte y plano escritos en {carpeta}")
 
 
-def escribir_plano(comun, ruta, paneles):
+def escribir_plano(ruta, paneles):
     """Hoja A3 apaisada: catálogo de sellos, medidas de un panel y lista de piezas."""
     total = ESPESOR_BASE + ESPESOR_RELIEVE
     margen = (LADO - DIAMETRO) / 2
@@ -233,7 +331,7 @@ def escribir_plano(comun, ruta, paneles):
         esc = lado_dib / LADO
         s.append(f'<rect x="{x:.2f}" y="{y:.2f}" width="{lado_dib}" height="{lado_dib}" fill="{fondo}" '
                  f'stroke="{tinta}" stroke-width="0.3"/>')
-        d = " ".join(comun._d_svg(t, LADO, esc, x, y) for t in trazados if t["capa"] == 2)
+        d = " ".join(_d_svg(t, LADO, esc, x, y) for t in trazados if t["capa"] == 2)
         s.append(f'<path d="{d}" fill="{madera}" fill-rule="evenodd"/>')
 
     # Catálogo de sellos
@@ -281,7 +379,7 @@ def escribir_plano(comun, ruta, paneles):
     s.append(f'<rect x="{xs}" y="{ys + zr}" width="{LADO * ep}" height="{zb}" fill="#e3d3ba" '
              f'stroke="{tinta}" stroke-width="0.35"/>')
     cruces = sorted(v for t in paneles[n0][0] if t["capa"] == 2
-                    for v in _cortes_horizontales(comun, t, LADO / 2))
+                    for v in _cortes_horizontales(t, LADO / 2))
     for a, b in zip(cruces[0::2], cruces[1::2]):
         s.append(f'<rect x="{xs + a * ep:.2f}" y="{ys}" width="{(b - a) * ep:.2f}" height="{zr}" '
                  f'fill="{madera}" stroke="{tinta}" stroke-width="0.3"/>')
@@ -314,26 +412,110 @@ def escribir_plano(comun, ruta, paneles):
         f.write("\n".join(s) + "\n")
 
 
-def _cortes_horizontales(comun, trazado, y):
+def _cortes_horizontales(trazado, y):
     """Coordenadas x donde el contorno cruza la horizontal de altura y."""
-    pts = comun._polilinea(trazado)
+    pts = _polilinea(trazado)
     return [x0 + (y - y0) * (x1 - x0) / (y1 - y0)
             for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1])
             if (y0 <= y < y1) or (y1 <= y < y0)]
 
 
 # ───────────────────────────── BLENDER ─────────────────────────────
+def _material(nombre, color, rugosidad=0.7, canto=None):
+    """Material sencillo. Con `canto`, las caras laterales (el corte del láser,
+    que queda tostado) toman ese color."""
+    mat = bpy.data.materials.get(nombre) or bpy.data.materials.new(nombre)
+    if mat.node_tree is None:
+        mat.use_nodes = True
+    nodos, enlaces = mat.node_tree.nodes, mat.node_tree.links
+    bsdf = next((n for n in nodos if n.type == "BSDF_PRINCIPLED"), None)
+    if bsdf:
+        bsdf.inputs["Base Color"].default_value = (*color, 1.0)
+        bsdf.inputs["Roughness"].default_value = rugosidad
+    if bsdf and canto and not nodos.get("Canto"):
+        geo = nodos.new("ShaderNodeNewGeometry")
+        xyz = nodos.new("ShaderNodeSeparateXYZ")
+        absz = nodos.new("ShaderNodeMath")
+        absz.operation = "ABSOLUTE"
+        cara = nodos.new("ShaderNodeMath")
+        cara.operation = "GREATER_THAN"
+        cara.inputs[1].default_value = 0.5
+        mezcla = nodos.new("ShaderNodeMix")
+        mezcla.name = "Canto"
+        mezcla.data_type = "RGBA"
+        ent = {s.identifier: s for s in mezcla.inputs}
+        sal = {s.identifier: s for s in mezcla.outputs}
+        ent["A_Color"].default_value = (*canto, 1.0)
+        ent["B_Color"].default_value = (*color, 1.0)
+        enlaces.new(geo.outputs["Normal"], xyz.inputs[0])
+        enlaces.new(xyz.outputs["Z"], absz.inputs[0])
+        enlaces.new(absz.outputs[0], cara.inputs[0])
+        enlaces.new(cara.outputs[0], ent["Factor_Float"])
+        enlaces.new(sal["Result_Color"], bsdf.inputs["Base Color"])
+    mat.diffuse_color = (*color, 1.0)
+    return mat
+
+
+def _coleccion(nombre):
+    vieja = bpy.data.collections.get(nombre)
+    if vieja:
+        for ob in list(vieja.objects):
+            bpy.data.objects.remove(ob, do_unlink=True)
+        bpy.data.collections.remove(vieja)
+    col = bpy.data.collections.new(nombre)
+    bpy.context.scene.collection.children.link(col)
+    return col
+
+
+def _objeto_curva(nombre, trazados, col, capa, tipo, z, extrusion=0.0, bisel=0.0, mat=None):
+    cu = bpy.data.curves.new(nombre, "CURVE")
+    cu.dimensions = "3D" if bisel else "2D"
+    cu.resolution_u = 6
+    if not bisel:
+        cu.fill_mode = "BOTH"
+        cu.extrude = extrusion * E / 2.0
+    else:
+        cu.bevel_depth = bisel * E
+        cu.bevel_resolution = 2
+    for t in trazados:
+        if all(hi == p == hd for hi, p, hd in t["nudos"]):
+            sp = cu.splines.new("POLY")
+            sp.points.add(len(t["nudos"]) - 1)
+            for pt, (_, p, _) in zip(sp.points, t["nudos"]):
+                pt.co = (p[0] * E, p[1] * E, 0.0, 1.0)
+        else:
+            sp = cu.splines.new("BEZIER")
+            sp.bezier_points.add(len(t["nudos"]) - 1)
+            for bp, (hi, p, hd) in zip(sp.bezier_points, t["nudos"]):
+                bp.handle_left_type = bp.handle_right_type = "FREE"
+                bp.co = (p[0] * E, p[1] * E, 0.0)
+                bp.handle_left = (hi[0] * E, hi[1] * E, 0.0)
+                bp.handle_right = (hd[0] * E, hd[1] * E, 0.0)
+        sp.use_cyclic_u = t["cerrado"]
+    ob = bpy.data.objects.new(nombre, cu)
+    ob.location.z = z * E
+    ob["capa"], ob["laser"] = capa, tipo
+    if mat:
+        cu.materials.append(mat)
+    col.objects.link(ob)
+    return ob
+
+
+def _apuntar(ob, destino):
+    ob.rotation_euler = (Vector(destino) - ob.location).to_track_quat("-Z", "Y").to_euler()
+
+
 def _posicion(i):
     return ((i % COLUMNAS) * (LADO + SEPARACION), -(i // COLUMNAS) * (LADO + SEPARACION))
 
 
-def construir_escena(comun, paneles):
+def construir_escena(paneles):
     """Un grupo por sello: base, marca guía y relieve, colgando de un vacío «Sello_NN»."""
     esc = bpy.context.scene
     esc.unit_settings.system = "METRIC"
     esc.unit_settings.length_unit = "MILLIMETERS"
-    madera = comun._material("Madera", (0.52, 0.34, 0.19), canto=(0.07, 0.04, 0.025))
-    col = comun._coleccion("Sellos SUMO (planos de corte)")
+    madera = _material("Madera", (0.52, 0.34, 0.19), canto=(0.07, 0.04, 0.025))
+    col = _coleccion("Sellos SUMO (planos de corte)")
     for i, n in enumerate(sorted(paneles)):
         trazados, info = paneles[n]
         x, y = _posicion(i)
@@ -346,12 +528,12 @@ def construir_escena(comun, paneles):
         def sel(capa, tipo):
             return [t for t in trazados if t["capa"] == capa and t["tipo"] == tipo]
 
-        partes = [comun._objeto_curva(f"{PREFIJO}{n:02d}_Base", sel(1, "CORTE"), col, 1, "CORTE",
+        partes = [_objeto_curva(f"{PREFIJO}{n:02d}_Base", sel(1, "CORTE"), col, 1, "CORTE",
                                       ESPESOR_BASE / 2, ESPESOR_BASE, mat=madera),
-                  comun._objeto_curva(f"{PREFIJO}{n:02d}_Relieve", sel(2, "CORTE"), col, 2, "CORTE",
+                  _objeto_curva(f"{PREFIJO}{n:02d}_Relieve", sel(2, "CORTE"), col, 2, "CORTE",
                                       ESPESOR_BASE + ESPESOR_RELIEVE / 2, ESPESOR_RELIEVE, mat=madera)]
         if sel(1, "GRABADO"):
-            marca = comun._objeto_curva(f"{PREFIJO}{n:02d}_Marca", sel(1, "GRABADO"), col, 1,
+            marca = _objeto_curva(f"{PREFIJO}{n:02d}_Marca", sel(1, "GRABADO"), col, 1,
                                         "GRABADO", ESPESOR_BASE)
             marca.data.fill_mode = "NONE"      # solo líneas: no se ve en el render
             marca.hide_render = True
@@ -362,7 +544,7 @@ def construir_escena(comun, paneles):
     bpy.context.view_layer.update()
 
 
-def leer_escena(comun):
+def leer_escena():
     """Lee los trazados de cada sello desde las curvas de Blender (por si se editaron)."""
     bpy.context.view_layer.update()
     paneles = {}
@@ -386,7 +568,7 @@ def leer_escena(comun):
                     nudos = [(mm(p.co),) * 3 for p in sp.points]
                 trazados.append(dict(capa=int(ob["capa"]), tipo=ob["laser"],
                                      cerrado=sp.use_cyclic_u, nudos=nudos))
-        relieve = [dict(pts=comun._polilinea(t)) for t in trazados if t["capa"] == 2]
+        relieve = [dict(pts=_polilinea(t)) for t in trazados if t["capa"] == 2]
         for c in relieve:
             c["prof"] = sum(_dentro(c["pts"][0], o["pts"]) for o in relieve if o is not c)
         piezas = sum(1 for c in relieve if c["prof"] % 2 == 0)
@@ -397,7 +579,7 @@ def leer_escena(comun):
     return paneles
 
 
-def renderizar(comun, carpeta, cantidad):
+def renderizar(carpeta, cantidad):
     esc = bpy.context.scene
     salida = os.path.join(carpeta, "renders")
     os.makedirs(salida, exist_ok=True)
@@ -415,13 +597,13 @@ def renderizar(comun, carpeta, cantidad):
         fondo.inputs["Color"].default_value = (1.0, 0.98, 0.95, 1.0)
         fondo.inputs["Strength"].default_value = 0.45
 
-    col = comun._coleccion("Vista previa (luz y camaras)")
+    col = _coleccion("Vista previa (luz y camaras)")
     malla = bpy.data.meshes.new("Pared")
-    r = 30.0
+    r = 6.0
     malla.from_pydata([(-r, -r, 0), (r, -r, 0), (r, r, 0), (-r, r, 0)], [], [(0, 1, 2, 3)])
     pared = bpy.data.objects.new("Pared", malla)
     pared.location.z = -0.0002
-    malla.materials.append(comun._material("Pared", (0.86, 0.85, 0.83), 0.9))
+    malla.materials.append(_material("Pared", (0.86, 0.85, 0.83), 0.9))
     col.objects.link(pared)
     sol_d = bpy.data.lights.new("Sol", "SUN")
     sol_d.energy = 3.4
@@ -441,7 +623,7 @@ def renderizar(comun, carpeta, cantidad):
         datos.lens = 50
         cam = bpy.data.objects.new(nombre, datos)
         cam.location = (mx - 0.20 * lejos, my - 0.92 * lejos, 1.42 * lejos)
-        comun._apuntar(cam, (mx + 0.005 * lejos, my - 0.01 * lejos, 0.0))
+        _apuntar(cam, (mx + 0.005 * lejos, my - 0.01 * lejos, 0.0))
         col.objects.link(cam)
         return cam
 
@@ -461,30 +643,37 @@ def renderizar(comun, carpeta, cantidad):
 
 def main():
     carpeta = _carpeta()
-    comun = _cargar_comun(carpeta)
     if bpy is None:                            # sin Blender: solo archivos de corte
-        exportar(comun, generar_todo(comun, carpeta), carpeta)
+        exportar(generar_todo(carpeta), carpeta)
         return
     if MODO.upper() == "EXPORTAR":
-        exportar(comun, leer_escena(comun), carpeta)
+        exportar(leer_escena(), carpeta)
         return
     consola = bpy.app.background
     if consola:                                # escena nueva y limpia
         for ob in list(bpy.data.objects):
             bpy.data.objects.remove(ob, do_unlink=True)
-    paneles = generar_todo(comun, carpeta)
+    paneles = generar_todo(carpeta)
     for n, (_, info) in sorted(paneles.items()):
         print(f"[sellos] {n:02d}: {info['piezas']} piezas, {info['huecos']} huecos, "
               f"{info['descartados']} motas descartadas")
-    construir_escena(comun, paneles)
-    exportar(comun, leer_escena(comun), carpeta)   # se exporta lo que hay en Blender
+    construir_escena(paneles)
+    exportar(leer_escena(), carpeta)   # se exporta lo que hay en Blender
     if consola:
         if RENDERIZAR:
-            renderizar(comun, carpeta, len(paneles))
+            renderizar(carpeta, len(paneles))
         ruta = os.path.join(carpeta, "panel_sellos_sumo.blend")
         aqui = globals().get("__file__", "")
-        if aqui and os.path.isfile(aqui):      # el script queda a mano en la pestaña Scripting
+        if aqui and os.path.isfile(aqui):      # el script y el arte quedan dentro del .blend
             bpy.data.texts.load(os.path.abspath(aqui))
+            arte = os.path.join(carpeta, ARCHIVO_ARTE)
+            if os.path.isfile(arte) and ARCHIVO_ARTE not in bpy.data.texts:
+                bpy.data.texts.load(arte)
+        for pantalla in bpy.data.screens:      # al abrir, la vista 3D mira por la cámara
+            for area in pantalla.areas:
+                for esp in area.spaces:
+                    if esp.type == "VIEW_3D" and esp.region_3d:
+                        esp.region_3d.view_perspective = "CAMERA"
         bpy.ops.wm.save_as_mainfile(filepath=ruta, compress=True, relative_remap=True)
         print(f"[sellos] Escena guardada: {ruta}")
 

@@ -34,7 +34,6 @@
 | `candidatos_sellos.json` | Esos 12 en vector, para cambiar uno por otro sin volver a generarlos |
 | `distribucion_A.png` | Ubicación en pared: mural en cuadrícula 4 × 3 |
 | `distribucion_B.png` | Ubicación en pared: friso de 7 en una fila |
-| `distribucion_C.png` | Ubicación en pared: ajedrez de sellos y paneles de ondas |
 
 Para cambiar un sello por otro candidato, copiar su `d` de `candidatos_sellos.json` a
 `sellos_sumo.json` con el número que se quiera y volver a ejecutar el script.
@@ -46,7 +45,7 @@ Para cambiar un sello por otro candidato, copiar su `d` de `candidatos_sellos.js
 | `corte/sello_NN_relieve.dxf` / `.svg` | **Lo que corta el láser.** Escala 1:1, en mm |
 | `corte/sello_NN_base.dxf` / `.svg` | Cuadrado de la base + marca guía |
 | `planos/plano_sellos.pdf` / `.png` / `.svg` | Todos los sellos, medidas, sección y lista de piezas |
-| `panel_sellos_sumo.blend` | Modelo de Blender: curvas editables + vista 3D |
+| `panel_sellos_sumo.blend` | Modelo de Blender: curvas editables + vista 3D. Lleva dentro el script y el arte, así que funciona solo |
 | `panel_sellos_sumo.py` | Script que genera todo lo anterior |
 | `sellos_sumo.json` | Arte de los sellos en vector |
 | `renders/` | Vistas previas |
@@ -74,5 +73,8 @@ Los parámetros están al principio de `panel_sellos_sumo.py` (medidas en mm): `
 blender --background --python panel_sellos_sumo.py
 ```
 
-Usa funciones de `../panel_ondas_laser/panel_ondas_laser.py`, así que las dos carpetas
-deben ir juntas. `plano_sellos.pdf` y `.png` son conversiones del `.svg` que escribe el script.
+También se puede ejecutar dentro de Blender (pestaña *Scripting* → *Run Script*). Si se
+retocan las curvas a mano, poner `MODO = "EXPORTAR"` y ejecutar de nuevo: reescribe los
+archivos de corte a partir de las curvas de la escena, en la carpeta del `.blend`.
+
+`plano_sellos.pdf` y `.png` son conversiones del `.svg` que escribe el script.

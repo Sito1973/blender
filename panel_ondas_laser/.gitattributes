@@ -1,4 +1,0 @@
-# Archivos pequeños de este proyecto: van directos al repositorio, sin Git LFS.
-*.png -filter -diff -merge
-*.blend -filter -diff -merge
-*.pdf -filter -diff -merge
