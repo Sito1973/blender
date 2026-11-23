@@ -32,9 +32,9 @@ except ImportError:  # permite generar SVG/DXF sin Blender
 # ───────────────────────────── PARÁMETROS (mm) ─────────────────────────────
 MODO = "GENERAR"          # "GENERAR" crea todo de cero · "EXPORTAR" solo reexporta la escena
 
-ANCHO = 600.0             # ancho del panel
-ALTO = 600.0              # alto del panel
-MARCO = 12.0              # ancho del marco perimetral
+ANCHO = 400.0             # ancho del panel
+ALTO = 400.0              # alto del panel
+MARCO = 8.0               # ancho del marco perimetral
 ESPESOR_BASE = 9.0        # capa 1 (cuadrado liso)
 ESPESOR_RELIEVE = 9.0     # capa 2 (marco + ondas)
 MATERIAL = "MDF"          # solo para rotular el plano
@@ -43,8 +43,8 @@ CANTIDAD_PANELES = 6      # paneles del conjunto
 NUM_BANDAS = 11           # impar. Huecos = (NUM_BANDAS - 1) / 2
 SEMILLA = 9               # cambia el dibujo de las ondas
 PENDIENTE_MAX = 1.15      # qué tan "tumbadas" pueden ir las ondas (1 = 45°)
-ANCHO_MIN_RELIEVE = 9.0   # tira de madera más fina permitida
-ANCHO_MIN_HUECO = 6.0     # ranura más fina permitida
+ANCHO_MIN_RELIEVE = 6.0   # tira de madera más fina permitida
+ANCHO_MIN_HUECO = 4.0     # ranura más fina permitida
 LINEAS_GRABADO = True     # líneas finas grabadas (azul) sobre las zonas en relieve
 PASO_NODOS = 4.0          # separación entre nodos Bézier
 

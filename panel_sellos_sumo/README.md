@@ -1,12 +1,12 @@
 # Paneles con los sellos de Sumo en relieve — corte láser
 
-14 sellos, cada uno convertido en un panel de 600 × 600 × 18 mm: la línea del sello
-(Ø 520 mm) se corta en una capa y se encola sobre una base cuadrada lisa.
+14 sellos, cada uno convertido en un panel de 400 × 400 × 18 mm: la línea del sello
+(Ø 350 mm) se corta en una capa y se encola sobre una base cuadrada lisa.
 
 | Capa | Qué es | Medida (mm) | Por panel |
 |------|--------|-------------|-----------|
-| 1 · Base | Cuadrado liso, con el contorno del sello marcado como guía | 600 × 600 × 9 | 1 |
-| 2 · Relieve | La línea del sello | Ø 520 × 9 | 1 juego |
+| 1 · Base | Cuadrado liso, con el contorno del sello marcado como guía | 400 × 400 × 9 | 1 |
+| 2 · Relieve | La línea del sello | Ø 350 × 9 | 1 juego |
 
 ## Los sellos
 
@@ -61,9 +61,9 @@ cortar**: dibuja sobre la base dónde va cada pieza, para pegarlas en su sitio.
   y 07–12 los de la cara 4, de arriba abajo.
 - Los sellos nuevos tienen la línea algo más gruesa y zonas macizas más grandes que los de
   la bolsa.
-- Se descartan 4 motas de menos de 120 mm² que no se podrían pegar (1 en el sello 03 y 3
-  en el 08). El umbral es `PIEZA_MIN_MM2`.
-- A este tamaño la línea mide entre 9 y 24 mm de ancho.
+- Se descartan 4 motas minúsculas que no se podrían pegar (1 en el sello 03 y 3 en el 08).
+  El umbral es `PIEZA_MIN_PCT`, en % del área del sello.
+- A este tamaño la línea más fina mide unos 5,5 mm y la mayoría entre 8 y 16 mm.
 
 ## Cambiar el diseño
 

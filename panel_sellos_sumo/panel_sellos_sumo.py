@@ -40,15 +40,15 @@ except ImportError:  # permite generar SVG/DXF sin Blender
 # ───────────────────────────── PARÁMETROS (mm) ─────────────────────────────
 MODO = "GENERAR"          # "GENERAR" crea todo de cero · "EXPORTAR" solo reexporta la escena
 
-LADO = 600.0              # lado del panel cuadrado
-DIAMETRO = 520.0          # diámetro del sello sobre el panel
+LADO = 400.0              # lado del panel cuadrado
+DIAMETRO = 350.0          # diámetro del sello sobre el panel
 ESPESOR_BASE = 9.0        # capa 1 (cuadrado liso)
 ESPESOR_RELIEVE = 9.0     # capa 2 (línea del sello)
 MATERIAL = "MDF"          # solo para rotular el plano
 SELLOS = None             # cuáles generar, p. ej. [2, 6, 12] · None = todos los del archivo
 MARCA_EN_BASE = True      # dibuja en la base el contorno del sello (azul) como guía de pegado
-PIEZA_MIN_MM2 = 120.0     # motas más pequeñas que esto se descartan (no se pueden pegar bien)
-HUECO_MIN_MM2 = 30.0      # agujeros más pequeños que esto se descartan
+PIEZA_MIN_PCT = 0.057     # motas menores que este % del área del sello se descartan (no se pueden pegar)
+HUECO_MIN_PCT = 0.014     # agujeros menores que este % del área del sello se descartan
 
 COLUMNAS = 5              # disposición de los paneles en la escena de Blender
 SEPARACION = 40.0
@@ -144,8 +144,9 @@ def trazados_sello(comun, d):
         contornos.append(dict(nudos=nudos, pts=pts, area=_area(pts)))
     for c in contornos:                        # profundidad par = pieza · impar = hueco
         c["prof"] = sum(_dentro(c["pts"][0], o["pts"]) for o in contornos if o is not c)
+    disco = math.pi * (DIAMETRO / 2) ** 2      # los umbrales van en % para que no dependan del tamaño
     buenos = [c for c in contornos
-              if c["area"] >= (PIEZA_MIN_MM2 if c["prof"] % 2 == 0 else HUECO_MIN_MM2)]
+              if c["area"] >= disco * (PIEZA_MIN_PCT if c["prof"] % 2 == 0 else HUECO_MIN_PCT) / 100]
     piezas = sum(1 for c in buenos if c["prof"] % 2 == 0)
     cuadrado = [(p, p, p) for p in ((0, 0), (LADO, 0), (LADO, LADO), (0, LADO))]
     trazados = [dict(capa=1, tipo="CORTE", cerrado=True, nudos=cuadrado)]

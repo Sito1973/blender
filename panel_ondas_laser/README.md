@@ -1,11 +1,11 @@
 # Panel de ondas en relieve para corte láser
 
-Panel decorativo de 600 × 600 × 18 mm formado por **2 capas** de MDF/madera encoladas:
+Panel decorativo de 400 × 400 × 18 mm formado por **2 capas** de MDF/madera encoladas:
 
 | Capa | Qué es | Medida (mm) | Por panel | Para 6 paneles |
 |------|--------|-------------|-----------|----------------|
-| 1 · Base | Cuadrado liso | 600 × 600 × 9 | 1 | 6 |
-| 2 · Relieve | Marco + ondas (5 huecos calados) | 600 × 600 × 9 | 1 | 6 |
+| 1 · Base | Cuadrado liso | 400 × 400 × 9 | 1 | 6 |
+| 2 · Relieve | Marco + ondas (5 huecos calados) | 400 × 400 × 9 | 1 | 6 |
 
 Los 6 paneles son iguales; se combinan girándolos 180° y las ondas casan entre sí.
 
